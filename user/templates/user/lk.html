@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load panel_tags %}
+
+{% block title %}
+    <title>{{ title }}</title>
+{% endblock %}
+{% block header %}
+    <a href="{% url "user:logout" %}" target="_self">
+        <button type="button" class="btn text-white">Выйти</button>
+    </a>
+{% endblock %}
+{% block main-center-display %}
+    <div class="main-container">
+        <!-- Пример нескольких вложенных контейнеров -->
+        <div class="inner-container">
+            <a href="https://example.com">
+                <div class="box">
+                    <p>Item 1</p>
+                </div>
+            </a>
+            <a href="https://example.com">
+                <div class="box">
+                    <p>Item 2</p>
+                </div>
+            </a>
+            <a href="https://example.com">
+                <div class="box">
+                    <p>Item 3</p>
+                </div>
+            </a>
+            <!-- Добавьте больше контейнеров здесь -->
+        </div>
+    </div>
+    </body>
+    </html>
+{% endblock %}
+
+/* Основной контейнер, центрирует вложенные блоки */
+.main-container {
+    display: flex;
+    justify-content: center; /* Центрирование по горизонтали */
+    align-items: center;     /* Центрирование по вертикали */
+    height: 100vh;           /* Высота окна браузера */
+    padding: 20px;
+}
+
+/* Внутренний контейнер с гибкой сеткой */
+.inner-container {
+    display: flex;
+    flex-wrap: wrap; /* Позволяет элементам переноситься на новую строку */
+    gap: 20px;       /* Отступы между ячейками */
+    justify-content: center;
+}
+
+/* Стили для каждого элемента */
+.box {
+    width: 200px;            /* Фиксированная ширина */
+    height: 150px;           /* Фиксированная высота */
+    background-color: #f8f9fa; /* Светло-серый цвет фона */
+    border-radius: 8px;      /* Закругленные углы */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Тень для объема */
+    display: flex;           /* Центрирование текста */
+    justify-content: center; /* Центрирование текста по горизонтали */
+    align-items: center;     /* Центрирование текста по вертикали */
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    transition: background-color 0.3s ease, transform 0.3s ease; /* Плавные переходы */
+}
+
+/* Изменение стилей при наведении */
+.box:hover {
+    background-color: #e9ecef; /* Изменение фона при наведении */
+    transform: scale(1.05);    /* Легкое увеличение */
+}
+
+/* Стили для ссылок (сбросить подчеркивание и цвет) */
+a {
+    text-decoration: none; /* Убирает подчеркивание */
+    color: inherit;        /* Наследует цвет родительского элемента */
+}

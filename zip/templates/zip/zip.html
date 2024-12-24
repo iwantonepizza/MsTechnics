@@ -1,0 +1,294 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% load panel_tags %}
+
+
+{% block styles %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'styles/zip.css' %}">
+{% endblock %}
+
+
+{% block title %}
+    {{ title }}
+{% endblock %}
+
+{% block header %}
+{% endblock %}
+
+
+{% block main-center-display %}
+    <div class="central-container" style="width: 100%;">
+        <div class="info-long-panel">
+            <div class="inner-block-zip">
+                <button type="button" class="btn btn-secondary btn-lg btn-up disabled">ЗИП</button>
+                <div class="info-block-zip" style="height:{% if panel_report_history %}22vh{% else %}50vh{% endif %}">
+                    {% qtag_department department_name='zip' model_filter=list_of_filtered_models condition_filter=list_of_condition_filter as zip_panels %}
+                    {% for zip_panel in zip_panels %}
+                        <a class="link" href="?id=
+                                {{ zip_panel.name }}{% if display_name %}&display_name={{ display_name }} {% endif %} "
+                           target="_self">
+                            <button type="button"
+                                    class="btn btn-secondary btn-status">{{ zip_panel.name }} {{ zip_panel.icon }}
+                            </button>
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="inner-block-zip">
+                <button type="button" class="btn btn-secondary btn-lg btn-up disabled">На руках</button>
+                <div class="info_display">
+                    <div class="info-block-zip"
+                         style="height:{% if panel_report_history %}22vh{% else %}50vh{% endif %}">
+                        {% qtag_department department_name='hand' model_filter=list_of_filtered_models condition_filter=list_of_condition_filter as hand_panels %}
+                        {% for hand_panels in hand_panels %}
+                            <a class="link" href="?id=
+                                    {{ hand_panels.name }}{% if display_name %}&display_name={{ display_name }} {% endif %}"
+                               target="_self">
+                                <button type="button"
+                                        class="btn btn-secondary btn-status">{{ hand_panels.name }} {{ hand_panels.icon }}
+                                </button>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="inner-block-zip">
+                <button type="button" class="btn btn-secondary btn-lg btn-up disabled">Сервис</button>
+                <div class="info_display">
+                    <div class="info-block-zip"
+                         style="height:{% if panel_report_history %}22vh{% else %}50vh{% endif %}">
+                        {% qtag_department department_name='service' model_filter=list_of_filtered_models condition_filter=list_of_condition_filter as panels %}
+                        {% for panel in panels %}
+                            <a class="link" href="?id=
+                                    {{ panel.name }}{% if display_name %}&display_name={{ display_name }} {% endif %}"
+                               target="_self">
+                                <button type="button"
+                                        class="btn btn-secondary btn-status">{{ panel.name }} {{ panel.icon }}
+                                </button>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="inner-block-zip">
+                <button type="button" class="btn btn-secondary btn-lg btn-up disabled">В работе</button>
+                <div class="info_display">
+                    <div class="info-block-zip"
+                         style="height:{% if panel_report_history %}22vh{% else %}50vh{% endif %}">
+                        {% qtag_department department_name='monitor' model_filter=list_of_filtered_models condition_filter=list_of_condition_filter as none_panels %}
+                        {% for none_panel in none_panels %}
+                            <a class="link" href="?id=
+                                    {{ none_panel.name }}{% if display_name %}&display_name={{ display_name }} {% endif %}"
+                               target="_self">
+
+                                <button type="button"
+                                        class="btn btn-secondary btn-status">
+                                    {{ none_panel.name }}{{ none_panel.display }}
+                                    {{ none_panel.icon }}
+                                </button>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="panel-container" style="margin-top: 1vh">
+            {% if panel_report_history %}
+                <div class="panel-info">
+                    <div class="panel-field">
+                        <strong>ID панели:</strong> {{ panel.id }}
+                    </div>
+                    <div class="panel-field">
+                        <strong>Модель:</strong> {{ panel.display.description }}
+                    </div>
+                    <div class="panel-field">
+                        <strong>Описание: </strong>
+                        {% if panel.comment %}{{ panel.comment }}{% else %}комментария нет{% endif %}
+                    </div>
+                    <div class="panel-field">
+                        {% if not params.panel_id_application %}
+                            <a style="text-decoration: none; color: rgba(255, 255, 255, 0.59); "
+                               role="button"
+                               id="dropdownMenuLink"
+                               data-bs-toggle="dropdown" aria-expanded="false">Статус
+                                панели: {{ panel.condition.icon }} {{ panel.condition.description }}
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                                {% get_allowed_status as allowed_status %}
+                                {% for status  in allowed_status %}
+                                    <li><a class="dropdown-item"
+                                           href="?{% update_get_query %}&mode=condition&new_condition={{ status.name }}">{{ status.description }}</a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+
+                    </div>
+                    <div class="panel-field">
+                        <strong>Заявка панели:</strong> {{ panel.application_status.description }}
+                    </div>
+                    <div class="panel-field">
+                        {% if panel.department.name == 'zip' %}
+                            <strong>Нахождение:</strong> {{ panel.department.description }}
+                        {% else %}
+                            <strong>Стоит на {{ panel.display.description }} место - {{ cell.position }}</strong>
+                        {% endif %}
+
+                    </div>
+                </div>
+                <!-- Кнопки-ссылки в левом нижнем углу -->
+                <div class="application-button-container">
+
+                    <div class="panel-links">
+                        <div class="action-button" data-bs-toggle="offcanvas"
+                             data-bs-target="#offcanvasRight" title="Комментарии панели" aria-controls="offcanvasRight">
+                            📄
+                        </div>
+                        {% if panel.department.name != 'service' %}
+                            <div class="action-button" data-bs-toggle="modal"
+                                 data-bs-target="#apply_to_service" title="В сервис" aria-controls="exampleModal">⚙️
+                            </div>
+                        {% endif %}
+                        {% if panel.department.name != 'zip' %}
+                            <div class="action-button" data-bs-toggle="modal"
+                                 data-bs-target="#apply_to_zip" title="ЗИП" aria-controls="exampleModal">🧰
+                            </div>
+                        {% endif %}
+                        {% if panel.department.name != 'hand' %}
+                            <div class="action-button" data-bs-toggle="modal"
+                                 data-bs-target="#apply_to_hand" title="На руки" aria-controls="exampleModal">🖐
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <div class="panel-links">
+                <form action="{% url 'main:zip:search' %}" class="d-flex" role="search" method="get">
+                    <input name="id" class="form-control me-2" type="search" placeholder="Введите айди"
+                           aria-label="Search">
+                    {% if request.GET.input_model %}
+                        <input type="hidden" name="input_model" value="{{ request.GET.input_model }}">
+                    {% endif %}
+                    <button class="action-button" title="Поиск по айди" type="submit">🔍</button>
+                </form>
+                <div class="action-button" data-bs-toggle="modal"
+                     data-bs-target="#exampleModal" title="Добавить
+                панель" aria-controls="exampleModal">➕
+                </div>
+                {#                <div class="action-button" data-bs-toggle="modal"#}
+                {#                     data-bs-target="#options-Model" title="Выбрать модель">🍪#}
+                {#                </div>#}
+                <div class="action-button" data-bs-toggle="modal"
+                     data-bs-target="#options-Condition" title="Выбрать состояние">🎱
+                </div>
+                <div class="action-button" data-bs-toggle="modal"
+                     data-bs-target="#lamel_menu" title="ламели">📺
+                </div>
+                <div class="action-button" data-bs-toggle="modal"
+                     data-bs-target="#hub_menu" title="хабы">🕹
+                </div>
+                <div class="action-button" data-bs-toggle="modal"
+                     data-bs-target="#wire_menu" title="провод питания сигнальный провод">⛓️
+                </div>
+            </div>
+        </div>
+        <div class="info-long-panel">
+            <div class="inner-block-zip">
+                <button type="button"
+                        class="btn btn-secondary btn-lg btn-up disabled">
+                    {% if panel.id %} История перемещения панели id-{{ panel.id }}
+                    {% else %} История перемещения {% endif %}
+                </button>
+                <div class="info_display">
+
+                    <div class="info-block-zip"
+                         style="height:{% if panel_report_history %}38vh{% else %}27vh{% endif %}">
+                        {% for info in panel_report_history.moving %}
+
+                            <p>{{ info.panel }} | {{ info.description }} | Коммент: {{ info.comment }} |
+                                Время: {{ info.time }}</p>
+
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="inner-block-zip">
+                <button type="button"
+                        class="btn btn-secondary btn-lg btn-up{% if not panel.id %} disabled{% endif %}"
+                        data-bs-toggle="modal"
+                        data-bs-target="#breakdown_comment">
+                    {% if panel.id %} История поломок панели id-{{ panel.id }}
+                    {% else %} История поломок {% endif %}
+                </button>
+                <div class="info_display">
+                    <div class="info-block-zip"
+                         style="height:{% if panel_report_history %}38vh{% else %}27vh{% endif %}">
+                        {% for info in panel_report_history.breakdown %}
+
+                            <p>{{ info.panel }} | {{ info.description }} | Коммент: {{ info.comment }} |
+                                Время: {{ info.time }}</p>
+
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="inner-block-zip">
+                <button type="button" class="btn btn-secondary btn-lg btn-up disabled">
+                    {% if panel.id %} История состояний панели id-{{ panel.id }}
+                    {% else %} История состояний {% endif %}
+                </button>
+                <div class="info_display">
+                    <div class="info-block-zip"
+                         style="height:{% if panel_report_history %}38vh{% else %}27vh{% endif %}">
+                        {% for info in panel_report_history.condition %}
+                            <p>{{ info.panel }} | {{ info.description }} | Коммент: {{ info.comment }} |
+                                Время: {{ info.time }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="inner-block-zip">
+                <button type="button"
+                        class="btn btn-secondary btn-lg btn-up{% if not panel.id %} disabled{% endif %}"
+                        data-bs-toggle="modal"
+                        data-bs-target="#service_comment">
+                    {% if panel.id %} История сервиса панели id-{{ panel.id }}
+                    {% else %} История сервиса {% endif %}
+                </button>
+                <div class="inner-block-zip">
+                    <div class="info-block-zip"
+                         style="height:{% if panel_report_history %}38vh{% else %}27vh{% endif %}">
+                        {% for info in panel_report_history.service %}
+                            <p>{{ info.panel }} | {{ info.description }} | Коммент: {{ info.comment }} |
+                                Время: {{ info.time }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="inner-block-zip">
+                <button type="button"
+                        class="btn btn-secondary btn-lg btn-up{% if not panel.id %} disabled{% endif %}"
+                        data-bs-toggle="modal"
+                        data-bs-target="#history_comment">
+                    {% if panel.id %} История панели id-{{ panel.id }}
+                    {% else %} История {% endif %}
+                </button>
+                <div class="info_display">
+                    <div class="info-block-zip"
+                         style="height:{% if panel_report_history %}38vh{% else %}27vh{% endif %}">
+                        {% for info in panel_report_history.none_type %}
+                            <p>{{ info }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+
+{% endblock %}

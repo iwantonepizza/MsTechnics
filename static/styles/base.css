@@ -1,0 +1,112 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+
+}
+
+
+html, body {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    background: linear-gradient(135deg, #a45faa, #000000);
+    background-size: cover;
+    font-family: Arial, sans-serif;
+
+}
+
+.background {
+linear-gradient(127 deg, rgba(209, 31, 31, 0.8), rgba(0, 255, 0, 0) 70.71 %),
+
+}
+
+.underline {
+    height: 2px;
+    background: linear-gradient(to right, yellow, #62cff3);
+    margin: 5px 30px; /* Отступы слева и справа */
+}
+
+.main {
+    flex-grow: 1;
+    display: flex;
+    justify-content: space-between;
+    padding: 2px;
+}
+
+footer {
+    margin-top: auto; /* This pushes the footer to the bottom */
+}
+
+.logo img {
+    height: 3vh;
+}
+
+
+.chosen {
+    background: rgba(113, 106, 106, 0.53);
+    color: rgba(225, 201, 123, 0.87)
+}
+
+.button-bar-fill-width {
+    padding: 0;
+    width: 100%;
+    display: flex;
+}
+
+.action-button {
+    background: rgba(192, 192, 192, 0.11);
+    border: 1px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 24px;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.action-button:hover {
+    background-color: #bbb;
+}
+
+
+.flex-box {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+
+}
+
+
+.panel-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+
+
+
+
+@media (width < 900px) {
+    .main {
+        flex-direction: column;
+    }
+}
+

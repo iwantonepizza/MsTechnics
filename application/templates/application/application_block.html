@@ -1,0 +1,42 @@
+{% load panel_tags %}
+<div class="application-row">
+
+    <div class="application-id">
+        <strong>ID:</strong> {{ application.id }}
+    </div>
+
+    <div class="application-status">
+                <strong>Экран:</strong> {{ application.display.description }}
+        <strong>Слот:</strong> {% get_cell panel=application.panel %}
+    </div>
+</div>
+
+<div class="application-details">
+    <div class="application-field">
+                <strong>Статус заявки:</strong> {{ application.status.description }}
+    </div>
+    <div class="application-field">
+    </div>
+</div>
+
+<div class="application-monitoring">
+    <strong>Мониторинг:</strong>
+    <p>Время: {{ application.time_monitoring }}</p>
+    <p>Комментарий: {{ application.comment_monitoring }}</p>
+</div>
+
+{% if application.time_control %}
+    <div class="application-service">
+        <strong>Контроль:</strong>
+        <p>Время: {{ application.time_control }}</p>
+        <p>Комментарий: {{ application.comment_control }}</p>
+    </div>
+{% endif %}
+
+{% if application.time_service %}
+    <div class="application-control">
+        <strong>Сервис:</strong>
+        <p>Время: {{ application.time_service }}</p>
+        <p>Комментарий: {{ application.comment_service }}</p>
+    </div>
+{% endif %}

@@ -1,0 +1,36 @@
+
+
+
+.application-container {
+    width: 100%;
+    max-width: 1200px;
+    background: rgba(97, 95, 95, 0.2);
+    border-radius: 25px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.67);
+    padding: 10px;
+    margin-bottom: 1vh;
+}
+
+
+
+.application-row {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.application-container strong {
+    color: rgba(255, 255, 255, 0.8); /* Белый шрифт */
+
+}
+
+.application-container p {
+    margin-top: 5px;
+}
+
+.application-button-container {
+    display: flex;
+    gap: 1vw;
+}

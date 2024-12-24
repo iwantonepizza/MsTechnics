@@ -1,0 +1,20 @@
+.header {
+    width: 100%;
+    padding: 10px 0;
+    position: relative;
+}
+.header-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px; /* Отступы слева и справа */
+}
+.nav-buttons {
+    display: flex;
+    gap: 1vh;
+}
+
+@media (width < 900px) {
+    .header-container {
+    }
+}

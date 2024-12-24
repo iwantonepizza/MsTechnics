@@ -1,0 +1,59 @@
+<div class="application-row">
+    <div class="application-id">
+        <strong>ID:</strong> {{ departure.id }}
+
+    </div>
+    <div class="application-status">
+        <strong>Статус заявки:</strong> {{ departure.status }}
+
+    </div>
+</div>
+<div class="application-field">
+    <strong>Исполнитель:</strong>
+    {% if departure.contractor %}
+        {{ departure.contractor }}
+    {% else %}
+        не выбран
+    {% endif %}
+</div>
+<div class="application-details">
+
+    <div class="application-field">
+        <strong>Описание:</strong> {{ departure.description }}
+    </div>
+</div>
+
+<div class="application-monitoring">
+    <strong>Время создания:</strong>
+    <p>{{ departure.time_created }}</p>
+</div>
+{% if departure.time_start %}
+    <div class="application-service">
+        <strong>Время выезда:</strong>
+        <p>{{ departure.time_start }}</p>
+
+    </div>
+{% endif %}
+{% if departure.time_end %}
+    <div class="application-control">
+        <strong>Время выполнения:</strong>
+        <p>{{ departure.time_end }}</p>
+
+    </div>
+{% endif %}
+<div class="application-button-container">
+
+    {% if departure.status != 'done' %}
+        <button class="head-button" data-target="dellDeparture"
+                data-departure-id="{{ departure.id }}"
+                title="удаление выезда">удалить
+        </button>
+        <button class="head-button" data-target="doneModal"
+                data-departure-id="{{ departure.id }}"
+                title="выполнение выезда">выполнить
+        </button>
+    {% else %}
+
+    {% endif %}
+
+</div>

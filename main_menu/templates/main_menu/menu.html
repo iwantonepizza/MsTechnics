@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load panel_tags %}
+
+
+{% block title %}
+    {{ title }}
+{% endblock %}
+
+{% block styles %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'styles/slot_and_panel_info_container.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/department_menu.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/department_content.css' %}">
+
+
+{% endblock %}
+
+{% block main-center-display %}
+    {% if request.user.permission in allowed.to_monitoring %}
+        <div class="menu-info-slot">
+            <a href="{% url "main:monitoring:index" %}" class="head-button">Отдел мониторинга</a>
+            <div class="scroll-info-block">
+                {% for line in move_report %}
+                    <p>{{ line.panel_id }} {{ line }} {{ line.time }}</p>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+    {% if request.user.permission in allowed.to_control %}
+        <div class="menu-info-slot">
+            <a href="{% url "main:control:index" %}" class="head-button">Отдел контроля</a>
+            <div class="scroll-info-block">
+                {% if applications %}
+                    {% for application in applications.all %}
+                        <div class="application-container">
+                            {% include 'application/application_block.html' with application=application %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    Заявок нет
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+    {% if request.user.permission in allowed.to_service %}
+        <div class="menu-info-slot">
+        <a href="{% url "main:service:index" %}" class="head-button">Отдел обслуживания</a>
+        <div class="scroll-info-block">
+            <p>xxxxxxxxxxxxxxxxx</p>
+            <p>xxxxxxxxxxxxxxxxx</p>
+            <p>xxxxxxxxxxxxxxxxx</p>
+            <p>xxxxxxxxxxxxxxxxx</p>
+            <p>xxxxxxxxxxxxxxxxx</p>
+        </div>
+        <div class="full-width-container">
+            <div class="inner-block">
+                <a class="head-button" data-target="commentModal">Сервис</a>
+                <div class="application-scroll-box">
+                    {% for info in panel_service_report %}
+                        <div class="application-container">
+                            {% include 'service/comment_block.html' with info=info %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="inner-block">
+                <a class="head-button" data-target="departureModal">Выезд</a>
+                <div class="application-scroll-box">
+                    {% if departures %}
+                        {% for departure in departures %}
+                            <div class="application-container">
+                                {% include 'departure/departure_info_block.html' with departure=departure %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        Выездов нет
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

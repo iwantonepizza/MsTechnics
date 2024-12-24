@@ -1,0 +1,32 @@
+/* Вложенные блоки */
+.full-width-container .inner-block {
+    flex: 1; /* Равное распределение по ширине */
+    display: flex;
+    border-radius: 5px; /* Закругленные углы для вложенных блоков */
+    transition: all 0.5s ease; /* Плавный переход для всех свойств */
+    flex-direction: column;
+
+}
+
+.full-width-container {
+    margin-top: 2vh;
+    width: 100%; /* Занимает всю ширину родителя */
+    display: flex; /* Flex-контейнер для вложенных блоков */
+    background-color: inherit; /* Цвет определяется в другом классе */
+    flex-direction: row;
+}
+
+
+/* Активное состояние блока */
+.full-width-container .inner-block.active {
+    opacity: 1;
+    flex: 1;
+    transition-duration: 1s
+}
+
+/* Деактивированное состояние блока */
+.full-width-container .inner-block.inactive {
+    opacity: 0.4;
+    flex: 0;
+    pointer-events: none; /* Отключаем взаимодействие */
+}

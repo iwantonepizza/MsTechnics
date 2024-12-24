@@ -1,0 +1,36 @@
+<div class="full-width-container">
+    <div class="inner-block {% if empty_slot %}inactive {% else %}active{% endif %}">
+        {% if empty_slot %}
+            <a class="head-button" type="button"></a>
+            <div class="application-scroll-box">
+            </div>
+        {% else %}
+            <a class="head-button" type="button">История панели id-{{ panel.name }}</a>
+            <div class="application-scroll-box">
+                {% if panel_report_history.moving %}
+                    {% for line in panel_report_history.moving %}
+                        <p>{{ line }}</p>
+                    {% endfor %}
+                {% else %}
+                    <span style="text-align: center; min-height: 1.5vh; color: rgba(225,201,123,0.87)">Нет истории</span>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+    <div class="inner-block">
+        <a class="head-button" type="button">История места {{ cell.position }}</a>
+        <div class="application-scroll-box">
+            {% if info_cell %}
+                {% for line in info_cell %}
+                    <p>{{ line.description }} {{ line.time }}
+                        {% if line.user %}
+                            {{ line.user }}
+                        {% endif %}
+                    </p>
+                {% endfor %}
+            {% else %}
+                <span style="text-align: center; min-height: 1.5vh; color: rgba(225,201,123,0.87)">Нет истории</span>
+            {% endif %}
+        </div>
+    </div>
+</div>

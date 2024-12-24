@@ -1,0 +1,52 @@
+/* Общий стиль меню */
+.head-buttons-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-buttons {
+    display: flex;
+    gap: 1vh;
+}
+
+
+.for-900px {
+    display: none;
+}
+
+
+/* Скрытое меню */
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: rgba(30, 30, 30, 0.32);
+    z-index: 1000;
+}
+
+.dropdown-menu a {
+    display: block;
+    text-decoration: none;
+    transition: background-color 0.3s;
+}
+
+
+
+/* Показ меню */
+.dropdown.active .dropdown-menu {
+    display: block;
+}
+
+
+/* Медиазапрос для скрытия ссылок и отображения выпадающего меню */
+@media (max-width: 900px) {
+    .nav-buttons {
+        display: none; /* Скрываем ссылки */
+    }
+
+    .for-900px {
+        display: block; /* Показываем выпадающее меню */
+    }
+}

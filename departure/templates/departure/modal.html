@@ -1,0 +1,88 @@
+<!-- Само модальное окно -->
+<div id="dellDeparture" class="overlay" style="display: none;">
+    <div class="modal">
+        <span class="close-cross" id="closeModalBtn">&times;</span>
+        <div class="modal-header">
+            <h2 id="modalTitle">Подтверждение удаления выезда</h2>
+        </div>
+        <div class="modal-body">
+            <form action="{% url 'main:departure:delete' %}" method="post">
+                {% csrf_token %}
+                <label>
+                    Комментарий
+                    <input name="comment" type="text">
+                </label>
+                <input type="hidden" id="departure-id" name="departure_id" value="">
+                <input type="hidden" name="mode" value=departure_cancel>
+
+                <div class="modal-footer">
+                    <button class="action-btn cancel" type="button">Отмена</button>
+                    <button class="action-btn" type="submit">Принять</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- Само модальное окно -->
+<div id="doneModal" class="overlay" style="display: none;">
+    <div class="modal">
+        <span class="close-cross" id="closeModalBtn">&times;</span>
+        <div class="modal-header">
+            <h2 id="modalTitle">Подтверждение выполнения выезда</h2>
+        </div>
+        <div class="modal-body">
+            <form action="{% url 'main:departure:complete' %}" method="post">
+                {% csrf_token %}
+                <label>
+                    Время выполнения
+                    <input name="time" type="datetime-local">
+                </label>
+                <label>
+                    Комментарий
+                    <input name="comment" type="text">
+                </label>
+                <input type="hidden" id="departure-id" name="departure_id" value="">
+                <input type="hidden" id="application-id" name="application_id" value="">
+
+                <div class="modal-footer" id="modalFooter">
+                    <button class="action-btn cancel" type="button">Отмена</button>
+                    <button class="action-btn" type="submit">Выполнить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+<!-- Само модальное окно -->
+<div id="departureModal" class="overlay" style="display: none;">
+    <div class="modal">
+        <span class="close-cross" id="closeModalBtn">&times;</span>
+        <div class="modal-header">
+            <h2 id="modalTitle">Планирование нового выезда</h2>
+        </div>
+        <div class="modal-body">
+            <form action="{% url 'main:departure:create' %}" method="post">
+                {% csrf_token %}
+                <label>
+                    Запланированное время выезда
+                    <input name="time" type="datetime-local">
+                </label>
+                <label>
+                    Описание
+                    <input name="description" type="text">
+                </label>
+                <br>
+                <div class="modal-footer">
+                    <button class="action-btn cancel" type="button">Отмена</button>
+                    <button class="action-btn" type="submit">Отправить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

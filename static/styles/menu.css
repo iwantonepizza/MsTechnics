@@ -1,0 +1,70 @@
+
+.menu-info-slot {
+    width: 100%;
+    flex: 1;
+    margin: 10vh 1% 1%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.menu-double-slot {
+    margin-top: 5vh;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    width: 100%;
+
+
+}
+
+
+.head-button {
+    cursor: pointer;
+    width: 100%;
+    padding: 10px 20px;
+    background: rgba(90, 89, 89, 0.27);
+    box-shadow: 3px 4px 7px rgba(0, 0, 0, 0.1);
+    border-radius: 8px; /* Чуть более угловатые */
+    text-decoration: none;
+    color: rgba(250, 238, 238, 0.94); /* Белый шрифт */
+    font-weight: bold;
+    transition: background-color 0.3s;
+    text-align: center;
+
+}
+
+.head-button:hover {
+    background-color: rgba(113, 106, 106, 0.53);
+    color: rgba(225, 201, 123, 0.87); /* Белый шрифт */
+
+}
+
+.dropdown-button{
+    border: none;
+    height: 100%;
+}
+
+.scroll-info-block {
+    background: rgba(192, 192, 192, 0.18);
+    border-radius: 8px;
+    width: 100%;
+    min-height: 5vh;
+    max-height: 50vh;
+    box-shadow: 3px 4px 7px rgba(0, 0, 0, 0.1);
+    overflow: auto;
+    color: rgba(255, 255, 255, 0.8); /* Белый шрифт */
+
+
+}
+
+.scroll-info-block::-webkit-scrollbar {
+    width: 0;
+}
+
+@media (width < 900px) {
+    .menu-info-slot {
+        max-width: 90%;
+    }
+}

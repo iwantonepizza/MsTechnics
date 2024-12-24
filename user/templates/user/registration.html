@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load panel_tags %}
+
+{% block title %}
+    <title>{{ title }}</title>
+{% endblock %}
+{% block header %}
+    <a href="{% url "user:logout" %}" target="_self">
+        <button type="button" class="btn text-white">Выйти</button>
+    </a>
+    
+{% endblock %}
+{% block main-center-display %}
+
+{% endblock %}

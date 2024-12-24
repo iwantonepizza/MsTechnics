@@ -1,0 +1,31 @@
+{% load panel_tags %}
+{% get_work_monitor_tag city_name as allowed_displays %}
+{% if allowed_displays %}
+    <div class="application-container">
+        <div class="head-button" style="margin-bottom: 1vh">{{ city.description }}</div>
+        {% for allowed_display  in allowed_displays %}
+            <div class='mini-status-info'
+                 style="background-color: {{ allowed_display.condition.color }} ;color: {{ allowed_display.condition.color_text }} ;">
+                <a class="display-name-container"
+                   href="/{{ department }}/{{ city.name }}/{{ allowed_display.name }}">{{ allowed_display.description }}</a>
+                <div style="display: flex; max-height: 50%">
+                    <a class="head-button" title="Список контактов для этой панели"
+                       href="{{ allowed_display.file.url }}" target="_blank">
+                        Электросхема
+                    </a>
+                    <a class="head-button" title="Проект панели">
+                        Проект
+                    </a>
+
+                    <a class="head-button" title="Список контактов для этой панели"
+                       data-target="contactList">
+                        Контакт лист
+                    </a>
+                    <a class="head-button" title="Фото этой панели">
+                        Фото
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}

@@ -1,0 +1,46 @@
+{% if central_bar_status == 'service_display' %}
+    <div class="display-visual" style="display: inline-grid;
+            grid: repeat({{ display.rows }}, 1fr)  / repeat({{ display.cols }}, 1fr);">
+        {% for cell in display.cells %}
+            <div class="slot">
+                <a class="active"
+                   href="?position={{ cell.position }}&left_bar_status={{ left_bar_status }}&panel_id={{ cell.panel.name }}">
+                    {% if cell.panel %}
+                        <div class="cell_application {% if panel.name  == cell.panel.name %}selected{% endif %}"
+                             style="background-color: {{ cell.panel.condition.color.hex_color }} ;color: {{ cell.panel.condition.color_text.hex_color }};">
+                            <div title={{ cell.panel }}  class="center_slot">{{ cell.position }}</div>
+                        </div>
+                    {% else %}
+                        <div class=cabinet_away>
+                            <div title={{ cell.panel }}  class="center_slot">{{ cell.position }}</div>
+                        </div>
+                    {% endif %}
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+
+{% elif central_bar_status == 'main_display' %}
+    <div class="display-visual" style="display: inline-grid;
+            grid: repeat({{ display.rows }}, 1fr)  / repeat({{ display.cols }}, 1fr);">
+        {% for cell in display.cells %}
+            <div class="slot">
+                <a class="active"
+                   href="?position={{ cell.position }}&left_bar_status={{ left_bar_status }}&panel_id={{ cell.panel.name }}&central_bar_status=main_display">
+                    {% if cell.panel %}
+                        <div class="cell_application {% if panel.name  == cell.panel.name %}selected{% endif %}" 
+                             style="background-color: {{ cell.panel.application_status.color.hex_color }}
+                                     ;color: {{ cell.panel.application_status.color_text.hex_color }};"
+                             title={{ cell.panel }}>
+                            {{ cell.position }}
+                        </div>
+                    {% else %}
+                        <div class=cabinet_away title=Пусто>
+                            {{ cell.position }}
+                        </div>
+                    {% endif %}
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}

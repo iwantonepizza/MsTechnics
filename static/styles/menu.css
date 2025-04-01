@@ -1,29 +1,46 @@
 
-.menu-info-slot {
-    width: 100%;
-    flex: 1;
-    margin: 10vh 1% 1%;
+.main-block-menu {
+    display: grid;
+    gap: 1vw;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(10, 1fr);
+    max-height: 94vh;
+}
+
+
+.menu-block {
     display: flex;
     flex-direction: column;
     align-items: center;
-    text-align: center;
+    text-align: start;
 }
 
-.menu-double-slot {
-    margin-top: 5vh;
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    width: 100%;
+.menu-block-monitoring {
+    grid-row: 2/9;
+    grid-column: span 1;
+}
 
+.menu-block-service {
+    grid-row: 2/6;
+    grid-column: 3/5;
+}
+
+.menu-block-serviceReport {
+    grid-row: 6/9;
+    grid-column: 3/4;
 
 }
 
+.menu-block-departure {
+    grid-row: 6/9;
+    grid-column: 4/5;
+
+}
 
 .head-button {
     cursor: pointer;
     width: 100%;
-    padding: 10px 20px;
+    padding: 10px;
     background: rgba(90, 89, 89, 0.27);
     box-shadow: 3px 4px 7px rgba(0, 0, 0, 0.1);
     border-radius: 8px; /* Чуть более угловатые */
@@ -32,39 +49,161 @@
     font-weight: bold;
     transition: background-color 0.3s;
     text-align: center;
+    align-content: center;
+
+
+}
+
+.inactive-head-button {
+    width: 100%;
+    padding: 10px;
+    background: rgba(90, 89, 89, 0.27);
+    box-shadow: 3px 4px 7px rgba(0, 0, 0, 0.1);
+    border-radius: 8px; /* Чуть более угловатые */
+    text-decoration: none;
+    color: rgba(250, 238, 238, 0.94); /* Белый шрифт */
+    font-weight: bold;
+    transition: background-color 0.3s;
+    text-align: center;
+    align-content: center;
+
 
 }
 
 .head-button:hover {
-    background-color: rgba(113, 106, 106, 0.53);
-    color: rgba(225, 201, 123, 0.87); /* Белый шрифт */
+    background-color: rgba(74, 71, 71, 0.53);
+    color: rgba(170, 152, 95, 0.87); /* Белый шрифт */
 
 }
 
-.dropdown-button{
-    border: none;
-    height: 100%;
+.head-button.chosen {
+    background: rgba(113, 106, 106, 0.53);
+    color: rgba(225, 201, 123, 0.87)
+
 }
+
 
 .scroll-info-block {
-    background: rgba(192, 192, 192, 0.18);
+    padding: 10px;
+    background: rgba(97, 95, 95, 0.12);
     border-radius: 8px;
     width: 100%;
-    min-height: 5vh;
-    max-height: 50vh;
-    box-shadow: 3px 4px 7px rgba(0, 0, 0, 0.1);
+    height: 100%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.67);
     overflow: auto;
     color: rgba(255, 255, 255, 0.8); /* Белый шрифт */
+    display: flex;
+    flex-direction: column;
+}
 
-
+#photo-list.scroll-info-block {
+    height: 40vh;
+    margin-bottom: 20px;
 }
 
 .scroll-info-block::-webkit-scrollbar {
-    width: 0;
+    width: 8px; /* Ширина вертикального скроллбара */
+    height: 8px; /* Высота горизонтального скроллбара */
+}
+
+.scroll-info-block::-webkit-scrollbar-track {
+    background: rgba(250, 240, 240, 0.06); /* Цвет фона дорожки скроллбара */
+    border-radius: 4px; /* Скругление дорожки */
+}
+
+.scroll-info-block::-webkit-scrollbar-thumb {
+    background: #535353; /* Цвет ползунка */
+    border-radius: 4px; /* Скругление ползунка */
+}
+
+.scroll-info-block::-webkit-scrollbar-thumb:hover {
+    background: rgba(51, 51, 51, 0.58); /* Цвет ползунка при наведении */
+}
+
+
+@media (width < 1400px) {
+    .main-block-menu {
+        grid-template-columns: repeat(4, 1fr);
+        max-height: 94vh;
+        row-gap: 5vh;
+    }
+
+    .menu-block-monitoring {
+        grid-row: span 1;
+        grid-column: 1/-1;
+        max-height: 50vh;
+    }
+
+    .menu-block-service {
+        grid-row: span 1;
+        grid-column: 1/-1;
+    }
+
+    .menu-block-serviceReport {
+        grid-row: span 1;
+        grid-column: 1/-1;
+
+    }
+
+    .menu-block-departure {
+        grid-row: span 1;
+        grid-column: 1/-1;
+
+
+    }
 }
 
 @media (width < 900px) {
-    .menu-info-slot {
-        max-width: 90%;
+    .main-block-menu {
+        grid-template-columns: repeat(4, 1fr);
+        max-height: 94vh;
+        row-gap: 5vh;
+    }
+
+    .menu-block-monitoring {
+        grid-row: span 1;
+        grid-column: 1/-1;
+        max-height: 50vh;
+    }
+
+    .menu-block-service {
+        grid-row: span 1;
+        grid-column: 1/-1;
+    }
+
+    .menu-block-serviceReport {
+        grid-row: span 1;
+        grid-column: 1/-1;
+
+    }
+
+    .menu-block-departure {
+        grid-row: span 1;
+        grid-column: 1/-1;
+
+
+    }
+}
+
+.animate-on-appear {
+    background-color: rgba(76, 175, 80, 0.64);
+    animation: buttonAppear 0.7s ease-in-out forwards;
+}
+
+@keyframes buttonAppear {
+    0% {
+        opacity: 0.6;
+        background-color: rgba(107, 159, 109, 0.64);
+        transform: scale(0.95);
+    }
+    50% {
+        background-color: #4CAF50;
+        transform: scale(1.1);
+
+    }
+    100% {
+        background-color: rgba(76, 175, 80, 0.64);
+        opacity: 1;
+        transform: scale(1);
     }
 }

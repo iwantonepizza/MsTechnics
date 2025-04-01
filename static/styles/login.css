@@ -1,10 +1,11 @@
 /* Основной контейнер */
 .login-container {
-    max-width: 30vh;
+    max-width: 50vh;
     height: 30vh;
-    margin: 15vw auto;
+    margin: 15vh auto;
     padding: 20px;
-    background-color: #ffffff;
+    background: rgba(168, 164, 164, 0.21);
+    color: rgba(255, 255, 255, 0.73);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     border-radius: 10px;
 }
@@ -15,7 +16,6 @@
     font-weight: bold;
     text-align: center;
     margin-bottom: 20px;
-    color: #333333;
 }
 
 /* Форма */
@@ -35,7 +35,6 @@
 .form-label {
     font-size: 14px;
     font-weight: 600;
-    color: #555555;
     margin-bottom: 5px;
 }
 

@@ -1,59 +1,71 @@
-<div class="application-row">
-    <div class="application-id">
-        <strong>ID:</strong> {{ departure.id }}
+<div class="departure-id" title="Айди выезда">
+    <strong>ID:</strong> {{ departure.id }}
 
-    </div>
-    <div class="application-status">
-        <strong>Статус заявки:</strong> {{ departure.status }}
-
-    </div>
 </div>
-<div class="application-field">
+<div class="departure-status" title="Статус выезда">
+    <strong>Статус выезда:</strong> {{ departure.status }}
+
+</div>
+<div class="departure-executor" title="Исполнитель выезда">
     <strong>Исполнитель:</strong>
-    {% if departure.contractor %}
-        {{ departure.contractor }}
+    {% if departure.executor %}
+        {{ departure.executor }}
     {% else %}
         не выбран
     {% endif %}
 </div>
-<div class="application-details">
 
-    <div class="application-field">
-        <strong>Описание:</strong> {{ departure.description }}
-    </div>
+<div class="departure-description" title="Описание выезда">
+    <strong>Описание:</strong> {{ departure.description }}
 </div>
 
-<div class="application-monitoring">
+<div class="departure-time-created" title="Время когда создали выезд">
     <strong>Время создания:</strong>
     <p>{{ departure.time_created }}</p>
 </div>
+
+<div class="departure-time-updated" title="Время когда последний раз взаимодействовали с выездом">
+    <strong>Время последнего взаимодействия:</strong>
+    <p>{{ departure.time_updated }}</p>
+</div>
 {% if departure.time_start %}
-    <div class="application-service">
+    <div class="departure-time-start" title="Назначенное время выезда">
         <strong>Время выезда:</strong>
         <p>{{ departure.time_start }}</p>
 
     </div>
 {% endif %}
 {% if departure.time_end %}
-    <div class="application-control">
+    <div class="departure-time-finish" title="Время когда выполнили выезд">
         <strong>Время выполнения:</strong>
         <p>{{ departure.time_end }}</p>
 
     </div>
 {% endif %}
-<div class="application-button-container">
+<div class="departure-button-container">
 
-    {% if departure.status != 'done' %}
-        <button class="head-button" data-target="dellDeparture"
-                data-departure-id="{{ departure.id }}"
-                title="удаление выезда">удалить
-        </button>
-        <button class="head-button" data-target="doneModal"
-                data-departure-id="{{ departure.id }}"
-                title="выполнение выезда">выполнить
-        </button>
-    {% else %}
-
+    {% if departure.status == 'Создан' %}
+        <a class="head-button open-modal"
+           data-api-url="/departure/delete-modal/"
+           data-departure-id="{{ departure.id }}"
+           title="удаление выезда">удалить
+        </a>
+        <a class="head-button open-modal"
+           data-api-url="/departure/complete-modal/"
+           data-departure-id="{{ departure.id }}"
+           title="выполнение выезда">выполнить
+        </a>
+        <a class="head-button open-modal"
+           data-api-url="/departure/change-executor-modal/"
+           data-departure-id="{{ departure.id }}"
+           title="Изменить исполнителя">Исполнитель
+        </a>
+    {% elif departure.status != 'В архиве' %}
+        <a class="head-button open-modal"
+           data-api-url="/departure/archive-modal/"
+           data-departure-id="{{ departure.id }}"
+           title="Отправить в архив">🗄
+        </a>
     {% endif %}
 
 </div>

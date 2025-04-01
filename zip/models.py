@@ -1,29 +1,35 @@
 from django.db import models
 from datetime import datetime, timedelta
+from django.db import transaction
+from django.apps import apps
 
-from core_mechanic.telegram_connect import send_tg_notification
+from sorting_message import presend_filters
 from user.models import ConcreteMsUser
 
 from django.db.models import UniqueConstraint
 from django.core.exceptions import ValidationError
 
 
+class ExampleQueryset(models.QuerySet):
+    def test_fuction(self):
+        return [obj.slug for obj in self]
+
+
 class Display(models.Model):
     name = models.CharField(max_length=20, unique=True, verbose_name='экран')
     city = models.ForeignKey(
         "main.Cities", to_field='name',
-        on_delete=models.PROTECT, verbose_name='город')
+        on_delete=models.PROTECT, verbose_name='город', related_name='display')
     description = models.TextField(blank=True, null=True, verbose_name='описание')
     rows = models.PositiveIntegerField(verbose_name='кол-во рядов', default=0)
     cols = models.PositiveIntegerField(verbose_name='кол-во столбцов', default=0)
-    condition = models.ForeignKey(
-        "main.Condition", to_field='name',
-        on_delete=models.PROTECT, null=True, verbose_name='состояние',
-    )
-    slug = models.SlugField(unique=True, blank=True, null=True, verbose_name='URL', editable=False)
     camera_link = models.URLField(max_length=150, null=True, verbose_name='ссылка"')
     file = models.FileField(upload_to='files/', blank=True, null=True, default='probka.jpg',
-                            verbose_name='Файл (PDF или JPEG)')
+                            verbose_name='Электросхема')
+    project_photo = models.FileField(upload_to='files/', blank=True, null=True, default='probka.jpg',
+                                     verbose_name='Проект')
+    slug = models.SlugField(unique=True, blank=True, null=True, verbose_name='URL')
+    objects = ExampleQueryset().as_manager()
 
     class Meta:
         db_table = 'display'
@@ -36,13 +42,46 @@ class Display(models.Model):
 
     @property
     def cells(self):
+        """
+        Вызов всех слотов дисплея
+        """
         return self.cell_set.all()
+
+    @property
+    def current_condition(self):
+        """
+        Ленивый поиск текущего состояния по худшему состоянию панелей во всех ячейках >id == хуже состояние
+        """
+        worst_condition_id = self.cell_set.aggregate(
+            worst_condition=models.Max('panel__condition__id')
+        )['worst_condition']
+
+        if worst_condition_id:
+            Condition = apps.get_model('main', 'Condition')
+            return Condition.objects.filter(id=worst_condition_id).first()
+
+        return None
+
+    def save(self, *args, **kwargs):
+        # создаем ячейки при создании дисплея
+        with transaction.atomic():
+            is_new = self.pk is None  # Проверяем, создается ли объект
+            super().save(*args, **kwargs)
+
+            # Если объект новый, создаем связанные ячейки
+            if is_new:
+                cells = [
+                    Cell(display=self, row=row, col=col)
+                    for row in range(1, self.rows + 1)
+                    for col in range(1, self.cols + 1)
+                ]
+                Cell.objects.bulk_create(cells)
 
 
 class Cell(models.Model):
     display = models.ForeignKey(
         "Display",
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         related_name="cell_set",
         verbose_name="экран", to_field='name', editable=False
     )
@@ -53,23 +92,14 @@ class Cell(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="cells",
+        related_name="cell",
         verbose_name="панель", to_field='name'
     )
 
-    class Meta:
-        db_table = 'cell'
-        constraints = [
-            UniqueConstraint(fields=['panel'], name='unique_panel'),
-            UniqueConstraint(fields=['display', 'row', 'col'], name='unique_display_row_col')
-        ]
-        verbose_name = 'Ячейка'
-        verbose_name_plural = 'Ячейки'
-        ordering = ['display', 'row', 'col']
-
     def __str__(self):
-        return f"Ячейка {self.position()} на {self.display.name}"
+        return f"Ячейка {self.position} на {self.display.name}"
 
+    @property
     def position(self):
         """
         Метод возвращает порядковый номер панели, начиная с 01.
@@ -84,6 +114,16 @@ class Cell(models.Model):
         position_number = (self.row - 1) * cols_count + self.col
 
         return str(position_number).zfill(2)
+
+    class Meta:
+        db_table = 'cell'
+        constraints = [
+            UniqueConstraint(fields=['panel'], name='unique_panel'),
+            UniqueConstraint(fields=['display', 'row', 'col'], name='unique_display_row_col')
+        ]
+        verbose_name = 'Ячейка'
+        verbose_name_plural = 'Ячейки'
+        ordering = ['display', 'row', 'col']
 
 
 class Panels(models.Model):
@@ -105,6 +145,23 @@ class Panels(models.Model):
         "application.ApplicationStatus", to_field='name',
         on_delete=models.PROTECT, null=True, verbose_name='статус заявки', default='default'
     )
+
+    def get_full_title(self):
+        dislpay = self.display.name if self.display else None
+        comment = self.comment if self.comment else "Не передан"
+        condition = self.condition.description
+        department = self.department.description
+        application_status = self.application_status.description if self.application_status and self.application_status != "default" else None
+        result = ""
+        result += f"ID - {self.name}\n"
+        if dislpay:
+            result += f"Экран - {dislpay}\n"
+        result += f"Комментарий - {comment}\n"
+        result += f"Состояние - {condition}\n"
+        if application_status:
+            result += f"Заявка - {application_status}\n"
+        result += f"Нахождение - {department}\n"
+        return result
 
     class Meta:
         db_table = 'panel'
@@ -130,7 +187,7 @@ class DailyTask(models.Model):
     description = models.TextField(blank=True, verbose_name='описание')
     city = models.ForeignKey(
         "main.Cities", to_field='name',
-        on_delete=models.PROTECT, verbose_name='город')
+        on_delete=models.PROTECT, verbose_name='Город')
     status = models.CharField(
         max_length=20,
         choices=TYPE_STATUS,
@@ -161,28 +218,26 @@ class DailyTask(models.Model):
         self.alert_notification_sent = self.deadline_notification_sent = self.lost_notification_sent = self.start_notification_sent = self.completed_notification_sent = False
         self.status = 'not_ready'
         self.save()
-        return send_tg_notification(text=f'Задание {self.name} обновлено',
-                                    type_msg='server_checker'
-                                    ) == 200
+        presend_filters(text=f'🔄 Задание {self.name} обновлено', type_msg='server_checker')
 
-    def check_status(self, current_datetime: datetime) -> dict:
+    def check_status(self, current_datetime: datetime) -> None:
         # присылает уведомление, если осталось менее 5 минут до начала
         if self.alert_notification_sent is False and self.status == 'not_ready' and (
                 datetime.combine(current_datetime.date(), self.start_time) - datetime.combine(current_datetime.date(),
                                                                                               current_datetime.time())) <= timedelta(
             minutes=5):
             self.alert_notification_sent = True
-            return send_tg_notification(text=f'👁 {self.name} откроется через 5 минут 👁',
-                                        type_msg='daily'
-                                        )
+            presend_filters(text=f'👁 {self.name} откроется через 5 минут 👁',
+                                   type_msg='daily'
+                                   )
         # проверка на просрок
         elif self.status != 'done' and self.lost_notification_sent is False and current_datetime.time() > self.end_time:
             self.status = 'undone'
             self.lost_notification_sent = True
             self.save()
-            return send_tg_notification(text=f'❌ {self.name} просрочен ❌',
-                                        type_msg='daily'
-                                        )
+            presend_filters(text=f'❌ {self.name} просрочен ❌',
+                                   type_msg='daily'
+                                   )
 
         # проверка на дедлайн
         elif self.deadline_notification_sent is False and (
@@ -192,16 +247,16 @@ class DailyTask(models.Model):
             self.status = 'deadline'
             self.deadline_notification_sent = True
             self.save()
-            return send_tg_notification(text=f'🔥 {self.name} остался час на выполнение 🔥',
-                                        type_msg='daily'
-                                        )
+            presend_filters(text=f'🔥 {self.name} остался час на выполнение 🔥',
+                                   type_msg='daily'
+                                   )
         elif current_datetime.time() > self.start_time and self.start_notification_sent is False:
             self.start_notification_sent = True
             self.status = 'ready'
             self.save()
-            return send_tg_notification(text=f'{self.name} доступен!',
-                                        type_msg='daily'
-                                        )
+            presend_filters(text=f'{self.name} доступен!',
+                                   type_msg='daily'
+                                   )
 
     def check_available_status(self):
         return self.status in ('ready', 'deadline')
@@ -209,11 +264,11 @@ class DailyTask(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
-    def check_iteration(self, current_datetime: datetime) -> dict:
+    def check_iteration(self, current_datetime: datetime) -> None:
         if self.last_completed_date != current_datetime.date():
             message_delivered = self.check_status(current_datetime)
             self.save()
-            return message_delivered
+
 
     class Meta:
         db_table = 'daily_task'
@@ -222,9 +277,6 @@ class DailyTask(models.Model):
 
     def __str__(self):
         return str(self.name or "Без названия")
-
-
-
 
 
 def validate_positive(value):
@@ -325,19 +377,15 @@ class Lamels(models.Model):
         self.save()
 
 
-class Contactlist(models.Model):
-    name = models.CharField(max_length=20, unique=True, verbose_name='имя')
-    description = models.TextField(blank=True, null=True, verbose_name='описание')
+class PhotoDisplay(models.Model):
     display = models.ForeignKey(
-        "Display", to_field='name',
-        on_delete=models.PROTECT, verbose_name='экран', related_name='display'
+        Display,
+        on_delete=models.CASCADE,
+        related_name="photos",
+        verbose_name="Экран"
     )
-
-    class Meta:
-        db_table = 'contactlist'
-        verbose_name = 'Контакт'
-        verbose_name_plural = 'Контакты'
-        ordering = ['id']
+    image = models.ImageField(upload_to="photos/display_photos/", verbose_name="Фото")
+    uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата загрузки")
 
     def __str__(self):
-        return self.name
+        return f"Фото {self.display.name}"

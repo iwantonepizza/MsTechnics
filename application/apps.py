@@ -6,3 +6,5 @@ class ApplicationConfig(AppConfig):
     name = 'application'
     verbose_name = 'Заявки'
 
+    def ready(self):
+        import application.signals  # Подключаем файл signals.py

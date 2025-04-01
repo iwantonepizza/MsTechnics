@@ -1,423 +1,113 @@
-{% load panel_tags %}
+{% load permission_tag %}
 
-<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <form action="/menu/service/zip">
-                <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="exampleModalLabel">Добавление панели</h1>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="input-group input-group-sm mb-3">
-                        <span class="input-group-text" id="inputGroup-sizing-sm">id-панели</span>
-                        <input name="input_id" type="number" class="form-control" aria-label="Sizing example input"
-                               aria-describedby="inputGroup-sizing-sm">
-                    </div>
-                    <div class="input-group input-group-sm mb-3">
-                        <span class="input-group-text" id="inputGroup-sizing-sm">Коментарий</span>
-                        <input name="comment" type="text" class="form-control"
-                               aria-label="Sizing example input"
-                               aria-describedby="inputGroup-sizing-sm">
-                    </div>
 
-                    <label for="exampleDataList" class="form-label">Модель</label>
-                    <input name="input_model" class="form-control" list="datalistOptions" id="exampleDataList"
-                           placeholder="Выберите...">
-                    <datalist id="datalistOptions">
-                        <option value="kolizey">
-                        <option value="shk">
-                        <option value="malkova">
-                        <option value="belinskogo">
-                    </datalist>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault">
-                        <label class="form-check-label" for="flexCheckDefault">
-                            Оповестить
-                        </label>
-                    </div>
-                    <div class="form-check">
-                        <input name="input_x" class="form-check-input" type="checkbox" value=""
-                               id="flexCheckChecked"
-                               checked>
-                        <label class="form-check-label" for="flexCheckChecked">
-                            Отправить в ЗИП
-                        </label>
-                    </div>
-
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-                    <p><input type="submit" value="Cоздать панель"></p>
-                </div>
-            </form>
+<div id="open_wire_list" class="overlay" style="display: none;">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 id="modalTitle">Список проводов на складе:</h2>
+            <span class="close-cross" id="closeModalBtn">&times;</span>
         </div>
-    </div>
-</div>
-
-<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel">
-    <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="offcanvasRightLabel">Комментарии</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-    </div>
-    <div class="offcanvas-body">
-        <p>{{ panel.comments }}</p>
-    </div>
-</div>
-
-
-<div class="modal fade" id="service_comment" tabindex="-1" aria-labelledby="ApplyLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h1 class="modal-title fs-5" id="ApplyLabel">
-                    Добавление комментария в раздел сервис панели id-{{ panel.id }}
-                </h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form action="{% url 'main:zip:index' %}">
-                    <label>
-                        Комментарий
-                        <input name="comment" type="text">
+        <div class="modal-body">
+            {% for wire in wires %}
+                <div title="{{ wire.description }}" class="hub-name-block">{{ wire.name }}</div>
+                <strong>
+                    <label>Количество:
+                        <input type="number"
+                               class="wire-input"
+                               value="{{ wire.count }}"
+                               data-wire-id="{{ wire.id }}"
+                               data-original-value="{{ wire.count }}">
                     </label>
-                    <br>
-                    <input type="hidden" name="id" value={{ panel.id }}>
-                    <input type="hidden" name="mode" value="add_service_comment">
+                </strong>
 
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-                        <button class="btn btn-outline-success" type="submit">Отправить</button>
-                    </div>
-                </form>
-            </div>
+                {% if wire.photo %}
+                    <a href="{{ wire.photo.url }}" target="_blank" class="photo-link new-cool-button"
+                       title="Посмотреть фото">📷</a>
+                    <a class="delete-photo-btn new-cool-button" title="Удалить фото"
+                       data-wire-id="{{ wire.id }}">🗑</a>
+                {% endif %}
+                <input type="file" class="photo-upload" data-wire-id="{{ wire.id }}" style="display: none;"
+                       accept="image/*">
+                <a class="update-photo-btn new-cool-button" title="Сменить фото" data-wire-id="{{ wire.id }}">🔃</a>
+            {% endfor %}
+        </div>
+        <div class="modal-footer">
+            <button class="save-button" id="save-button">Сохранить изменения</button>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="apply_to_hand" tabindex="-1" aria-labelledby="ApplyLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h1 class="modal-title fs-5" id="ApplyLabel">
-                    Подтверждение отправления на руки панели id-{{ panel.id }}
-                </h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form action="{% url 'main:zip:index' %}">
 
-                    <label>
-                        Комментарий
-                        <input name="comment" type="text">
-                    </label>
-
-                    <br>
-
-                    <input type="hidden" name="id" value={{ panel.id }}>
-                    <input type="hidden" name="mode" value="send">
-                    <input type="hidden" name="target" value="hand">
-
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-                        <button class="btn btn-outline-success" type="submit">Отправить</button>
-                    </div>
-                </form>
-            </div>
+<div id="open_lamel_list" class="overlay" style="display: none;">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 id="modalTitle">Список ламелей на складе:</h2>
+            <span class="close-cross" id="closeModalBtn">&times;</span>
         </div>
+        <div class="modal-body">
+            {% for lamel in lamels %}
+                <div title="{{ lamel.description }}" class="hub-name-block">{{ lamel.name }}</div>
+                <strong>
+                    <label>Количество:
+                        <input type="number"
+                               class="wire-input"
+                               value="{{ lamel.count }}"
+                               data-wire-id="{{ lamel.id }}"
+                               data-original-value="{{ lamel.count }}"></label>
+                </strong>
+
+                {% if lamel.photo %}
+                    <a href="{{ lamel.photo.url }}" target="_blank" class="photo-link new-cool-button"
+                       title="Посмотреть фото">📷</a>
+                    <a class="delete-photo-btn new-cool-button" title="Удалить фото" data-wire-id="{{ lamel.id }}">🗑</a>
+                {% endif %}
+                <input type="file" class="photo-upload" data-wire-id="{{ lamel.id }}" style="display: none;"
+                       accept="image/*">
+                <a class="update-photo-btn new-cool-button" title="Сменить фото" data-wire-id="{{ lamel.id }}">🔃</a>
+            {% endfor %}
+        </div>
+        <div class="modal-footer">
+            <button class="save-button" id="save-button">Сохранить изменения</button>
+        </div>
+
     </div>
 </div>
-<div class="modal fade" id="apply_to_service" tabindex="-1" aria-labelledby="ApplyLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h1 class="modal-title fs-5" id="ApplyLabel">
-                    Подтверждение отправления в сервис панели id-{{ panel.id }}
-                </h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form action="{% url 'main:zip:index' %}">
-
-                    <label>
-                        Комментарий
-                        <input name="comment" type="text">
-                    </label>
-
-                    <br>
-
-                    <input type="hidden" name="id" value={{ panel.id }}>
-                    <input type="hidden" name="mode" value="send">
-                    <input type="hidden" name="target" value="service">
 
 
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-                        <button class="btn btn-outline-success" type="submit">Отправить</button>
-                    </div>
-                </form>
-            </div>
+<div id="open_hub_list" class="overlay" style="display: none;">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 id="modalTitle">Список хабов на складе:</h2>
+            <span class="close-cross" id="closeModalBtn">&times;</span>
+
         </div>
-    </div>
-</div>
-<div class="modal fade" id="apply_to_zip" tabindex="-1" aria-labelledby="ApplyLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h1 class="modal-title fs-5" id="ApplyLabel">
-                    Подтверждение отправления в ЗИП панели id-{{ panel.id }}
-                </h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form action="{% url 'main:zip:index' %}">
+        <div class="modal-body">
+            {% for hub in hubs %}
+                <div title="{{ hub.description }}" class="hub-name-block">{{ hub.name }}</div>
+                <strong>
+                    <label>Количество:
+                        <input type="number"
+                               class="wire-input"
+                               value="{{ hub.count }}"
+                               data-wire-id="{{ hub.id }}"
+                               data-original-value="{{ hub.count }}"></label>
+                </strong>
 
-                    <label>
-                        Комментарий
-                        <input name="comment" type="text">
-                    </label>
-                    <br>
-                    <input type="hidden" name="id" value={{ panel.id }}>
-                    <input type="hidden" name="mode" value="send">
-                    <input type="hidden" name="target" value="zip">
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-                        <button class="btn btn-outline-success" type="submit">Отправить</button>
-                    </div>
-                </form>
-            </div>
+                {% if hub.photo %}
+                    <a href="{{ hub.photo.url }}" target="_blank" class="photo-link new-cool-button"
+                       title="Посмотреть фото">📷</a>
+                    <a class="delete-photo-btn new-cool-button" title="Удалить фото"
+                       data-wire-id="{{ hub.id }}">🗑</a>
+                {% endif %}
+                <input type="file" class="photo-upload" data-wire-id="{{ hub.id }}" style="display: none;"
+                       accept="image/*">
+                <a class="update-photo-btn new-cool-button" title="Сменить фото" data-wire-id="{{ hub.id }}">🔃</a>
+            {% endfor %}
+        </div>
+        <div class="modal-footer">
+            <button class="save-button" id="save-button">Сохранить изменения</button>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="breakdown_comment" tabindex="-1" aria-labelledby="ApplyLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h1 class="modal-title fs-5" id="ApplyLabel">
-                    Добавление комментария в раздел истории поломок панели id-{{ panel.id }}
-                </h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form action="{% url 'main:zip:index' %}">
-                    <label>
-                        Комментарий
-                        <input name="comment" type="text">
-                    </label>
-                    <br>
-                    <input type="hidden" name="id" value={{ panel.id }}>
-                    <input type="hidden" name="mode" value="add_breakdown_comment">
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-                        <button class="btn btn-outline-success" type="submit">Отправить</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-<div class="modal fade" id="options-Model" tabindex="-1" aria-labelledby="optionsLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="optionsLabel">Выберите опции</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
-            </div>
-            <div class="modal-body">
-                <form id="optionsForm" action="{% url 'main:zip:index' %}" method="post">
-                    {% csrf_token %}input_model
-                    {% for option in filtered_models %}
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox"
-                                   name="model_type_{{ option.name }}" id="option_{{ option.name }}"
-                                   {% if option.selected %}checked{% endif %}>
-                            <label class="form-check-label" for="option_{{ option.name }}">
-                                {{ option.name }}
-                            </label>
-                        </div>
-                    {% endfor %}
 
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-                        <button type="submit" class="btn btn-primary">Сохранить</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="options-Condition" tabindex="-1" aria-labelledby="optionsLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="optionsLabel">Выберите опции</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
-            </div>
-            <div class="modal-body">
-                <form id="optionsForm" action="{% url 'main:zip:index' %}" method="post">
-                    {% csrf_token %}
-                    {% for option in filtered_condition %}
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox"
-                                   name="condition_type_{{ option.name }}" id="option_{{ option.name }}"
-                                   {% if option.selected %}checked{% endif %}>
-                            <label class="form-check-label" for="option_{{ option.name }}">
-                                {{ option.description }}
-                            </label>
-                        </div>
-                    {% endfor %}
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-                        <button type="submit" class="btn btn-primary">Сохранить</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-<div class="modal fade" id="hub_menu" tabindex="-1" aria-labelledby="ApplyLabel" aria-hidden="true"
-     style="background-color: rgba(25,25,27,0.69);">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="background: rgba(192, 192, 192, 0.18);">
-            <div class="modal-header">
-                <h1 class="modal-title fs-5" id="ApplyLabel">
-                    Список хабов на складе:
-                </h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                {% for hub in hubs %}
-                    <div class="hub-item">
-                        <strong title="{{ hub.description }}">{{ hub.name }}</strong>
-
-                        <strong>
-                            <label>Количество:</label>
-                            <input type="number" class="form-control hub-count-input"
-                                   value="{{ hub.count }}" data-hub-name="{{ hub.name }}"
-                                   data-hub-id="{{ hub.id }}"
-                                   style="width: 80px; display: inline-block; background: rgba(192, 192, 192, 0.18); border: none">
-                        </strong>
-
-                        {% if hub.photo %}
-                            <strong><a href="{{ hub.photo.url }}" target="_blank"
-                                       class="nav-button">Фото</a></strong>
-                            <strong><a href="#" class="nav-button">🗑</a></strong>
-                        {% else %}
-                            <strong><a href="#" target="_blank" class="nav-button">Загрузить фото</a></strong>
-                        {% endif %}
-                        <br>
-                    </div>
-                {% endfor %}
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-            </div>
-        </div>
-    </div>
-</div>
-<div class="modal fade" id="lamel_menu" tabindex="-1" aria-labelledby="ApplyLabel" aria-hidden="true"
-     style="background-color: rgba(25,25,27,0.69);">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="background: rgba(192, 192, 192, 0.18);">
-            <div class="modal-header">
-                <h1 class="modal-title fs-5" id="ApplyLabel">
-                    Список ламелей на складе:
-                </h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                {% for lamel in lamels %}
-                    <div class="hub-item">
-                        <strong title="{{ lamel.description }}">{{ lamel.name }}</strong>
-
-                        <strong>
-                            <label>Количество:</label>
-                            <input type="number" class="form-control hub-count-input"
-                                   value="{{ lamel.count }}" data-lamel-name="{{ lamel.name }}"
-                                   data-lamel-id="{{ lamel.id }}"
-                                   style="width: 80px; display: inline-block; background: rgba(192, 192, 192, 0.18); border: none">
-                        </strong>
-
-                        {% if lamel.photo %}
-                            <strong><a href="{{ lamel.photo.url }}" target="_blank"
-                                       class="nav-button">Фото</a></strong>
-                            <strong><a href="#" class="nav-button">🗑</a></strong>
-                        {% else %}
-                            <strong><a href="#" target="_blank" class="nav-button">Загрузить фото</a></strong>
-                        {% endif %}
-                        <br>
-                    </div>
-                {% endfor %}
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-            </div>
-        </div>
-    </div>
-</div>
-<div class="modal fade" id="wire_menu" tabindex="-1" aria-labelledby="ApplyLabel" aria-hidden="true"
-     style="background-color: rgba(25,25,27,0.69);">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="background: rgba(192, 192, 192, 0.18);">
-            <div class="modal-header">
-                <h1 class="modal-title fs-5" id="ApplyLabel">
-                    Список проводов на складе:
-                </h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                {% for wire in wires %}
-                    <div class="hub-item">
-                        <strong title="{{ wire.description }}">{{ wire.name }}</strong>
-
-                        <strong>
-                            <label>Количество:</label>
-                            <input type="number" class="form-control hub-count-input"
-                                   value="{{ wire.count }}" data-lamel-name="{{ wire.name }}"
-                                   data-lamel-id="{{ wire.id }}"
-                                   style="width: 80px; display: inline-block; background: rgba(192, 192, 192, 0.18); border: none">
-                        </strong>
-
-                        {% if wire.photo %}
-                            <strong><a href="{{ wire.photo.url }}" target="_blank"
-                                       class="nav-button">Фото</a></strong>
-                            <strong><a href="#" class="nav-button">🗑</a></strong>
-                        {% else %}
-                            <strong><a href="#" target="_blank" class="nav-button">Загрузить фото</a></strong>
-                        {% endif %}
-                        <br>
-                    </div>
-                {% endfor %}
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-            </div>
-        </div>
-    </div>
-</div>
-<div class="modal fade" id="confirm_count_modal" tabindex="-1" aria-labelledby="ConfirmLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" style="background-color: rgba(25,25,27,0.69);">
-        <div class="modal-content" style="background: rgba(192, 192, 192, 0.18);">
-            <div class="modal-header">
-                <h1 class="modal-title fs-5" id="ConfirmLabel">Подтверждение изменения</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>Вы уверены, что хотите изменить количество для <span id="modal-hub-name"></span>?</p>
-                <p>Новое значение: <strong id="new-count-value"></strong></p>
-                <input type="hidden" id="hidden-hub-id">
-                <input type="hidden" id="hidden-new-count">
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                <button type="button" class="btn btn-primary confirm-count-change">Подтвердить</button>
-            </div>
-        </div>
-    </div>
-</div>

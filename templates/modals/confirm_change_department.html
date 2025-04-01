@@ -1,0 +1,20 @@
+<div class="modal-header">
+    <span>{{ header }}</span>
+    <span class="close-cross">&times;</span>
+</div>
+<div class="modal-body">
+    <form action="{% url 'main:zip:panel_change_department' %}" method="post">
+        {% csrf_token %}
+        <label>
+            Комментарий
+            <input name="comment" type="text">
+        </label>
+        <input type="hidden" name="target_panel_id" value="{{ panel_id }}">
+        <input type="hidden" name="target_department" value="{{ target_department }}">
+
+    </form>
+</div>
+<div class="modal-footer">
+    <button class="action-btn cancel" type="button" id="closeModalBtn">Отмена</button>
+    <button class="action-btn submit-btn" type="button">Принять</button>
+</div>

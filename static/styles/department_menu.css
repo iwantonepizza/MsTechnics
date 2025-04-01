@@ -1,43 +1,71 @@
 .menu-city-block {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    display: grid;
+    gap: 50px;
+    grid-template-columns: repeat(auto-fit, minmax(600px, 1fr)); /* Минимальная ширина 100px */
+    grid-template-rows: repeat(8, 1fr);
+    max-height: 94vh;
 
 }
 
-.city-info { /*блок городов общий, под вопросом*/
-    display: flex;
-    justify-content: space-around;
+.city-info-block {
+    max-height: 100%;
+    grid-row: 2/6;
 }
 
+.application-block-city {
+    margin-top: 1vh;
+    grid-row: 6/8;
+}
 
 
 /*контейнер дисплея*/
 .mini-status-info {
+    min-height: 5vh;
     border-radius: 8px; /* Чуть более угловатые */
-    margin-top: 0.3vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* Минимальная ширина 100px */
+    grid-template-rows: 2fr 1fr;
 
 }
 
 
 /*контейнер имени  дисплея для отключения подчеркивания ссылки, можно убрать в код*/
 .display-name-container {
+    height: 100%;
+    width: 100%;
     text-decoration: none;
     color: #dcd6d6;
     font-size: 160%;
     font-weight: bold;
-    width: 100%;
-    height: 3vh;
-    text-align: center;
+    display: grid;
+    place-items: center;
+    grid-column: 1 / -1;
+    transition: background-color 0.2s;
+
+}
+
+.display-name-container:hover {
+    font-size: 200%;
+    border-radius: 10px;
+    background-color: rgba(122, 119, 119, 0.13);
+    color: rgba(225, 201, 123, 0.87)
+
 }
 
 @media (width < 900px) {
-    .city-info {
-        flex-direction: column;
+    .menu-city-block {
+        grid-template-columns: auto;
+        grid-template-rows: auto;
     }
+
+    .city-info-block {
+        max-height: 100%;
+        grid-row: span 4;
+    }
+
+    .application-block-city {
+        margin-top: 1vh;
+        grid-row: span 3;
+    }
+
 }

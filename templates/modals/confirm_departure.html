@@ -1,0 +1,23 @@
+<div class="modal-header">
+    <span>Подтверждение выполнения выезда {{ departure_id }}</span>
+    <span class="close-cross">&times;</span>
+</div>
+<div class="modal-body">
+    <form action="{% url 'main:departure:complete' %}" method="post">
+        {% csrf_token %}
+        <label>
+            Время выполнения
+            <input name="time" type="datetime-local">
+        </label>
+        <label>
+            Комментарий
+            <input name="comment" type="text">
+        </label>
+        <input type="hidden" id="departure-id" name="departure_id" value="{{ departure_id }}">
+
+    </form>
+</div>
+<div class="modal-footer">
+    <button class="action-btn cancel" type="button" id="closeModalBtn">Отмена</button>
+    <button class="action-btn submit-btn" type="button">Принять</button>
+</div>

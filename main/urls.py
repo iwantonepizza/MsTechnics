@@ -12,5 +12,7 @@ urlpatterns = [
     path('departure/', include('departure.urls', namespace='departure')),
     path('application/', include('application.urls', namespace='application')),
     path('sys-check/', views.sys_check, name='system_check_page'),
+    path('get-contacts/<int:display_id>/', views.get_display_contacts, name='get_display_contacts'),
+    path('gmail/', include('mail.urls', namespace='mail')),
 
 ]

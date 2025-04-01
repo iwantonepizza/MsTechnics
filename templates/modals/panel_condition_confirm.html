@@ -1,0 +1,19 @@
+<div class="modal-header">
+    <span>Новое состояние панели : {{ new_condition_name }}</span>
+    <span class="close-cross">&times;</span>
+</div>
+<div class="modal-body">
+    <form action="{% url 'main:service:change_condition' %}" method="post">
+        {% csrf_token %}
+        <label>
+            Комментарий
+            <input name="comment" type="text">
+        </label>
+        <input type="hidden" name="panel_id" value="{{ panel_id }}">
+        <input type="hidden" name="new_condition" value="{{ new_condition }}">
+    </form>
+</div>
+<div class="modal-footer">
+    <button class="action-btn cancel" type="button" id="closeModalBtn">Отмена</button>
+    <button class="action-btn submit-btn" type="button">Принять</button>
+</div>

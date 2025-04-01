@@ -1,49 +1,73 @@
-from datetime import datetime
-
-from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 
 from MsServiceControl.settings import ALLOWED_DEPARTMENT
-from core_mechanic.Data.Db.orm_query import get_panel_history_report
-from zip.models import Panels
-from core_mechanic.get_time import get_time_setting_tz
-from departure.models import Departure
-from application.utils import get_filter_application
+from departure.models import Departure, Executor
 from main_menu.models import PanelHistoryReport
+from application.models import Application
+import json
+
+from django.shortcuts import render
+from django.http import JsonResponse
+
+from zip.models import Panels
 
 
 @login_required
 def index(request):
     user = request.user
-    chosen_panel = request.GET.get('chosen_panel', None)
-    mode = request.GET.get('mode', None)
-    comment = request.GET.get('comment', None)
-    description = request.GET.get('description', None)
-    user = request.user
-    current_datetime = request.GET.get('time', None)
-    if not current_datetime:
-        current_datetime = get_time_setting_tz()
-    else:
-        current_datetime = datetime.fromisoformat(current_datetime)
-    if mode == 'add_service_comment':
-        if chosen_panel:
-            if comment:
-                PanelHistoryReport.objects.create(panel=Panels.objects.get(name=chosen_panel),
-                                                  description=comment,
-                                                  type_report='service', comment=f'добавлен вручную',
-                                                  time=current_datetime, user=f'{user.first_name} {user.last_name}')
 
-    applications = get_filter_application()
-    move_report = get_panel_history_report(type_report='moving')
-    departures = Departure.objects.all().order_by('-time_created')
-    panel_service_report = get_panel_history_report().filter(type_report='service')
-    panels = Panels.objects.all()
+    applications = Application.objects.select_related(
+        'panel',
+        'display',
+        'cell',
+        'status',
+        'executor'
+    ).all().order_by('-last_update_date_time')
+
+    service_applications = applications.filter(status__name='application_sent_to_service')
+
+    departures = Departure.objects.select_related('executor').exclude(status='В архиве').order_by('-time_updated')
+
+    executors = Executor.objects.all()
+
+    panel_reports = PanelHistoryReport.objects.select_related("panel").all().order_by('-time')
+    panel_service_report = panel_reports.filter(type_report='service')
 
     context = {'title': 'Общее меню',
                'allowed': ALLOWED_DEPARTMENT,
                'panel_service_report': panel_service_report,
                'applications': applications,
-               'move_report': move_report,
+               'service_applications': service_applications,
+               'panel_reports': panel_reports,
                'departures': departures,
-               'panels': panels}
+               'executors': executors}
     return render(request, 'main_menu/menu.html', context)
+
+
+@login_required()
+def get_application_color_info(request):
+    return render(request, "modals/application_color_info.html")
+
+
+@login_required()
+def panel_condition_confirm(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)  # Загружаем JSON
+            return render(request, "modals/panel_condition_confirm.html", data)  # 🔹 Передаем ВСЕ параметры в шаблон
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+    return JsonResponse({"error": "Invalid request"}, status=400)
+
+
+@login_required()
+def create_application_confirm(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)  # Загружаем JSON
+            panel = Panels.objects.get(id=data['panel_id'])
+
+            return render(request, "modals/create_application.html", {'panel': panel})
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+    return JsonResponse({"error": "Invalid request"}, status=400)

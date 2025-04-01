@@ -1,183 +1,181 @@
 {% load panel_tags %}
-<div class="panel-container">
-    <div class="panel-info">
-        <div class="panel-field">
-            <strong title="айди выбранной модели">
-                Панель ID:
-            </strong> <span title="это айди">{{ panel.name }}</span>
-            <strong title="название модели">
-                Модель:
-            </strong> {{ panel.display.description }}
+<div class="panel-id" title="Айди панели">
+    <strong>
+        ID:
+    </strong>
+    {{ panel.name }} {{ panel.condition.icon }}
 
+</div>
+<div class="panel-model" title="Название модели">
+    <strong>
+        Модель:
+    </strong> {{ panel.display.name }}
+</div>
+
+<div class="panel-description" title="Описание панели. Нажмите чтобы раскрыть">
+    <strong>Описание:</strong>
+    {% if panel.comment %}
+        {{ panel.comment }}
+    {% else %}
+        описание отсутствует
+    {% endif %}
+</div>
+
+<div class="panel-application" title="Заявки у панели">
+    <strong>Заявка:</strong>
+    {% if not panel.application.last or panel.application.last.status|default:'' in 'archive_done,archive_unable' %}
+        {% if panel.condition.name == 'work' %}
+            панель исправна и активных заявок нет
+        {% else %}
+            активных заявок нет
+        {% endif %}
+    {% else %}
+        ID: {{ panel.application.last.id }} ({{ panel.application.last.status.description }})
+    {% endif %}
+</div>
+
+
+<div class="panel-status">
+    {% if department == 'monitoring' %}
+        {% if panel.condition.name == 'work' and not application_active %}
+            <a class="open-modal switch-panel-status-button-work"
+               data-panel-id="{{ panel.id }}"
+               data-new-condition="problem"
+               data-api-url="/menu/panel-condition-confirm/"
+               title="Нажмите чтобы пометить панель как сломанную.">
+                Работает
+            </a>
+
+        {% elif panel and  panel.condition.name != 'work'  and panel.condition != 'unrecoverable' and  panel.application_status.name == 'default' %}
+
+            <a class="open-modal switch-panel-status-button-broken"
+               data-panel-id="{{ panel.id }}"
+               data-new-condition="work"
+               data-api-url="/menu/panel-condition-confirm/"
+               title="Нажмите чтобы пометить панель как рабочую.">
+                Не работает
+            </a>
+
+        {% else %}
+            <a style="cursor: not-allowed" title="Состояние не поменять. Причина - есть активная заявка"> <strong>Cостояние
+                : </strong>
+                {{ panel.condition.description }}</a>
+        {% endif %}
+    {% elif department == 'service' %}
+        <div class="dropdown">
+            <a class="dropdown-button head-button" title="Состояние панели, нажмите чтобы изменить.">
+                {{ panel.condition.icon }}
+            </a>
+
+            <div class="dropdown-menu">
+                {% get_allowed_status panel.condition.name as allowed_status %}
+                {% for condition in allowed_status %}
+                    <a class="head-button open-modal"
+                       data-api-url="/menu/panel-condition-confirm/"
+                       data-panel-id="{{ panel.id }}"
+                       data-new-condition="{{ condition.name }}"
+                       data-new-condition-name="{{ condition.description }}"
+
+                       title="Нажмите чтобы поменять состояние панели на {{ condition.description }}">
+                        {{ condition.description }} {{ condition.icon }}
+                    </a>
+                {% endfor %}
+            </div>
         </div>
 
-        <div class="panel-field">
-            <strong>
-                Состояние:
-            </strong> {{ panel.department.description }}
+    {% else %}
+        <strong title="Статус панели" style="cursor: help">Статус : </strong>
+        {{ panel.condition.icon }} {{ panel.condition.description }}
+    {% endif %}
+</div>
 
-        </div>
-        <div class="panel-field-size">
-            <strong>Описание:</strong>
-            {% if panel.comment %}{{ panel.comment }} {% else %}-{% endif %}
-        </div>
-        <div class="panel-field">
 
-        </div>
-        <div class="panel-field">
-            <strong>Заявка:</strong>
-            {% if panel.condition.name == 'work' and panel.application_status.name == 'default' %}
-                панель исправна и активных заявок нет
-            {% else %}
-                {{ panel.application_status.description }}
+<div class="application-button-container">
+    <div class="panel-links">
+        {% if department != 'zip' %}
+            <a class="application-button open-modal"
+               data-panel-name="{{ panel.name }}"
+               data-api-url="/zip/modal-panel-history/"
+               title="История перемещений">
+                🗄
+            </a>
+        {% endif %}
+        {% if department == 'monitoring' %}
+            {% if  panel.condition.name == 'problem' and panel.application_status.name == 'default' %}
+                <a class="application-button open-modal"
+                   data-api-url="/menu/modal-create-application/"
+                   data-panel-id="{{ panel.id }}"
+                   title="Создать новую заявку">
+                    🆕
+                </a>
             {% endif %}
-        </div>
-        <div class="panel-field">
-            {% if department == 'monitoring' %}
-                <strong title="Состояние. переключение между сломанной и нормальной.">
-                    Статус:
-                </strong>
-                {% if panel.condition.name == 'work' and not application_active %}
-                    <a class="head-button" style="background: rgba(85,179,85,0.62); color: white;"
-                       data-target="change_condition" data-panel-id="{{ panel.name }}"
-                       data-new-condition="problem"
-                       title="Нажмите чтобы пометить панель как сломанную.">
-                        Работает
-                    </a>
-                    <a title="{{ panel.condition.description }}">{{ panel.condition.icon }}</a>
-                {% elif panel and  panel.condition.name != 'work'  and panel.condition != 'unrecoverable' and  panel.application_status.name == 'default' %}
-                    <a class="head-button" style="background: rgba(193,61,61,0.68); color: rgba(255,255,255,0.69);"
-                       data-target="change_condition" data-panel-id="{{ panel.name }}"
-                       data-new-condition="work"
-                       title="Нажмите чтобы пометить панель как рабочую.">
-                        Не работает
-                    </a>
+        {% endif %}
 
-                    <a title="{{ panel.condition.description }}">
-                        {{ panel.condition.icon }}
-                    </a>
-                {% else %}
-                    <a title="Состояние не поменять. Причина - есть активная заявка">{{ panel.condition.description }} </a>
-                    <a title="Заявка в работе">
-                        {{ panel.condition.icon }}
-                    </a>
-                {% endif %}
-            {% elif department == 'service' %}
-                <strong title="Состояние. переключение между сломанной и нормальной.">
-                    Статус:
-                </strong>
+        {% if department == 'service' %}
+
+            {% if not empty_slot and panel.application_status.name == 'default' and panel.condition.name == 'work' %}
+                {# ниже должна быть проверка на активную заявку  #}
+                <a class="head-button open-modal"
+                   data-api-url="/zip/modal-panel-remove/"
+                   data-cell-id="{{ cell_id }}"
+                   data-display-id="{{ display_id }}"
+                   data-panel-name="{{ panel.name }}"
+                   data-with-application='True'
+                   title="Снять панель">
+                    ⤵️
+                </a>
+
+            {% endif %}
+        {% elif department == 'zip' %}
+            {% if panel_report_history %}
                 <div class="dropdown">
-                    <a class="dropdown-button head-button {% if left_bar_status == 'application_history' %}chosen{% endif %}">
-                        {{ panel.condition.icon }} {{ panel.condition.description }}
-                    </a>
-
-                    <div class="dropdown-menu" style=" position: inherit;">
-                        {% get_allowed_status panel.condition.name as allowed_status %}
-                        {% for condition in allowed_status %}
-                            <a class="head-button" data-target="change_condition" data-panel-id="{{ panel.name }}"
-                               data-new-condition="{{ condition.name }}"
-                               title="Нажмите чтобы поменять состояние панели на {{ condition.description }}">
-                                {{ condition.description }} {{ condition.icon }}
-                            </a>
-                        {% endfor %}
-                    </div>
-                </div>
-
-
-
-            {% else %}
-                <strong title="Статус панели">Статус : </strong>
-                {{ panel.condition.icon }} {{ panel.condition.description }}
-            {% endif %}</div>
-
-    </div>
-
-    <div class="application-button-container">
-        <div class="panel-links">
-            {% if department == 'monitoring' %}
-                {% if  panel.condition.name == 'problem' and panel.application_status.name == 'default' %}
-                    <a class="head-button" data-target="create_application" title="Создать новую заявку">
-                        🆕
-                    </a>
-                {% endif %}
-
-            {% elif department == '!!сontrol' or department == '!!service' %}
-                <div class="action-button" data-bs-toggle="offcanvas"
-                     data-bs-target="#moving"
-                     title="История перемещений"
-                     aria-controls="offcanvasRight">❌
-                </div>
-                <div class="action-button" data-bs-toggle="offcanvas"
-                     data-bs-target="#breakdown"
-                     title="История поломок"
-                     aria-controls="offcanvasRight">❌
-                </div>
-                <div class="action-button" data-bs-toggle="offcanvas"
-                     data-bs-target="#condition"
-                     title="История состояний"
-                     aria-controls="offcanvasRight">❌
-                </div>
-                <div class="action-button" data-bs-toggle="offcanvas"
-                     data-bs-target="#service"
-                     title="История сервиса"
-                     aria-controls="offcanvasRight">❌
-                </div>
-                <div class="action-button" data-bs-toggle="offcanvas"
-                     data-bs-target="#none_type"
-                     title="Прочее"
-                     aria-controls="offcanvasRight">❌
-                </div>
-                <div class="action-button" data-bs-toggle="offcanvas"
-                     data-bs-target="#none_type"
-                     title="Заявки"
-                     aria-controls="offcanvasRight">❌
-                </div>
-            {% endif %}
-            {% if department == 'service' %}
-
-                {% if central_bar_status == 'service_display' %}
-                    {% if not empty_slot %}
-                        {# ниже должна быть проверка на активную заявку  #}
-                        <a class="head-button" 
-                           data-target="remove_panel_in_cell"
-                           data-cell-id="{{ cell_id }}"
-                           data-display-id="{{ display_id }}"
-                           title="Снять панель">
-                            ⤵️
-                        </a>
-
-                    {% endif %}
-                {% endif %}
-            {% elif department == 'zip' %}
-                {% if panel_report_history %}
-                    <div class="action-button" data-bs-toggle="offcanvas"
-                         data-bs-target="#offcanvasRight" title="Комментарии" aria-controls="offcanvasRight">
+                    <a class="dropdown-button head-button" title="Сменить нахождение панели">
                         📄
-                    </div>
-                    {% if panel.department.name != 'service' %}
-                        <div class="action-button" data-bs-toggle="modal"
-                             data-bs-target="#apply_to_service" title="В сервис" aria-controls="exampleModal">⚙️
-                        </div>
-                    {% endif %}
-                    {% if panel.department.name != 'zip' %}
-                        <div class="action-button" data-bs-toggle="modal"
-                             data-bs-target="#apply_to_zip" title="ЗИП" aria-controls="exampleModal">🧰
-                        </div>
-                    {% endif %}
-                    {% if panel.department.name != 'hand' %}
-                        <div class="action-button" data-bs-toggle="modal"
-                             data-bs-target="#apply_to_hand" title="На руки" aria-controls="exampleModal">🖐
-                        </div>
-                    {% endif %}
-                {% endif %}
-            {% endif %}
+                    </a>
 
-        </div>
+                    <div class="dropdown-menu">
+                        {% if panel.department.name != 'service' %}
+                            <a class="head-button open-modal"
+                               data-api-url="/zip/modal-panel-change-department/"
+                               data-target-department="service"
+                               data-panel-id="{{ panel.id }}"
+                               title="Отправить в сервис">
+                                ⚙️ В сервис
+                            </a>
+
+                        {% endif %}
+                        {% if panel.department.name != 'zip' %}
+                            <a class="head-button open-modal"
+                               data-api-url="/zip/modal-panel-change-department/"
+                               data-target-department="zip"
+                               data-panel-id="{{ panel.id }}"
+                               title="Отправить в ЗИП">
+                                🧰 В ЗИП
+                            </a>
+                        {% endif %}
+                        {% if panel.department.name != 'hand' %}
+                            <a class="head-button open-modal"
+                               data-api-url="/zip/modal-panel-change-department/"
+                               data-target-department="hand"
+                               data-panel-id="{{ panel.id }}"
+                               title="Отправить на руки">
+                                👋 На руки
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+
+
+            {% endif %}
+        {% endif %}
+
     </div>
 </div>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const panelFields = document.querySelectorAll('.panel-field-size');
+        const panelFields = document.querySelectorAll('.panel-description');
 
         panelFields.forEach(panelField => {
             panelField.addEventListener('click', function () {

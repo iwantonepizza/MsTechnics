@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load panel_tags %}
+{% load permission_tag %}
 {% load static %}
 
 {% block title %}
@@ -15,26 +15,42 @@
 {% endblock %}
 {% block main-center-display %}
     <div class="menu-city-block">
-        {% if department == 'control'%}
-            <div class="scroll-info-block" style="width: 50vw">
-                {% if applications %}
-                    {% for application in applications.all %}
-                        <div class="application-container" style="max-width: 100%">
-                            {% include 'application/application_block.html' with application=application %}
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    пусто
-                {% endif %}
-            </div>
-        {% endif %}
-        <div class="city-info mt-5">
-            {% for city in all_city %}
-                {% include 'main_menu/city_display_info_block.html' with city_name=city.name department=department %}
-            {% endfor %}
-        </div>
-    </div>
-    {% include 'monitoring/modal.html' %}
 
+        {% for city in all_city %}
+            {% check_city_permission request.user.id city.id as has_permission %}
+            {% if has_permission %}
+
+                <div class="city-info-block">
+                    {% include 'main_menu/city_display_info_block.html' with city=city department=department %}
+                </div>
+
+                {% if department == 'control' %}
+                    <div class="application-block-city scroll-info-block">
+                        {% if applications %}
+                            {% for application in applications.all %}
+                                {% if application.display.city == city %}
+                                    <div class="application-container" style="height: 100%">
+                                        {% include 'application/application_block.html' with application=application %}
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <span class="empty-application-warning">Заявок нет</span>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+            {% endif %}
+
+        {% endfor %}
+    </div>
+
+    {% include 'main_menu/modal.html' %}
+
+
+{% endblock %}
+{% block scripts %}
+    {{ block.super }}
+    <script src="{% static 'scripts/photo_display.js' %}"></script>
 
 {% endblock %}

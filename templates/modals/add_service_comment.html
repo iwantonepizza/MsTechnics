@@ -1,0 +1,28 @@
+<div class="modal-header">
+    <span>Добавление комментария в раздел сервис</span>
+    <span class="close-cross">&times;</span>
+</div>
+<div class="modal-body">
+    <form action="{% url 'main_menu:index' %}" method="post">
+        {% csrf_token %}
+        <label>
+            Комментарий
+            <input name="comment" type="text">
+        </label>
+        <br>
+        <label for="panel">Выберите панель:</label>
+        <input list="panel-options" name="chosen_panel" id="panel" class="form-control"
+               placeholder="Введите или выберите панель">
+        <datalist id="panel-options">
+            {% for panel in panels %}
+                <option value="{{ panel.name }}">{{ panel.name }} - {{ panel.description }}</option>
+            {% endfor %}
+        </datalist>
+        <input type="hidden" name="id" value={{ panel.id }}>
+        <input type="hidden" name="mode" value="add_service_comment">
+    </form>
+</div>
+<div class="modal-footer">
+    <button class="action-btn cancel" type="button" id="closeModalBtn">Отмена</button>
+    <button class="action-btn submit-btn" type="button">Принять</button>
+</div>

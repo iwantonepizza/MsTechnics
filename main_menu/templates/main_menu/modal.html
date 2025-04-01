@@ -1,0 +1,30 @@
+<div id="photoModal" class="overlay" style="display: none;">
+    <div class="modal">
+        <div class="modal-header">
+            <span>Фото дисплея</span>
+            <span class="close-cross">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="scroll-info-block" id="photo-list">
+                <div class="loading-wrapper">
+                    <div class="loading"></div>
+                </div>
+            </div>
+            <form method="POST" id="photo-upload-form" enctype="multipart/form-data"
+                  action="{% url 'main:zip:upload_display_photos' %}">
+                {% csrf_token %}
+
+                <input type="hidden" id="target-display-id" name="display_id" value="">
+
+                <label for="photo-input" class="custom-file-upload">
+                    <span id="file-label">📂 Загрузите одно или несколько фото</span>
+                    <input type="file" name="photo" id="photo-input" multiple accept="image/*">
+                </label>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="action-btn cancel" type="button">Отмена</button>
+        </div>
+    </div>
+
+</div>

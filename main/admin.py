@@ -3,32 +3,18 @@ from main.models import *
 
 
 class CitiesAdmin(admin.ModelAdmin):
-    list_display = ('description',)
-    ordering = ('description',)
-    fields = [
-        'description',
-        'displays',
-    ]
+    list_display = ('name', 'description',)
+    ordering = ('name',)
+    fields = ['name',
+              'description',
+              'displays',
+              'slug'
+              ]
 
 
 admin.site.register(Cities, CitiesAdmin)
 
 
-class PanelStatusAdmin(admin.ModelAdmin):
-    list_display = ('name', 'description', 'color', 'color_text', 'icon')  # Поля, отображаемые в списке
-    list_filter = ('name', 'color', 'icon')  # Фильтры для боковой панели
-    search_fields = ('name', 'icon')  # По каким полям осуществляется поиск
-    ordering = ('name',)  # Порядок сортировки (убывание по времени выполнения)
-    list_editable = ('description', 'color', 'color_text', 'icon')  # Поля, которые можно редактировать прямо в списке
-    fields = [
-        'name',
-        ('color', 'color_text', 'icon'),
-        'description',
-
-    ]
-
-
-admin.site.register(PanelStatus, PanelStatusAdmin)
 
 
 class ColorAdmin(admin.ModelAdmin):

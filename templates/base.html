@@ -1,17 +1,16 @@
 {% load static %}
-{% load panel_tags %}
+{% load permission_tag %}
 
 <!DOCTYPE html>
 <html lang="ru">
-
-
 <head>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="{% block meta_description %}description{% endblock %}">
     <meta name="keywords" content="{% block meta_keywords %}keywords{% endblock %}">
     <meta name="author" content="Msgroup">
-
+    <meta name="csrf-token" content="{{ csrf_token }}">
     <title>
         {% block title %}{% endblock %}
     </title>
@@ -19,7 +18,6 @@
     {% block styles %}
         <link rel="stylesheet" href="{% static 'styles/base.css' %}">
         <link rel="stylesheet" href="{% static 'styles/menu.css' %}">
-        
         <link rel="stylesheet" href="{% static 'styles/messages.css' %}">
         <link rel="stylesheet" href="{% static 'styles/header.css' %}">
         <link rel="stylesheet" href="{% static 'styles/modal_fade.css' %}">
@@ -32,15 +30,14 @@
         <link rel="icon" type="image/png" sizes="16x16" href='{% static 'favicon.ico' %}'>
     {% endblock %}
 
-
 </head>
 
 
-<body class="background">
-
+<body>
+{% get_allowed_department as allowed %}
 <header class="header">
     <div class="header-container">
-        <div class="logo">
+        <div class="logo-MS">
             <img src="{% static 'logo-white.png' %}" alt="Логотип">
         </div>
         {% if request.user.is_authenticated %}
@@ -69,9 +66,11 @@
                            {% if department == 'zip' %}style="background: rgba(113,106,106,0.53); color: rgba(225,201,123,0.87)"{% endif %}>ЗИП</a>
                     {% endif %}
 
+
                     {% if request.user.is_superuser %}
+                        <a href="{% url 'main:mail:google_auth' %}" class="head-button">AUS</a>
+                        <a href="{% url 'main:mail:get_emails' %}" class="head-button">check</a>
                         <a href="{% url 'admin:index' %}" class="head-button">Админ</a>
-                        {{ time }}
                     {% endif %}
                 </div>
                 <div class="for-900px">
@@ -124,9 +123,12 @@
 </header>
 
 
-<main class="main">
-    {% include 'departure/modal.html' %}
-    {% block main-center-display %} {% endblock %}
+<main>
+    {% block main-center-display %}
+
+    {% endblock %}
+    {% include 'modal.html' %}
+
 </main>
 
 

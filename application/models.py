@@ -4,31 +4,77 @@ from django.db import models
 class Application(models.Model):
     display = models.ForeignKey(
         "zip.Display", to_field='name',
-        on_delete=models.PROTECT, null=True, verbose_name='экран',
+        on_delete=models.PROTECT, null=True, verbose_name='экран', related_name='application'
     )
     panel = models.ForeignKey(
         "zip.Panels", to_field='name',
-        on_delete=models.PROTECT, null=True, verbose_name='панель',
+        on_delete=models.PROTECT, null=True, verbose_name='панель', related_name='application'
     )
     status = models.ForeignKey(
         "ApplicationStatus", to_field='name',
-        on_delete=models.PROTECT, null=False, verbose_name='Статус',
+        on_delete=models.PROTECT, null=False, verbose_name='Статус', related_name='application'
     )
-    comment_monitoring = models.TextField(max_length=300, null=True, verbose_name='Коммент мониторинга')
-    time_monitoring = models.DateTimeField(verbose_name='Время мониторинга', null=True, blank=True)
-    # file_monitoring = models.FileField(upload_to='files/', blank=True, null=True, default='probka.jpg',
-    #                         verbose_name='Фото мониторинга')
 
+    last_update_date_time = models.DateTimeField(verbose_name='Время последней активности', null=True, blank=True)
 
-    comment_control = models.TextField(max_length=300, null=True, verbose_name='Коммент контроля')
-    time_control = models.DateTimeField(verbose_name='Время мониторинга', null=True, blank=True)
-    # file_control_apply = models.FileField(upload_to='files/', blank=True, null=True, default='probka.jpg',
-    #                         verbose_name='Фото мониторинга')
-    #
+    cell = models.ForeignKey(
+        "zip.Cell", to_field='id',
+        on_delete=models.PROTECT, null=False, verbose_name='ячейка',
+    )
 
+    executor = models.ForeignKey(
+        "departure.Executor",
+        on_delete=models.PROTECT, blank=True, null=True, verbose_name='Исполнитель',
+    )
 
-    comment_service = models.TextField(max_length=300, null=True, verbose_name='Комменты мониторинга')
-    time_service = models.DateTimeField(verbose_name='Время мониторинга', null=True, blank=True)
+    comment_monitoring = models.TextField(max_length=300, null=True, verbose_name='Коммент отправки заявки мониторинга')
+    time_monitoring = models.DateTimeField(verbose_name='Время отправки заявки мониторинга', null=True, blank=True)
+    file_monitoring = models.FileField(upload_to=f'application/', blank=True, null=True,
+                                       verbose_name='Фото отправки заявки мониторинг')
+    user_monitoring = models.CharField(max_length=40, blank=True, null=True, verbose_name='Работник')
+
+    comment_control_apply = models.TextField(max_length=300, null=True, verbose_name='Коммент принятия заявки контроль')
+    time_control_apply = models.DateTimeField(verbose_name='Время принятие заявки контроль', null=True, blank=True)
+    file_control_apply = models.FileField(upload_to='files/', blank=True, null=True,
+                                          verbose_name='Фото контроль принятие заявки')
+    user_control_apply = models.CharField(max_length=40, blank=True, null=True, verbose_name='Работник')
+
+    comment_control_send = models.TextField(max_length=300, null=True, verbose_name='Коммент отправки заявки контроль')
+    time_control_send = models.DateTimeField(verbose_name='Время отправки заявки контроль', null=True, blank=True)
+    file_control_send = models.FileField(upload_to='files/', blank=True, null=True,
+                                         verbose_name='Фото контроль отправка заявки')
+    user_control_send = models.CharField(max_length=40, blank=True, null=True, verbose_name='Работник')
+
+    comment_service_apply = models.TextField(max_length=300, null=True,
+                                             verbose_name='Коммент принятия заявки сервис')
+    time_service_apply = models.DateTimeField(verbose_name='Время принятие заявки сервис', null=True, blank=True)
+    file_service_apply = models.FileField(upload_to='files/', blank=True, null=True,
+                                          verbose_name='Фото сервис принятие заявки')
+    user_service_apply = models.CharField(max_length=40, blank=True, null=True, verbose_name='Работник')
+
+    comment_control_at_work = models.TextField(max_length=300, null=True,
+                                               verbose_name='Коммент проведенной работы по заявке в сервисе')
+    time_control_at_work = models.DateTimeField(verbose_name='Время проведенной работы по заявке в сервисе', null=True,
+                                                blank=True)
+    file_control_at_work = models.FileField(upload_to='files/', blank=True, null=True,
+                                            verbose_name='Фото проведенной работы по заявке в сервисе')
+    user_control_at_work = models.CharField(max_length=40, blank=True, null=True, verbose_name='Работник')
+
+    comment_control_unable = models.TextField(max_length=300, null=True,
+                                              verbose_name='Коммент проведенной работы по заявке в сервисе')
+    time_control_unable = models.DateTimeField(verbose_name='Время проведенной работы по заявке в сервисе', null=True,
+                                               blank=True)
+    file_control_unable = models.FileField(upload_to='files/', blank=True, null=True,
+                                           verbose_name='Фото проведенной работы по заявке в сервисе')
+    user_control_unable = models.CharField(max_length=40, blank=True, null=True, verbose_name='Работник')
+
+    comment_control_archive = models.TextField(max_length=300, null=True,
+                                               verbose_name='Коммент архивирования заявки в сервисе')
+    time_control_archive = models.DateTimeField(verbose_name='Время архивирования заявки в сервисе', null=True,
+                                                blank=True)
+    file_control_archive = models.FileField(upload_to='files/', blank=True, null=True,
+                                            verbose_name='Фото архивирования заявки в сервисе')
+    user_control_archive = models.CharField(max_length=40, blank=True, null=True, verbose_name='Работник')
 
     class Meta:
         db_table = 'application'
@@ -64,18 +110,11 @@ class ApplicationStatus(models.Model):
 
 
 class ApplicationHistoryReport(models.Model):
-    display = models.ForeignKey(
-        "zip.Display", to_field='name',
-        on_delete=models.PROTECT, null=True, verbose_name='дисплей',
-    )
-    panel = models.ForeignKey(
-        "zip.Panels", to_field='name',
-        on_delete=models.PROTECT, null=True, verbose_name='панель',
-    )
-    description = models.TextField(blank=True, null=True, verbose_name='описание')
+    application_id = models.CharField(max_length=5, unique=False, null=True, verbose_name='Айди заявки')
+    description = models.TextField(blank=True, null=True, verbose_name='Описание')
     comment = models.TextField(verbose_name='коммент')
-    time = models.DateTimeField(null=False, blank=False, verbose_name='время')
-    user = models.CharField(max_length=20, unique=False, verbose_name='пользователь')
+    time = models.DateTimeField(null=False, blank=False, verbose_name='Время')
+    user = models.CharField(max_length=40, unique=False, verbose_name='Пользователь')
 
     class Meta:
         db_table = 'history_application'

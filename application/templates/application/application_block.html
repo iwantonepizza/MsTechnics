@@ -1,42 +1,153 @@
-{% load panel_tags %}
-<div class="application-row">
-
-    <div class="application-id">
-        <strong>ID:</strong> {{ application.id }}
-    </div>
-
-    <div class="application-status">
-                <strong>Экран:</strong> {{ application.display.description }}
-        <strong>Слот:</strong> {% get_cell panel=application.panel %}
-    </div>
+{% load permission_tag %}
+<div class="application-id" title="Айди заявки">
+    <strong>ID:</strong> {{ application.id }}
+</div>
+<div class="application-panel" title="Панель, на которой зарегистрирована заявка">
+    <strong>Панель:</strong> {{ application.panel }}
+</div>
+<div class="application-display" title="Экран, на котором висит заявка">
+    <strong>Экран:</strong> {{ application.display.description }}
+</div>
+<div class="application-slot" title="Ячейка экрана, на который зарегистрирована заявка">
+    <strong>Слот:</strong> {{ application.cell.position }}
 </div>
 
-<div class="application-details">
-    <div class="application-field">
-                <strong>Статус заявки:</strong> {{ application.status.description }}
-    </div>
-    <div class="application-field">
-    </div>
+
+<div class="application-status" title="Статус заявки на данный момент">
+    <strong>Статус:</strong> {{ application.status.description }}
+</div>
+<div class="application-activity" title="Время последнего взаимодействия с заявкой">
+    <strong>Активность:</strong> {{ application.last_update_date_time }}
 </div>
 
-<div class="application-monitoring">
+<div class="application-executor">
+    {% if application.executor %}
+        <strong>Исполнитель:</strong> {{ application.executor }}
+    {% endif %}
+</div>
+
+
+<div>
     <strong>Мониторинг:</strong>
     <p>Время: {{ application.time_monitoring }}</p>
-    <p>Комментарий: {{ application.comment_monitoring }}</p>
+    <p>Комментарий:
+        {% if not application.comment_monitoring %}
+            ❌
+        {% else %}
+            {{ application.comment_monitoring }}
+        {% endif %}
+    </p>
+    <p>Работник: {{ application.user_monitoring }}</p>
+    {% if application.file_monitoring %}
+        <p>Файл: {{ application.file_monitoring }}</p>
+    {% endif %}
 </div>
 
-{% if application.time_control %}
-    <div class="application-service">
-        <strong>Контроль:</strong>
-        <p>Время: {{ application.time_control }}</p>
-        <p>Комментарий: {{ application.comment_control }}</p>
+
+{% if application.time_control_apply %}
+    <div>
+        <strong>Контроль (принятие):</strong>
+        <p>Время: {{ application.time_control_apply }}</p>
+        <p>Комментарий:
+            {% if not application.comment_control_apply %}
+                ❌
+            {% else %}
+                {{ application.comment_control_apply }}
+            {% endif %}
+        </p>
+        <p>Работник: {{ application.user_control_apply }}</p>
+        {% if application.file_control_apply %}
+            <p>Файл: {{ application.file_control_apply }}</p>
+        {% endif %}
     </div>
 {% endif %}
 
-{% if application.time_service %}
-    <div class="application-control">
-        <strong>Сервис:</strong>
-        <p>Время: {{ application.time_service }}</p>
-        <p>Комментарий: {{ application.comment_service }}</p>
+{% if application.time_control_send %}
+    <div>
+        <strong>Контроль (отправка):</strong>
+        <p>Время: {{ application.time_control_send }}</p>
+        <p>Комментарий:
+            {% if not application.comment_control_send %}
+                ❌
+            {% else %}
+                {{ application.comment_control_send }}
+            {% endif %}
+        </p>
+        <p>Работник: {{ application.user_control_send }}</p>
+        {% if application.file_control_send %}
+            <p>Файл: {{ application.file_control_send }}</p>
+        {% endif %}
+    </div>
+{% endif %}
+
+{% if application.time_service_apply %}
+    <div>
+        <strong>Сервис (принятие):</strong>
+        <p>Время: {{ application.time_service_apply }}</p>
+        <p>Комментарий:
+            {% if not application.comment_service_apply %}
+                ❌
+            {% else %}
+                {{ application.comment_service_apply }}
+            {% endif %}
+        </p>
+        <p>Работник: {{ application.user_service_apply }}</p>
+        {% if application.file_service_apply %}
+            <p>Файл: {{ application.file_service_apply }}</p>
+        {% endif %}
+    </div>
+{% endif %}
+
+{% if application.time_control_at_work %}
+    <div>
+        <strong>Сервис (выполненный ремонт):</strong>
+        <p>Время: {{ application.time_control_at_work }}</p>
+        <p>Комментарий:
+            {% if not application.comment_control_at_work %}
+                ❌
+            {% else %}
+                {{ application.comment_control_at_work }}
+            {% endif %}
+        </p>
+        <p>Работник: {{ application.user_control_at_work }}</p>
+        {% if application.file_control_at_work %}
+            <p>Файл: {{ application.file_control_at_work }}</p>
+        {% endif %}
+    </div>
+{% endif %}
+
+{% if application.time_control_unable %}
+    <div>
+        <strong>Сервис (невозможность ремонта):</strong>
+        <p>Время: {{ application.time_control_unable }}</p>
+        <p>Комментарий:
+            {% if not application.comment_control_unable %}
+                ❌
+            {% else %}
+                {{ application.comment_control_unable }}
+            {% endif %}
+        </p>
+        <p>Работник: {{ application.user_control_unable }}</p>
+        {% if application.file_control_unable %}
+            <p>Файл: {{ application.file_control_unable }}</p>
+        {% endif %}
+    </div>
+{% endif %}
+
+{% if application.time_control_archive %}
+    <div>
+        <strong>Архив:</strong>
+        <p>Время: {{ application.time_control_archive }}</p>
+        <p>Комментарий:
+            {% if not application.comment_control_archive %}
+                ❌
+            {% else %}
+                {{ application.comment_control_archive }}
+            {% endif %}
+        </p>
+        <p>Работник: {{ application.user_control_archive }}</p>
+        {% if application.file_control_archive %}
+            <p>Файл: {{ application.file_control_archive }}</p>
+        {% endif %}
     </div>
 {% endif %}

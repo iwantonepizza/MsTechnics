@@ -1,0 +1,18 @@
+{% load panel_tags %}
+<div class="modal-header">
+    <span>Информация по отображении заявок</span>
+    <span class="close-cross">&times;</span>
+
+</div>
+
+<div class="modal-body">
+    {% application_status_info as statuses %}
+    {% for status in statuses %}
+        <li>
+            <span style="background-color: {{ status.color.hex_color }};  border-radius: 50%; width: 1vh; height: 1vh">. . </span>{{ status.description }}
+        </li>
+    {% endfor %}
+</div>
+<div class="modal-footer" id="modalFooter">
+    <button class="action-btn cancel" type="button">Отмена</button>
+</div>

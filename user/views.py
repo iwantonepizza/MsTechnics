@@ -5,6 +5,8 @@ from django.urls import reverse, reverse_lazy
 from user.forms import UserLoginForm
 from django.contrib.auth.decorators import login_required
 
+from .utils import create_user
+
 
 # Create your views here.
 def login(request):
@@ -47,7 +49,10 @@ def login(request):
 
 
 def registration(request):
-    context = {'title': 'Меню сервис'}
+    answer = create_user(username='izhevsk11', email=None, password='ff420qk3g')
+    context = {'title': 'Меню сервис',
+               answer: 'answer', }
+
     return render(request, 'user/registration.html', context)
 
 

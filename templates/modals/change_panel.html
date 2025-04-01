@@ -1,0 +1,19 @@
+<div class="modal-header">
+    <span>Подтверждение установки панели {{ panel_id }}</span>
+</div>
+<div class="modal-body">
+    <form action="{% url 'main:service:change_panel_in_cell' %}" method="post">
+        {% csrf_token %}
+        <label>
+            Комментарий
+            <input name="comment" type="text">
+        </label>
+        <input type="hidden"  name="cell_id" value="{{ cell_id }}">
+        <input type="hidden"  name="panel_id" value="{{ panel_id }}">
+        <input type="hidden"  name="display_id" value="{{ display_id }}">
+        <div class="modal-footer">
+            <button class="action-btn cancel" type="button">Отмена</button>
+            <button class="action-btn" type="submit">Принять</button>
+        </div>
+    </form>
+</div>

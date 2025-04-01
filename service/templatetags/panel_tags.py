@@ -1,16 +1,18 @@
 from django import template
+from zip.models import Display
 from django.utils.http import urlencode
 
 from application.models import ApplicationStatus
-from core_mechanic.Data.Db.orm_query import get_display_at_city
 from main.models import Condition
 
+from zip.models import Panels
+
 register = template.Library()
-from zip.models import Panels, Cell
 
 
 @register.simple_tag()
 def get_allowed_status(excluded_name: str = None):
+    """Это что не понмю"""
     if excluded_name:
         return Condition.objects.exclude(name=excluded_name)
     return Condition.objects.all()
@@ -24,14 +26,17 @@ def update_get_query(context, **kwargs):
 
 
 @register.simple_tag()
-def get_work_monitor_tag(city_name):
-    return get_display_at_city(city_name)
+def get_city_displays(city):
+    return Display.objects.filter(city=city)
 
 
 @register.simple_tag()
-def qtag_department(department_name: str = None, panels_filter: list = None, model_filter: list = None,
-                    condition_filter: list = None):
-    queryset = Panels.objects.select_related('department', 'display', 'condition__icon')
+def qtg_get_panels(department_name: str = None, panels_filter: list = None, display_slug: list = None,
+                   condition_filter: list = None, user=None):
+    """кверисет по параметрам, может и не нужон"""
+    user_cities = user.allowed_city.all()
+    queryset = Panels.objects.select_related('department', 'display', 'condition__icon', 'application_status', ).filter(
+        display__city__in=user_cities)
     if department_name:
         queryset = queryset.filter(
             department__name=department_name
@@ -41,36 +46,12 @@ def qtag_department(department_name: str = None, panels_filter: list = None, mod
         queryset = queryset.filter(name__in=panels_filter)
     if condition_filter:
         queryset = queryset.filter(condition__name__in=condition_filter)
-    if model_filter:
-        queryset = queryset.filter(display__name__in=model_filter)
-    # Получаем значения
-    res = queryset.values(
-        'name', 'display__name', 'comment', 'condition__icon__smile_icon'
-    )
+    if display_slug:
+        queryset = queryset.filter(display__slug__in=display_slug)
 
-    # Конвертация имен ключей для удобства
-
-    res = [
-        {
-            'name': item['name'],
-            'display': item['display__name'],
-            'comment': item['comment'],
-            'icon': item['condition__icon__smile_icon']
-        }
-        for item in res
-    ]
-    return res
+    return queryset
 
 
 @register.simple_tag()
 def application_status_info():
     return ApplicationStatus.objects.select_related('color').all()
-
-
-@register.simple_tag()
-def get_cell(panel: Panels = None):
-    cell = Cell.objects.filter(panel=panel)
-    if cell:
-        return cell.first().position()
-    else:
-        return "xxx"

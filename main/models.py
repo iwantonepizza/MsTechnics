@@ -7,47 +7,13 @@ from zip.models import Display
 
 class Cities(models.Model):
     name = models.CharField(max_length=15, unique=True, verbose_name='имя')
-    slug = models.SlugField(unique=True, blank=True, null=True, verbose_name='URL', editable=False)
+    slug = models.SlugField(unique=True, blank=True, null=True, verbose_name='URL')
     description = models.TextField(blank=True, null=True, verbose_name='описание')
-    displays = models.ManyToManyField(
-        Display,
-        verbose_name=("Экраны"),
-        blank=True,
-        related_name="user_set",
-        related_query_name="user",
-    )
 
     class Meta:
         db_table = 'city'
         verbose_name = 'Город'
         verbose_name_plural = 'Города'
-        ordering = ['id']
-
-    def __str__(self):
-        return self.name
-
-
-class PanelStatus(models.Model):
-    name = models.CharField(max_length=20, unique=True, verbose_name='название"')
-    description = models.TextField(blank=True, null=True, verbose_name='описание')
-    color = models.ForeignKey(
-        "Color", to_field='name',
-        on_delete=models.PROTECT, verbose_name='цвет', related_name='panel_status_color'
-    )
-    color_text = models.ForeignKey(
-        "Color", to_field='name',
-        on_delete=models.PROTECT, verbose_name='цвет текста', related_name='panel_status_color_text'
-    )
-
-    icon = models.ForeignKey(
-        "Smile", to_field='smile_icon',
-        on_delete=models.PROTECT, null=True, verbose_name='иконка',
-    )
-
-    class Meta:
-        db_table = 'panel_status'
-        verbose_name = 'Статус панели'
-        verbose_name_plural = 'Статусы панели'
         ordering = ['id']
 
     def __str__(self):

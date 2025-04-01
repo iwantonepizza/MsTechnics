@@ -8,6 +8,6 @@ urlpatterns = [
     path('<str:city_name>/<str:display_name>/', views.service_main, name='service_main'),
     path('change-condition/', views.change_condition, name='change_condition'),
     path('change-panel-in-cell/', views.change_panel_in_cell, name='change_panel_in_cell'),
-    path('change-problem-panel/', views.change_problem_panel, name='change_problem_panel'),
+    path('change-panel-modal/', views.change_panel_modal, name='change_panel_modal'),
 
 ]

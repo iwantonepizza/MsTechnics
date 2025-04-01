@@ -19,6 +19,8 @@ class MsUser(AbstractUser):
         choices=TYPE_PERMISSION,
         default='none_type',
         verbose_name='Уровень доступа')
+    allowed_city = models.ManyToManyField(
+        "main.Cities", blank=True, verbose_name='Разрешенные города')
     telegram_id = models.CharField(max_length=10, blank=True, null=True,
                                    verbose_name='Айди телеграм')
 

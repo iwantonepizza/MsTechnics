@@ -1,79 +1,63 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const modalOverlays = document.querySelectorAll(".overlay"); // Все модальные окна
+document.body.addEventListener("click", (e) => {
+    if (e.target.classList.contains("open-modal")) {
+        const modal = document.getElementById("universalModal");
+        const modalContent = document.getElementById("modalContent");
+        const modalBody = document.getElementById("modalBody");
+        const apiUrl = e.target.getAttribute("data-api-url");
 
-    // Открытие модальных окон и передача данных в скрытое поле
-    document.body.addEventListener("click", (e) => {
-        if (e.target.classList.contains("head-button")) {
-            const targetModalId = e.target.getAttribute("data-target");
-            const applicationId = e.target.getAttribute("data-application-id"); // Получаем application ID
-            const departureId = e.target.getAttribute("data-departure-id");
-            const targetStep = e.target.getAttribute("data-next-application-step");
-            const panelId = e.target.getAttribute("data-panel-id");
-            const newCondition = e.target.getAttribute("data-new-condition");
-            const cellId = e.target.getAttribute("data-cell-id");
-            const displayId = e.target.getAttribute("data-display-id");
+        modal.style.display = "flex";
+        modalContent.innerHTML = `
+            <div class="modal-header">
+                <span>Загрузка информации с сервера</span>
+                <span class="close-cross">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="loading-wrapper">
+                    <div class="loading"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="action-btn cancel" type="button" id="closeModalBtn">Отмена</button>
+                <button class="action-btn submit-btn" type="button">Выполнить</button>
+            </div>`;
 
-            console.log(11)
-
-            console.log(displayId)
-
-            const targetModal = document.getElementById(targetModalId);
-            if (targetModal) {
-                targetModal.style.display = "flex"; // Показываем модальное окно
-
-                // Заполняем скрытое поле
-                const hiddenApplicationID = targetModal.querySelector("input#application-id");
-                if (hiddenApplicationID) {
-                    hiddenApplicationID.value = applicationId; // Устанавливаем значение ID
-                }
-                const hiddenDepartureID = targetModal.querySelector("input#departure-id");
-                if (hiddenDepartureID) {
-                    hiddenDepartureID.value = departureId;
-                }
-                const hiddenTargetStep = targetModal.querySelector("input#target-step");
-                if (hiddenTargetStep) {
-                    hiddenTargetStep.value = targetStep;
-                }
-                const hiddenPanelId = targetModal.querySelector("input#target-panel-id");
-                if (hiddenPanelId) {
-                    hiddenPanelId.value = panelId;
-                }
-                const hiddenNewCondition = targetModal.querySelector("input#condition-new");
-                if (hiddenNewCondition) {
-                    hiddenNewCondition.value = newCondition;
-                }
-                const hiddenCellId = targetModal.querySelector("input#target-cell-id");
-                if (hiddenCellId) {
-                    hiddenCellId.value = cellId;
-                }
-                const hiddenDisplayId = targetModal.querySelector("input#target-display-id");
-                if (hiddenDisplayId) {
-                    hiddenDisplayId.value = displayId;
-                }
-
-
-                // Также обновляем текст заголовка
-                /*                const modalTitle = targetModal.querySelector("#modalTitle");
-                                if (modalTitle) {
-                                    modalTitle.textContent = `Вы точно хотите удалить заявку ${applicationId}?`;
-                                }*/
+        let params = {};
+        for (let attr of e.target.attributes) {
+            if (attr.name.startsWith("data-") && attr.name !== "data-api-url") {
+                let key = attr.name.replace("data-", "").replace(/-/g, "_");
+                params[key] = attr.value;
             }
         }
-    });
 
-    // Закрытие всех окон через кнопки "X" или фон
-    document.body.addEventListener("click", (e) => {
-        if (e.target.classList.contains("close-cross") || e.target.classList.contains("overlay")) {
-            modalOverlays.forEach(modal => modal.style.display = "none");
-        }
-    });
+        const csrfToken = document.querySelector("input[name='csrfmiddlewaretoken']")?.value ||
+            document.querySelector("meta[name='csrf-token']")?.getAttribute("content") || "";
 
-    // Дополнительно: предотвращение отправки формы на кнопке "Отмена"
-    document.body.addEventListener("click", (e) => {
-        if (e.target.classList.contains("cancel")) {
-            e.preventDefault(); // Предотвращаем действие по умолчанию
-            const currentModal = e.target.closest(".overlay");
-            if (currentModal) currentModal.style.display = "none"; // Закрываем окно
+        fetch(apiUrl, {
+            method: "POST",
+            headers: { "X-CSRFToken": csrfToken, "Content-Type": "application/json" },
+            body: JSON.stringify(params)
+        })
+            .then(response => response.text())
+            .then(html => {
+                modalContent.innerHTML = html;
+            })
+            .catch(error => {
+                modalBody.innerHTML = "<p>Ошибка загрузки</p>";
+            });
+    }
+
+    // Делегирование событий для кнопки "Выполнить"
+    if (e.target.classList.contains("submit-btn")) {
+        const form = document.querySelector("#modalContent form"); // Ищем форму внутри модалки
+        if (form) {
+            form.submit();
+        } else {
+            console.error("Форма не найдена");
         }
-    });
+    }
+
+    // Закрытие окна
+    if (e.target.classList.contains("close-cross") || e.target.classList.contains("overlay") || e.target.classList.contains("cancel")) {
+        document.getElementById("universalModal").style.display = "none";
+    }
 });

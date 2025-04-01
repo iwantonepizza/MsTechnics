@@ -1,148 +1,16 @@
-{% load panel_tags %}
-
-<div id="contactList" class="overlay" style="display: none;">
-    <div class="modal">
-        <span class="close-cross" id="closeModalBtn">&times;</span>
+<div id="universalModal" class="overlay" style="display: none;">
+    <div class="modal" id="modalContent">
         <div class="modal-header">
-            <h2 id="modalTitle">Контакт лист {{ panel.name }}</h2>
+            <span>Загрузка</span>
+            <span class="close-cross">&times;</span>
         </div>
         <div class="modal-body">
+            <div class="loading-wrapper">
+                <div class="loading"></div>
+            </div>
         </div>
-        <div class="modal-footer" id="modalFooter">
+        <div class="modal-footer">
             <button class="action-btn cancel" type="button">Отмена</button>
-            <button class="action-btn" type="submit">Выполнить</button>
-        </div>
-    </div>
-</div>
-
-
-<div id="application_info" class="overlay" style="display: none;">
-    <div class="modal">
-        <span class="close-cross" id="closeModalBtn">&times;</span>
-        <div class="modal-header">
-            <h2 id="modalTitle">Информация по отображении заявок</h2>
-
-        </div>
-        <div class="modal-body">
-            {% application_status_info as statuses %}
-            {% for status in statuses %}
-                <li>
-                    <span style="background-color: {{ status.color.hex_color }};  border-radius: 50%; width: 1vh; height: 1vh">. . </span>{{ status.description }}
-                </li>
-            {% endfor %}
-        </div>
-        <div class="modal-footer" id="modalFooter">
-            <button class="action-btn cancel" type="button">Отмена</button>
-        </div>
-    </div>
-</div>
-
-
-<div id="application_dell" class="overlay" style="display: none;">
-    <div class="modal">
-        <span class="close-cross" id="closeModalBtn">&times;</span>
-        <div class="modal-header">
-            <h2 id="modalTitle">Вы точно хотите удалить заявку?</h2>
-        </div>
-        <div class="modal-body">
-            <form action="{% url 'main:application:delete' %}" method="post">
-                {% csrf_token %}
-                <input type="hidden" id="application-id" name="application_id" value="">
-                <button class="action-btn cancel" type="button">Отмена</button>
-                <button class="action-btn" type="submit">Выполнить</button>
-            </form>
-        </div>
-    </div>
-</div>
-
-
-<div id="application_accept" class="overlay" style="display: none;">
-    <div class="modal">
-        <span class="close-cross" id="closeModalBtn">&times;</span>
-        <div class="modal-header">
-            <h2 id="modalTitle">Отправление заявки {{ panel.name }}</h2>
-        </div>
-        <div class="modal-body">
-            <form action="{% url 'main:application:next_step' %}" method="post">
-                {% csrf_token %}
-                <label>
-                    Комментарий
-                    <input style="background: rgba(187,187,187,0.49); color: rgba(255,255,255,0.89); width: 100%; height: 5vh"
-                           name="comment" type="text">
-                </label>
-                <input type="hidden" id="application-id" name="application_id" value="">
-                <input type="hidden" id="target-step" name="target_step" value="">
-
-                <div class="modal-footer">
-                    <button class="action-btn cancel" type="button">Отмена</button>
-                    <button class="action-btn" type="submit">Выполнить</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-
-<div id="change_condition" class="overlay" style="display: none;">
-    <div class="modal">
-        <span class="close-cross" id="closeModalBtn">&times;</span>
-        <div class="modal-header">
-            <h2 id="modalTitle">Подтверждение смены состояния</h2>
-        </div>
-        <div class="modal-body">
-            <form action="{% url 'main:service:change_condition' %}" method="post">
-                {% csrf_token %}
-                <label>
-                    Комментарий
-                    <input name="comment" type="text">
-                </label>
-                <input type="hidden" id="target-panel-id" name="panel_id" value="">
-                <input type="hidden" id="condition-new" name="new_condition" value="">
-
-                <div class="modal-footer">
-                    <button class="action-btn cancel" type="button">Отмена</button>
-                    <button class="action-btn" type="submit">Принять</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-
-<!-- Само модальное окно -->
-<div id="commentModal" class="overlay" style="display: none;">
-    <div class="modal">
-        <span class="close-cross" id="closeModalBtn">&times;</span>
-        <div class="modal-header">
-            <h2 id="modalTitle">Добавление комментария в раздел сервис</h2>
-        </div>
-        <div class="modal-body">
-            <form action="{% url 'main_menu:index' %}" method="post">
-                {% csrf_token %}
-                <label>
-                    Комментарий
-                    <input name="comment" type="text">
-                </label>
-                <br>
-                <label for="panel">Выберите панель:</label>
-                <input list="panel-options" name="chosen_panel" id="panel" class="form-control"
-                       placeholder="Введите или выберите панель">
-                <datalist id="panel-options">
-                    {% for panel in panels %}
-                        <option value="{{ panel.name }}">{{ panel.name }} - {{ panel.description }}</option>
-                    {% endfor %}
-                </datalist>
-                <input type="hidden" name="id" value={{ panel.id }}>
-                <input type="hidden" name="mode" value="add_service_comment">
-                <div class="modal-footer">
-                    <button class="action-btn cancel" type="button">Отмена</button>
-
-                    <button class="action-btn" type="submit">Отправить</button>
-                </div>
-            </form>
-        </div>
-        <div class="modal-footer" id="modalFooter">
-            <!-- Кнопки будут добавлены динамически -->
         </div>
     </div>
 </div>

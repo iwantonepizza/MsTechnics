@@ -1,36 +1,42 @@
-<div class="full-width-container">
-    <div class="inner-block {% if empty_slot %}inactive {% else %}active{% endif %}">
-        {% if empty_slot %}
-            <a class="head-button" type="button"></a>
-            <div class="application-scroll-box">
-            </div>
+<div class="panel-report-box">
+    <a class="inactive-head-button" type="button">История панели {% if panel.name %} id  {{ panel.name }} {% endif %}
+    </a>
+    <div class="scroll-info-block">
+        {% if panel_report_history %}
+            {% for report in panel_report_history %}
+                <p class="pointed" title="Работник: {{ report.user }} {% if report.comment %}Комментарий: {{ report.comment }}{% endif %}">{{ report.description }}| {{ report.time }}</p>
+            {% endfor %}
+        {% elif panel %}
+            <a class="needed-panel-info" title="В базе нет информации по данной панели">
+                Информации нет
+            </a>
         {% else %}
-            <a class="head-button" type="button">История панели id-{{ panel.name }}</a>
-            <div class="application-scroll-box">
-                {% if panel_report_history.moving %}
-                    {% for line in panel_report_history.moving %}
-                        <p>{{ line }}</p>
-                    {% endfor %}
-                {% else %}
-                    <span style="text-align: center; min-height: 1.5vh; color: rgba(225,201,123,0.87)">Нет истории</span>
-                {% endif %}
-            </div>
+            <a class="needed-panel-info" title="Выберите ячейку на экране панелей">
+                Выберите панель
+            </a>
         {% endif %}
     </div>
-    <div class="inner-block">
-        <a class="head-button" type="button">История места {{ cell.position }}</a>
-        <div class="application-scroll-box">
-            {% if info_cell %}
-                {% for line in info_cell %}
-                    <p>{{ line.description }} {{ line.time }}
-                        {% if line.user %}
-                            {{ line.user }}
-                        {% endif %}
-                    </p>
-                {% endfor %}
-            {% else %}
-                <span style="text-align: center; min-height: 1.5vh; color: rgba(225,201,123,0.87)">Нет истории</span>
-            {% endif %}
-        </div>
+</div>
+<div class="slot-report-box">
+    <a class="inactive-head-button" type="button">История места {{ cell.position }}</a>
+    <div class="scroll-info-block">
+        {% if info_cell %}
+            {% for report in info_cell %}
+                <p class="pointed" title="Работник: {{ report.user }} {% if report.comment %}Комментарий: {{ report.comment }}{% endif %}">
+                    {{ report.description }} {{ report.time }}
+                    {% if report.user %}
+                        {{ report.user }}
+                    {% endif %}
+                </p>
+            {% endfor %}
+        {% elif cell %}
+            <a class="needed-panel-info" title="В базе нет информации по данной ячейке">
+                Информации нет
+            </a>
+        {% else %}
+            <a class="needed-panel-info" title="Выберите ячейку на экране панелей">
+                Выберите панель
+            </a>
+        {% endif %}
     </div>
 </div>

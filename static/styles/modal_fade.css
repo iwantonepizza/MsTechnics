@@ -1,6 +1,3 @@
-
-
-/* Модальное окно */
 .overlay {
     position: fixed;
     top: 0;
@@ -8,13 +5,12 @@
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.89);
-    display: flex; /* Flexbox */
-    justify-content: center; /* Горизонтальное центрирование */
-    align-items: center; /* Вертикальное центрирование */
-    animation: fadeIn 0.3s forwards; /* Плавное появление */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.3s forwards;
 }
 
-/* Анимация появления фона */
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -26,21 +22,21 @@
 
 .modal {
     background: rgba(71, 69, 69, 0.95);
-    padding: 20px;
-    min-height: 10vh;
-    max-height: 80vh;
-    min-width: 20vh;
-    max-width: 50vh;
     border-radius: 8px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    position: relative; /* Для кнопки закрытия */
-    transform: scale(0.8); /* Начальный масштаб */
+    position: relative;
+    transform: scale(0.8);
     opacity: 0;
     animation: popUp 0.5s forwards;
+    overflow: hidden;
+    padding: 0;
+    min-width: 500px;
+    max-width: 30vw;
+    min-height: 20vh;
+    display: grid;
+    grid-template-rows: 50px 1fr 50px;
 }
 
-
-/* Анимация масштабирования окна */
 @keyframes popUp {
     0% {
         transform: scale(0.8);
@@ -56,65 +52,258 @@
     }
 }
 
-/* Кнопка закрытия */
+.modal-header, .modal-footer {
+    background: #333;
+    color: #fff;
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 8px 8px 0 0;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px; /* Добавляем зазор между кнопками */
+    padding: 15px;
+    border-radius: 0 0 8px 8px;
+}
+
+.modal-body {
+    padding: 15px;
+    max-height: 70vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
 .close-cross {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    font-size: 24px;
-    color: #1e1e1e;
+    color: red;
+    font-size: 20px;
     cursor: pointer;
-    transition: color  5ms ease, transform 2ms ease;
+    transition: transform 0.2s;
 }
 
 .close-cross:hover {
     transform: scale(1.3);
-    color: #450000;
-    background: none;
 }
 
-/* Заголовок */
-.modal-header {
-    padding: 1vh;
-    border-bottom: 1px solid #ddd;
-    color: #e3e2e3;
+
+@media (width < 900px) {
+    .modal {
+        min-width: 80vw;
+        width: 90vw;
+        max-height: 90vh;
+
+    }
 }
 
-.modal-header h2 {
-    margin: 0;
-    align-items: center;
-}
-
-/* Основной блок */
-.modal-body {
-    padding: 20px;
-    font-size: 16px;
-    color: #c6c4c6;
-}
-
-/* Блок кнопок */
-.modal-footer {
-    padding: 15px;
-    border-top: 1px solid #ddd;
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-}
 
 .action-btn {
     padding: 8px 16px;
     border: none;
     cursor: pointer;
     border-radius: 5px;
-    background-color: #4CAF50;
-    color: white;
     font-size: 14px;
 }
 
 .action-btn.cancel {
     background-color: #f44336;
+    color: white;
 }
 
-.action-btn:hover {
-    opacity: 0.9;
+.action-btn {
+    background-color: #4CAF50;
+    color: white;
+}
+
+
+
+
+/* Базовые стили для кнопки */
+
+.new-cool-button {
+    cursor: pointer;
+    display: flex; /* Для центрирования смайлика */
+    justify-content: center;
+    align-items: center;
+    width: 40px; /* Задаем фиксированную ширину как базу */
+    height: 40px; /* Фиксированная высота для квадрата */
+    min-width: 40px; /* Минимальная ширина */
+    min-height: 40px; /* Минимальная высота */
+    background-color: rgba(255, 253, 253, 0.07); /* Светлый фон по умолчанию */
+    border-radius: 8px; /* Скругленные углы */
+    text-decoration: none; /* Убираем подчеркивание ссылки */
+    color: #333; /* Цвет смайлика */
+    font-size: 20px; /* Начальный размер смайлика */
+    transition: background-color 0.3s ease, transform 0.2s ease; /* Плавные переходы */
+}
+
+/* Наведение */
+
+.new-cool-button:hover {
+    background-color: #8c9f8d; /* Затемнение при наведении */
+    transform: scale(1.1); /* Легкое увеличение при наведении */
+}
+
+/* Анимация нажатия */
+
+.new-cool-button:active {
+    transform: scale(0.95); /* Уменьшение при клике */
+    background-color: #45a049; /* Более темный оттенок при нажатии */
+    transition: transform 0.1s ease; /* Быстрая анимация нажатия */
+}
+
+/* Смайлик внутри */
+
+.new-cool-button span, .new-cool-button::before {
+    display: block;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    line-height: 40px; /* Соответствует высоте кнопки */
+    transition: font-size 0.3s ease; /* Плавное изменение размера смайлика */
+}
+
+/* Растягивание смайлика при наведении */
+
+.new-cool-button:hover span, .new-cool-button:hover::before {
+    font-size: 24px; /* Увеличиваем размер смайлика */
+}
+
+/* Если смайлик — эмодзи, он уже внутри текста, так что span не нужен */
+
+.new-cool-button {
+    line-height: 40px; /* Центрирование эмодзи */
+}
+
+.delete-photo-btn {
+    grid-column: 7/8;
+}
+
+
+
+.photo-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    border-radius: 8px;
+    transition: box-shadow 0.3s ease, border 0.3s ease;
+}
+
+.photo-link {
+    display: inline-block;
+    max-width: 100%;
+    text-align: center;
+}
+
+.photo-img {
+    max-height: 20vh; /* Максимальная высота 20vh */
+    max-width: 100%; /* Фото не выходит за родителя */
+    border-radius: 6px;
+    transition: box-shadow 0.3s ease, border 0.3s ease;
+}
+
+.photo-item:hover .photo-img {
+    box-shadow: 0 0 10px rgba(0, 162, 255, 0.8); /* Синеватое свечение */
+    border: 2px solid rgba(0, 162, 255, 0.6); /* Рамка */
+}
+
+.custom-file-upload {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    border: 2px dashed #007bff;
+    border-radius: 8px;
+    background-color: rgba(0, 123, 255, 0.1);
+    cursor: pointer;
+    transition: background-color 0.3s ease, border 0.3s ease;
+    text-align: center;
+}
+
+.custom-file-upload:hover {
+    background-color: rgba(0, 123, 255, 0.2);
+    border-color: #0056b3;
+}
+
+.custom-file-upload span {
+    font-size: 14px;
+    font-weight: bold;
+    color: #007bff;
+    margin-bottom: 5px;
+}
+
+#photo-input {
+    display: none;
+}
+
+.delete-photo {
+    position: relative;
+    padding: 12px 32px; /* Увеличьте горизонтальный padding */
+    min-width: 120px;
+    font-size: 16px;
+    font-family: Arial, sans-serif;
+    font-weight: 600;
+    color: #fff;
+    background: #ff4d4d;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.delete-photo::before {
+    content: "Удалить";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.delete-photo::after {
+    content: "❌";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.delete-photo:hover {
+    min-width: 200px;
+    background: #e60000;
+    box-shadow: 0 4px 15px rgba(255, 77, 77, 0.4);
+}
+
+.delete-photo:hover::before {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0);
+}
+
+.delete-photo:hover::after {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+/* Дополнительный эффект волны при клике */
+
+.delete-photo:active::before,
+.delete-photo:active::after {
+    transition: none;
+}
+
+.report-box {
+    cursor: pointer;
+}
+
+.report-box:hover {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
 }

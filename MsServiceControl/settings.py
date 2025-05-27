@@ -1,17 +1,19 @@
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+env_path = BASE_DIR / "Config" / ".env"
+load_dotenv(dotenv_path=env_path)
 
 GOOGLE_CREDENTIALS_FILE = os.path.join(BASE_DIR, 'Config/client_secret.json')
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 
-SECRET_KEY = 'django-insecure-w-wfq_hlw8rteq7$pne*n0c6li3hxbw%x5jm_jy*3*oqi3p05$'
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
-DEBUG = True
+DEBUG = os.environ.get('DEBUG')
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['*']  # потом заменить
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -20,8 +22,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
-    "debug_toolbar",
 
     'main',
     "main_menu",
@@ -34,8 +34,10 @@ INSTALLED_APPS = [
     'application',
     'mail',
 
-
 ]
+
+if DEBUG:
+    INSTALLED_APPS.append("debug_toolbar")
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -45,9 +47,11 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
 ]
+
+if DEBUG:
+    MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
+
 
 ROOT_URLCONF = 'MsServiceControl.urls'
 
@@ -73,12 +77,11 @@ WSGI_APPLICATION = 'MsServiceControl.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'MShomeDEV',
-        'USER': 'homePIZ',
-        'PASSWORD': 'dudecomeon222',
-        'HOST': 'localhost',
-        'PORT': '5433',
-
+        'NAME': os.environ.get('POSTGRES_DB'),
+        'USER': os.environ.get('POSTGRES_USER'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
+        'HOST': os.getenv('POSTGRES_HOST'),
+        'PORT': os.getenv('POSTGRES_PORT', 5432),
     }
 }
 
@@ -98,33 +101,33 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 LANGUAGE_CODE = 'ru'
-
 TIME_ZONE = 'Asia/Yekaterinburg'
-
 USE_I18N = True
-
 USE_TZ = True
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATICFILES_DIRS = (BASE_DIR / 'static',)
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
 MEDIA_URL = 'media/'
-
 MEDIA_ROOT = BASE_DIR / 'media'
 
-INTERNAL_IPS = [
-    # ...
-    "127.0.0.1",
-    # ...
-]
 
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+#адреса с которых видно DjangoToolBar
+if DEBUG:
+    INTERNAL_IPS = [
+        "127.0.0.1",
+    ]
+
+# привязывание модели и адреса авторизации пользователя
 AUTH_USER_MODEL = 'user.MsUser'
 LOGIN_URL = '/user/login/'
 LOGIN_REDIRECT_URL = '/'
 
+
+#это потом поместить в бд
 ALLOWED_DEPARTMENT = {'to_monitoring': ["monitoring", "all", "admin"],
                       'to_control': ["control", "all", "admin"],
                       'to_service': ["service", "all", "admin"],

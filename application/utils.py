@@ -23,7 +23,7 @@ def create_application(panel: Panels, comment: str, time_event, user, file=None)
     panel.save()
     cell = Cell.objects.filter(panel=panel).first()
     presend_filters(text=f'Создана заявка c id - {created_application.id}\n'
-                         f'------------------------ \n'
+                         f'------------------------ \n' 
                          f'Время создания - {datetime.strftime(time_event, '%d.%m.%Y %H:%M:%S ')}\n'
                          f'Экран - {created_application.display} {cell.position}\n'
                          f'Панель - {created_application.panel}\n'

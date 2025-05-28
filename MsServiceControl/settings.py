@@ -13,7 +13,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 
 DEBUG = os.environ.get('DEBUG')
 
-ALLOWED_HOSTS = ['*']  # потом заменить
+ALLOWED_HOSTS = ['127.0.0.1', 'www.mstechnics.ru', 'mstechnics.ru', '185.251.88.121']  # потом заменить
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -51,7 +51,6 @@ MIDDLEWARE = [
 
 if DEBUG:
     MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
-
 
 ROOT_URLCONF = 'MsServiceControl.urls'
 
@@ -112,10 +111,9 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-#адреса с которых видно DjangoToolBar
+# адреса с которых видно DjangoToolBar
 if DEBUG:
     INTERNAL_IPS = [
         "127.0.0.1",
@@ -126,8 +124,7 @@ AUTH_USER_MODEL = 'user.MsUser'
 LOGIN_URL = '/user/login/'
 LOGIN_REDIRECT_URL = '/'
 
-
-#это потом поместить в бд
+# это потом поместить в бд
 ALLOWED_DEPARTMENT = {'to_monitoring': ["monitoring", "all", "admin"],
                       'to_control': ["control", "all", "admin"],
                       'to_service': ["service", "all", "admin"],

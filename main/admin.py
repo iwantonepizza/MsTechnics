@@ -7,7 +7,6 @@ class CitiesAdmin(admin.ModelAdmin):
     ordering = ('name',)
     fields = ['name',
               'description',
-              'displays',
               'slug'
               ]
 
@@ -40,12 +39,10 @@ admin.site.register(Smile, SmileAdmin)
 
 class ConditionAdmin(admin.ModelAdmin):
     list_display = ('description', 'color', 'color_text', 'icon')  # Поля, отображаемые в списке
-    list_filter = ('name', 'color', 'icon')  # Фильтры для боковой панели
-    search_fields = ('name', 'icon')  # По каким полям осуществляется поиск
-    ordering = ('name',)  # Порядок сортировки (убывание по времени выполнения)
+    list_filter = ('color', 'icon')  # Фильтры для боковой панели
+    search_fields = ('description', 'icon')  # По каким полям осуществляется поиск
     list_editable = ('color', 'color_text', 'icon')  # Поля, которые можно редактировать прямо в списке
     fields = [
-        'name',
         ('color', 'color_text', 'icon'),
         'description',
 

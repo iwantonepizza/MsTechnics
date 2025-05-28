@@ -3,7 +3,6 @@ from django.contrib import messages
 
 from django.contrib.auth.decorators import login_required
 from zip.models import Display, Panels, Cell
-from main.Db.orm_query import replace_panel_in_cell, change_panel_condition
 from django.views.decorators.csrf import csrf_exempt
 from get_time import get_time_setting_tz
 from application.models import ApplicationHistoryReport
@@ -13,7 +12,7 @@ from main.models import Cities
 from django.db.models import Count
 import json
 from django.http import JsonResponse
-
+from main.Db.orm_query import replace_panel_in_cell, change_panel_condition
 
 @login_required
 def index(request):

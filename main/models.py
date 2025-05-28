@@ -1,8 +1,6 @@
 from django.db import models
 
-from user.models import ConcreteMsUser
 
-from zip.models import Display
 
 
 class Cities(models.Model):

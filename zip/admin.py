@@ -17,6 +17,7 @@ class DisplayAdmin(admin.ModelAdmin):
         ('city', 'cols', 'rows'),
         'description',
         'camera_link',
+        'file',
         'project_photo',
         'slug'
     ]
@@ -66,4 +67,3 @@ class CellAdmin(admin.ModelAdmin):
     ]
 
 
-admin.site.register(Cell, CellAdmin)

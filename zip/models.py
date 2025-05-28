@@ -2,13 +2,16 @@ from django.db import models
 from datetime import datetime, timedelta
 from django.db import transaction
 from django.apps import apps
+from get_time import get_time_setting_tz
 
+from main.models import Condition
 from sorting_message import presend_filters
 from user.models import ConcreteMsUser
 
 from django.db.models import UniqueConstraint
 from django.core.exceptions import ValidationError
 
+from main_menu.models import PanelHistoryReport, DisplayHistoryReport
 
 class ExampleQueryset(models.QuerySet):
     def test_fuction(self):
@@ -23,10 +26,10 @@ class Display(models.Model):
     description = models.TextField(blank=True, null=True, verbose_name='описание')
     rows = models.PositiveIntegerField(verbose_name='кол-во рядов', default=0)
     cols = models.PositiveIntegerField(verbose_name='кол-во столбцов', default=0)
-    camera_link = models.URLField(max_length=150, null=True, verbose_name='ссылка"')
-    file = models.FileField(upload_to='files/', blank=True, null=True, default='probka.jpg',
+    camera_link = models.URLField(max_length=150, null=True, verbose_name='ссылка на камеру')
+    file = models.FileField(upload_to='files/', blank=True, null=True, default='file_not_found.jpg',
                             verbose_name='Электросхема')
-    project_photo = models.FileField(upload_to='files/', blank=True, null=True, default='probka.jpg',
+    project_photo = models.FileField(upload_to='files/', blank=True, null=True, default='file_not_found.jpg',
                                      verbose_name='Проект')
     slug = models.SlugField(unique=True, blank=True, null=True, verbose_name='URL')
     objects = ExampleQueryset().as_manager()
@@ -63,19 +66,55 @@ class Display(models.Model):
         return None
 
     def save(self, *args, **kwargs):
-        # создаем ячейки при создании дисплея
+        is_new = self.pk is None
+        extra_panels = getattr(self, "_extra_panels", 10)
+
         with transaction.atomic():
-            is_new = self.pk is None  # Проверяем, создается ли объект
             super().save(*args, **kwargs)
 
-            # Если объект новый, создаем связанные ячейки
             if is_new:
+                # 1. Создаем ячейки
                 cells = [
                     Cell(display=self, row=row, col=col)
                     for row in range(1, self.rows + 1)
                     for col in range(1, self.cols + 1)
                 ]
                 Cell.objects.bulk_create(cells)
+
+                # 2. Создаем панели
+                PanelModel = Panels
+                total = len(cells) + extra_panels  # гарантируем достаточно панелей
+
+                panels = [
+                    PanelModel(
+                        name=f"{self.name}-{i + 1}",
+                        display=self,
+                        comment="Создан автоматически с экраном",
+                    )
+                    for i in range(total)
+                ]
+                PanelModel.objects.bulk_create(panels)
+
+                # 3. Назначаем панель каждой ячейке
+                # Повторно получаем объекты, т.к. bulk_create не возвращает PK
+                created_cells = list(Cell.objects.filter(display=self).order_by("id"))
+                created_panels = list(PanelModel.objects.filter(display=self).order_by("id"))
+
+                for cell, panel in zip(created_cells, created_panels):
+                    cell.panel = panel
+                    current_time = get_time_setting_tz()
+
+                    PanelHistoryReport.objects.create(panel=cell.panel,
+                                                      description=f'⬇️ {cell.panel.display.description} {cell.position}',
+                                                      type_report='moving', time=current_time,
+                                                      comment='Установлена автоматически при создании экрана')
+                    DisplayHistoryReport.objects.create(display=cell.panel.display, slot=cell,
+                                                        description=f'⬇️ {cell.panel}',
+                                                        type_event='moving', time=current_time,
+                                                        comment='Установлена автоматически при создании экрана')
+                    cell.save()
+
+                Cell.objects.bulk_update(created_cells, ["panel"])
 
 
 class Cell(models.Model):
@@ -139,7 +178,7 @@ class Panels(models.Model):
     )
     department = models.ForeignKey(
         "main.Department", to_field='name',
-        on_delete=models.PROTECT, null=True, verbose_name='нахождение',
+        on_delete=models.PROTECT, null=True, verbose_name='нахождение', default='zip'
     )
     application_status = models.ForeignKey(
         "application.ApplicationStatus", to_field='name',
@@ -228,16 +267,16 @@ class DailyTask(models.Model):
             minutes=5):
             self.alert_notification_sent = True
             presend_filters(text=f'👁 {self.name} откроется через 5 минут 👁',
-                                   type_msg='daily'
-                                   )
+                            type_msg='daily'
+                            )
         # проверка на просрок
         elif self.status != 'done' and self.lost_notification_sent is False and current_datetime.time() > self.end_time:
             self.status = 'undone'
             self.lost_notification_sent = True
             self.save()
             presend_filters(text=f'❌ {self.name} просрочен ❌',
-                                   type_msg='daily'
-                                   )
+                            type_msg='daily'
+                            )
 
         # проверка на дедлайн
         elif self.deadline_notification_sent is False and (
@@ -248,15 +287,15 @@ class DailyTask(models.Model):
             self.deadline_notification_sent = True
             self.save()
             presend_filters(text=f'🔥 {self.name} остался час на выполнение 🔥',
-                                   type_msg='daily'
-                                   )
+                            type_msg='daily'
+                            )
         elif current_datetime.time() > self.start_time and self.start_notification_sent is False:
             self.start_notification_sent = True
             self.status = 'ready'
             self.save()
             presend_filters(text=f'{self.name} доступен!',
-                                   type_msg='daily'
-                                   )
+                            type_msg='daily'
+                            )
 
     def check_available_status(self):
         return self.status in ('ready', 'deadline')
@@ -268,7 +307,6 @@ class DailyTask(models.Model):
         if self.last_completed_date != current_datetime.date():
             message_delivered = self.check_status(current_datetime)
             self.save()
-
 
     class Meta:
         db_table = 'daily_task'
@@ -386,6 +424,10 @@ class PhotoDisplay(models.Model):
     )
     image = models.ImageField(upload_to="photos/display_photos/", verbose_name="Фото")
     uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата загрузки")
-
+    class Meta:
+        db_table = 'photo_display'
+        verbose_name = 'Фото экрана'
+        verbose_name_plural = 'Фото экрана'
+        ordering = ['id']
     def __str__(self):
         return f"Фото {self.display.name}"

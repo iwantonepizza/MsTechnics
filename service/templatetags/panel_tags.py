@@ -37,15 +37,20 @@ def qtg_get_panels(department_name: str = None, panels_filter: list = None, disp
     user_cities = user.allowed_city.all()
     queryset = Panels.objects.select_related('department', 'display', 'condition__icon', 'application_status', ).filter(
         display__city__in=user_cities)
+    print(queryset.count(), department_name)
+
     if department_name:
         queryset = queryset.filter(
             department__name=department_name
         )
+
     # Если panels_filter не пуст, применяем дополнительную фильтрацию
     if panels_filter:
         queryset = queryset.filter(name__in=panels_filter)
+
     if condition_filter:
         queryset = queryset.filter(condition__name__in=condition_filter)
+
     if display_slug:
         queryset = queryset.filter(display__slug__in=display_slug)
 

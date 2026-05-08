@@ -16,14 +16,28 @@ RENAMES = [
 
 def _rewrite_legacy_fk_values(connection, source, target):
     with connection.cursor() as cursor:
-        cursor.execute(
-            "UPDATE panel SET application_status_id = %s WHERE application_status_id = %s",
-            [target, source],
-        )
-        cursor.execute(
-            "UPDATE application SET status_id = %s WHERE status_id = %s",
-            [target, source],
-        )
+        for table_name, column_name in (
+            ("panel", "application_status_id"),
+            ("application", "status_id"),
+        ):
+            cursor.execute(
+                """
+                SELECT data_type
+                FROM information_schema.columns
+                WHERE table_schema = current_schema()
+                  AND table_name = %s
+                  AND column_name = %s
+                """,
+                [table_name, column_name],
+            )
+            row = cursor.fetchone()
+            if not row or row[0] in {"smallint", "integer", "bigint"}:
+                continue
+
+            cursor.execute(
+                f"UPDATE {table_name} SET {column_name} = %s WHERE {column_name} = %s",
+                [target, source],
+            )
 
 
 def forwards(apps, schema_editor):

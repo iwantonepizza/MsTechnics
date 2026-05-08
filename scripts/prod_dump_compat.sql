@@ -14,7 +14,6 @@ WHERE NOT EXISTS (
 );
 
 ALTER TABLE "user" ADD COLUMN IF NOT EXISTS max_id varchar(50);
-ALTER TABLE display ADD COLUMN IF NOT EXISTS vnnox_device_id varchar(64) NOT NULL DEFAULT '';
 
 ALTER TABLE display DROP CONSTRAINT IF EXISTS display_city_id_21080318_fk_city_name;
 ALTER TABLE panel DROP CONSTRAINT IF EXISTS panel_application_status_id_d5e89b0b_fk_application_status_name;

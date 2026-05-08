@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
             state_operations=[
                 migrations.DeleteModel(name="Application"),
                 migrations.DeleteModel(name="ApplicationHistoryReport"),
-                migrations.DeleteModel(name="ApplicationStatus"),
+                # Legacy zip state still points at application.ApplicationStatus until zip.0003.
             ],
         ),
     ]

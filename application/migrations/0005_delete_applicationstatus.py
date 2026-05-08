@@ -3,15 +3,15 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("main", "0001_initial"),
-        ("core_references", "0001_initial_state_import"),
+        ("application", "0004_remove_models_from_state"),
+        ("zip", "0003_remove_models_from_state"),
     ]
 
     operations = [
         migrations.SeparateDatabaseAndState(
             database_operations=[],
             state_operations=[
-                # Legacy application/zip state still references main.* until later cleanup.
+                migrations.DeleteModel(name="ApplicationStatus"),
             ],
         ),
     ]

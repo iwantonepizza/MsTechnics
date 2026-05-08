@@ -1,6 +1,18 @@
 -- Compatibility patch for restoring an older prod dump into the current codebase.
 -- Apply after pg_restore, before running the app against the restored DB.
 
+UPDATE django_migrations
+SET name = '0001_initial_state_import'
+WHERE app = 'user' AND name = '0001_initial';
+
+INSERT INTO django_migrations (app, name, applied)
+SELECT 'core_references', '0001_initial_state_import', NOW()
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM django_migrations
+    WHERE app = 'core_references' AND name = '0001_initial_state_import'
+);
+
 ALTER TABLE "user" ADD COLUMN IF NOT EXISTS max_id varchar(50);
 ALTER TABLE display ADD COLUMN IF NOT EXISTS vnnox_device_id varchar(64) NOT NULL DEFAULT '';
 

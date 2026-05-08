@@ -1,0 +1,11 @@
+[Unit]
+Description=MsTechnics VNNOX Gmail alarm pull
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/mstechnics
+EnvironmentFile=/opt/mstechnics/Config/.env
+ExecStart=/opt/mstechnics/.venv/bin/python manage.py pull_vnnox_alarms
+

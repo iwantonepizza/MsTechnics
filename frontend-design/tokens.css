@@ -1,0 +1,281 @@
+/* MsTechnics design tokens — dark-only */
+:root {
+  /* Surfaces */
+  --bg-0: oklch(15.5% 0.005 255);
+  --bg-1: oklch(18.5% 0.005 255);
+  --bg-2: oklch(22%   0.006 255);
+  --bg-3: oklch(26%   0.007 255);
+  --bg-4: oklch(30%   0.008 255);
+
+  /* Borders */
+  --border-subtle: oklch(28% 0.006 255);
+  --border: oklch(34% 0.008 255);
+  --border-strong: oklch(44% 0.010 255);
+
+  /* Text */
+  --fg:      oklch(96% 0.003 255);
+  --fg-dim:  oklch(74% 0.005 255);
+  --fg-mute: oklch(56% 0.008 255);
+  --fg-faint:oklch(42% 0.008 255);
+
+  /* Brand (amber) */
+  --brand:     oklch(82% 0.17 78);
+  --brand-ink: oklch(22% 0.04 78);
+
+  /* Interactive accent (cyan-blue) */
+  --accent:       oklch(70% 0.13 230);
+  --accent-hover: oklch(75% 0.13 230);
+  --accent-press: oklch(64% 0.13 230);
+  --accent-faint: oklch(70% 0.13 230 / 0.14);
+  --accent-edge:  oklch(70% 0.13 230 / 0.45);
+  --accent-ink:   oklch(18% 0.02 230);
+
+  /* Semantic */
+  --ok:    oklch(72% 0.14 155);
+  --ok-faint:  oklch(72% 0.14 155 / 0.16);
+  --warn:  oklch(78% 0.14 78);
+  --warn-faint: oklch(78% 0.14 78 / 0.18);
+  --warn-ink: oklch(20% 0.04 78);
+  --err:   oklch(68% 0.18 25);
+  --err-faint: oklch(68% 0.18 25 / 0.16);
+  --err-ink: oklch(18% 0.04 25);
+  --info:  oklch(72% 0.12 230);
+  --info-faint: oklch(72% 0.12 230 / 0.16);
+  --info-ink: oklch(18% 0.02 230);
+
+  /* Type */
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Density — default comfortable */
+  --h-row: 28px;
+  --h-btn-sm: 22px;
+  --h-btn-md: 26px;
+  --h-btn-lg: 30px;
+  --h-input: 26px;
+  --h-header: 44px;
+  --hit-target: 28px;
+  --pad-card: 12px;
+
+  /* Radii */
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 8px;
+
+  /* Shadows */
+  --shadow-popover: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+  --shadow-modal:   0 4px 16px rgba(0,0,0,.4), 0 24px 64px rgba(0,0,0,.5);
+
+  /* Skeleton */
+  --skeleton-bg: oklch(22% 0.006 255);
+  --skeleton-shimmer: oklch(30% 0.008 255);
+}
+
+/* Density: compact — для мощных юзеров на 27" */
+[data-density="compact"] {
+  --h-row: 24px;
+  --h-btn-sm: 20px;
+  --h-btn-md: 22px;
+  --h-btn-lg: 26px;
+  --h-input: 22px;
+  --h-header: 40px;
+  --hit-target: 24px;
+  --pad-card: 10px;
+}
+/* Density: comfortable — дефолт desktop (совпадает с :root) */
+[data-density="comfortable"] {
+  --h-row: 28px;
+  --h-btn-md: 26px;
+  --hit-target: 28px;
+}
+/* Density: touch — iPad 1024 в поле у сервисника */
+[data-density="touch"] {
+  --h-row: 40px;
+  --h-btn-sm: 32px;
+  --h-btn-md: 36px;
+  --h-btn-lg: 44px;
+  --h-input: 36px;
+  --h-header: 52px;
+  --hit-target: 44px;
+  --pad-card: 16px;
+}
+/* Auto-switch on coarse pointer below 1280 */
+@media (max-width: 1280px) and (pointer: coarse) {
+  :root:not([data-density]) {
+    --h-row: 40px; --h-btn-sm: 32px; --h-btn-md: 36px; --h-btn-lg: 44px;
+    --h-input: 36px; --h-header: 52px; --hit-target: 44px; --pad-card: 16px;
+  }
+}
+
+/* OKLCH fallback — Android Browser / старые WebKit рендерят oklch как чёрное */
+@supports not (color: oklch(0% 0 0)) {
+  :root {
+    --bg-0: #1a1b1d;
+    --bg-1: #202225;
+    --bg-2: #272a2e;
+    --bg-3: #2f3237;
+    --bg-4: #383c42;
+    --border-subtle: #313438;
+    --border: #3d4147;
+    --border-strong: #555961;
+    --fg:      #f4f5f6;
+    --fg-dim:  #b4b6ba;
+    --fg-mute: #82858b;
+    --fg-faint:#5e6167;
+    --brand:     #fbbf24;
+    --brand-ink: #3b2e0b;
+    --accent:       #4aa3d9;
+    --accent-hover: #64b3e2;
+    --accent-press: #3f92c5;
+    --accent-faint: rgba(74,163,217,0.14);
+    --accent-edge:  rgba(74,163,217,0.45);
+    --accent-ink:   #0b1c27;
+    --ok:    #4dbd8b;
+    --ok-faint:  rgba(77,189,139,0.16);
+    --warn:  #e2b555;
+    --warn-faint: rgba(226,181,85,0.18);
+    --warn-ink: #3b2e0b;
+    --err:   #e26e5a;
+    --err-faint: rgba(226,110,90,0.16);
+    --err-ink: #321411;
+    --info:  #5aa6d3;
+    --info-faint: rgba(90,166,211,0.16);
+    --info-ink: #0b1c27;
+    --skeleton-bg: #272a2e;
+    --skeleton-shimmer: #383c42;
+  }
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  background: var(--bg-0);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.45;
+  font-feature-settings: 'cv11', 'ss03', 'ss01', 'tnum';
+  -webkit-font-smoothing: antialiased;
+}
+
+.mono { font-family: var(--font-mono); font-feature-settings: 'tnum', 'zero'; }
+
+/* Scrollbars */
+.scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+.scroll::-webkit-scrollbar-thumb { background: var(--bg-3); border-radius: 6px; border: 2px solid var(--bg-0); }
+.scroll::-webkit-scrollbar-thumb:hover { background: var(--bg-4); }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: var(--h-btn-md); padding: 0 10px;
+  border-radius: var(--r-md); border: 1px solid transparent;
+  font: 500 12.5px/1 var(--font-sans); color: var(--fg);
+  cursor: pointer; user-select: none; white-space: nowrap;
+  transition: background 100ms linear, border-color 100ms linear, color 100ms linear;
+}
+.btn.sm { height: var(--h-btn-sm); padding: 0 8px; font-size: 12px; }
+.btn.lg { height: var(--h-btn-lg); padding: 0 12px; font-size: 13px; }
+.btn svg { width: 13px; height: 13px; flex: none; }
+
+.btn-primary { background: var(--accent); color: var(--accent-ink); }
+.btn-primary:hover { background: var(--accent-hover); }
+
+.btn-secondary { background: var(--bg-2); border-color: var(--border); color: var(--fg); }
+.btn-secondary:hover { background: var(--bg-3); border-color: var(--border-strong); }
+
+.btn-ghost { background: transparent; color: var(--fg-dim); }
+.btn-ghost:hover { background: var(--bg-2); color: var(--fg); }
+
+.btn-danger { background: var(--err-faint); border-color: transparent; color: var(--err); }
+.btn-ok { background: var(--ok-faint); color: var(--ok); }
+
+.icon-btn {
+  width: var(--hit-target); height: var(--hit-target);
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--r-md); color: var(--fg-dim);
+  background: transparent; border: 1px solid transparent;
+  cursor: pointer; transition: background 100ms linear, color 100ms linear;
+}
+.icon-btn:hover { background: var(--bg-2); color: var(--fg); }
+.icon-btn svg { width: 14px; height: 14px; }
+
+/* Pills */
+.pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  height: 20px; padding: 0 7px; border-radius: var(--r-sm);
+  font-size: 11px; font-weight: 500; letter-spacing: 0.01em; white-space: nowrap;
+}
+.pill .dot { width: 6px; height: 6px; border-radius: 999px; background: currentColor; }
+.pill-ok   { background: var(--ok-faint);   color: var(--ok); }
+.pill-warn { background: var(--warn-faint); color: var(--warn); }
+.pill-err  { background: var(--err-faint);  color: var(--err); }
+.pill-info { background: var(--info-faint); color: var(--info); }
+.pill-neutral { background: var(--bg-3); color: var(--fg-dim); }
+.pill-brand { background: color-mix(in oklch, var(--brand) 18%, transparent); color: var(--brand); }
+
+/* ID chip — цвета приходят из БД через CSS-переменные --chip-bg / --chip-fg */
+.idchip {
+  display: inline-flex; align-items: center;
+  height: 18px; padding: 0 6px; border-radius: 3px;
+  font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+  letter-spacing: 0.01em;
+  background: var(--chip-bg, var(--bg-3));
+  color: var(--chip-fg, var(--fg-dim));
+}
+
+/* Kbd */
+.kbd {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 16px; height: 16px; padding: 0 4px; border-radius: 3px;
+  background: var(--bg-3); color: var(--fg-dim); border: 1px solid var(--border-subtle);
+  font: 500 10px/1 var(--font-mono);
+}
+
+.focusable:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--bg-0), 0 0 0 4px var(--accent);
+}
+
+/* Label */
+.label {
+  font-family: var(--font-mono); font-size: 10px; color: var(--fg-mute);
+  text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500;
+}
+
+.vsep { width: 1px; height: 14px; background: var(--border-subtle); margin: 0 4px; }
+
+/* Skeleton / shimmer */
+.skeleton {
+  background: var(--skeleton-bg);
+  background-image: linear-gradient(90deg, transparent 0%, var(--skeleton-shimmer) 50%, transparent 100%);
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  background-position: -150% 0;
+  animation: skeleton-shimmer 1.4s linear infinite;
+  border-radius: var(--r-sm);
+  color: transparent !important;
+  user-select: none;
+  pointer-events: none;
+}
+@keyframes skeleton-shimmer {
+  0%   { background-position: -150% 0; }
+  100% { background-position: 250% 0; }
+}
+
+/* Popover (hover на row) */
+.popover {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-popover);
+  padding: 10px 12px;
+  font-size: 12.5px;
+  color: var(--fg);
+  line-height: 1.5;
+  max-width: 380px;
+}
+.popover-title {
+  font-size: 11px; color: var(--fg-mute); text-transform: uppercase;
+  letter-spacing: 0.08em; font-family: var(--font-mono); margin-bottom: 4px;
+}

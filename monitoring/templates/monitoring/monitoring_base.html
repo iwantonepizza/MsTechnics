@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load permission_tag %}
+
+
+{% block title %}
+    {{ title }}
+{% endblock %}
+
+{% block styles %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'styles/panel_info_block.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/displays.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/department_content.css' %}">
+{% endblock %}
+
+{% block back-link %}
+    {% url "main_menu:monitoring:index_monitoring" %}
+{% endblock %}
+
+
+{% block main-center-display %}
+    {% if request.user.permission in allowed.to_monitoring %}
+        {% check_city_permission request.user.id display.city.id as has_permission %}
+        {% if has_permission %}
+
+            <div class="main-grid-12x12">
+
+                <a class="open-modal head-button info-button" data-api-url="/menu/get-application-color-info/" title="Информация по заявкам">Мониторинг {{ display.description }}</a>
+
+                <div class="central-container">
+                    {% include 'html/central_block.html' with central_bar_status='main_display' display=display panel=panel application_box_chosen=application_box_chosen empty_slot=empty_slot free_panels=free_panels %}
+                </div>
+
+
+                    {% if not panel.condition.name %}
+                <div class="panel-info-block">
+                        <a class="needed-panel-info" title="Выберите ячейку на экране панелей">
+                            Выберите панель
+                        </a>
+                </div>
+                    {% else %}
+                        {% include 'html/panel_info_block.html' with applications=applications.all_new department='monitoring' panel=panel %}
+                    {% endif %}
+
+
+                <div class="application-control-block-monitoring">
+                    <nav class=button-bar-fill-width>
+
+                        <a href="?panel_id={{ panel.name }}&application_box_chosen=quest" class="head-button"
+                           title="Ежедневные задачи"
+                           {% if application_box_chosen == 'quest' %}style="background: rgba(113,106,106,0.53); color: rgba(225,201,123,0.87)" {% endif %}>
+                            Задачи
+                        </a>
+                        <a href="?panel_id={{ panel.name }}&application_box_chosen=sent_application"
+                           title="Заявки отправленные, но не принятые мониторингом"
+                           class="head-button"
+                           {% if application_box_chosen == 'sent_application' %}style="background: rgba(113,106,106,0.53); color: rgba(225,201,123,0.87)"  {% endif %}>
+                            Отправленные
+                        </a>
+                        <a href="?panel_id={{ panel.name }}&application_box_chosen=all_application" class="head-button"
+                           title="Все заявки"
+                           {% if application_box_chosen == 'all_application' %}style="background: rgba(113,106,106,0.53); color: rgba(225,201,123,0.87)" {% endif %}>
+                            Все
+                        </a>
+                        <a href="?panel_id={{ panel.name }}&application_box_chosen=application_history"
+                           class="head-button"
+                           title="История заявок"
+                           {% if application_box_chosen == 'application_history' %}style="background: rgba(113,106,106,0.53); color: rgba(225,201,123,0.87)"  {% endif %}>
+                            История
+                        </a>
+                    </nav>
+
+                    <div class="scroll-info-block">
+
+                        {% if application_box_chosen == 'quest' %}
+                            {% for task in daily %}
+                                {% if task.is_ready %}
+                                    <a class="pointed" style="font-size: 1.8vh; display: block;"
+                                       title="Конец в: {{ task.end_time }}"
+                                       href="?url={{ task.link }}&task={{ task.id }}"
+                                       target="_blank">
+                                        {{ task.smile }} {{ task.name }}
+                                    </a>
+                                {% else %}
+                                    <a class="pointed" style="font-size: 1.8vh"
+                                       title="Начало: {{ start_time }} Выполнен: {{ task.last_completed_date }}">
+                                        {{ task.smile }} {{ task.name }}
+                                    </a>
+                                {% endif %}
+                            {% endfor %}
+
+
+                        {% elif application_box_chosen == 'sent_application' %}
+                            {% if applications.application_sent_to_control %}
+                                {% for application in applications.application_sent_to_control %}
+                                    <div class="application-container">
+                                        {% include 'application/application_block.html' %}
+                                        <div class="application-button-container">
+                                            <a class="head-button open-modal"
+                                               data-api-url="/application/modal-dell-application/"
+                                               data-application-id="{{ application.id }}"
+                                               title="Удалить">
+                                                🗑
+                                            </a>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <span class="empty-application-warning">Заявок нет</span>
+                            {% endif %}
+
+
+                        {% elif application_box_chosen == 'application_history' %}
+                            {% if application_report %}
+                                {% for application in application_report %}
+                                    <p>ID:{{ application.application_id }} | {{ application.description }}
+                                        | {{ application.user }} | {{ application.time }}</p>
+                                {% endfor %}
+                            {% else %}
+                                <span class="empty-application-warning">Заявок нет</span>
+                            {% endif %}
+
+
+                        {% elif application_box_chosen == 'all_application' %}
+                            {% if applications %}
+                                {% for application in applications.all %}
+                                    <div class="application-container">
+                                        {% include 'application/application_block.html' %}
+                                        <div class="application-button-container">
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <span class="empty-application-warning">Заявок нет</span>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+
+                </div>
+                <div class="iframe-container">
+                    <iframe src="{{ display.camera_link }}" frameborder="0" allowfullscreen scrolling="no">
+                        Сломалось, звоните Сене.
+                    </iframe>
+                </div>
+
+            </div>
+            {% include 'modal.html' with panel=panel %}
+        {% else %}
+            <span class="empty-application-warning"
+                  style="height: 90vh">Доступа к этому городу нет, обратитесь к администратору.</span>
+        {% endif %}
+    {% else %}
+        <span class="empty-application-warning"
+              style="height: 90vh">Доступа к отделу мониторинга нет, обратитесь к администратору.</span>
+    {% endif %}
+
+
+{% endblock %}

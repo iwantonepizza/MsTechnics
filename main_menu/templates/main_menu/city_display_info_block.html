@@ -1,0 +1,38 @@
+{% load panel_tags %}
+{% get_city_displays city as city_displays %}
+<div class="head-button" style="margin-bottom: 1vh">{{ city.name }}</div>
+<div class="scroll-info-block">
+    {% if city_displays %}
+        {% for display  in city_displays %}
+            <div class='mini-status-info'
+                 style="background-color: {{ display.current_condition.color }} ;color: {{ display.current_condition.color_text }} ;">
+                <a class="display-name-container"
+                   href="/{{ department }}/{{ city.slug }}/{{ display.name }}">{{ display.description }}
+                </a>
+                <a class="head-button" title="Список контактов для этой панели"
+                   href="{{ display.file.url }}" target="_blank">
+                    Электросхема
+                </a>
+                <a class="head-button" title="Проект панели"
+                   href="{{ display.project_photo.url }}" target="_blank">
+                    Проект
+                </a>
+
+                <a class="head-button open-modal"
+                   title="Список контактов для этой панели"
+                   data-api-url="/get-contacts/{{ display.id }}/">
+                    Контакт лист
+                </a>
+                <a class="head-button open-photo-modal"
+                   title="Фото этой панели"
+                   data-display-id="{{ display.id }}">
+                    Фото
+                </a>
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
+
+
+

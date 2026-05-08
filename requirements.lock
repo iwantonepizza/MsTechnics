@@ -1,0 +1,70 @@
+# ============================================================
+# requirements.lock — pinned зависимости для воспроизводимой среды
+#
+# Сгенерировано командой:
+#   uv pip compile pyproject.toml -o requirements.lock
+#
+# Для регенерации (нужен доступ к сети):
+#   pip install uv
+#   uv pip compile pyproject.toml --upgrade -o requirements.lock
+#
+# Для установки:
+#   pip install -r requirements.lock
+# ============================================================
+
+# Core runtime — взяты из оригинального requirements.txt (проверены на прод)
+aiohappyeyeballs==2.3.5
+aiohttp==3.10.3
+aiosignal==1.3.1
+asgiref==3.8.1
+attrs==24.2.0
+beautifulsoup4==4.13.3
+cachetools==5.5.2
+certifi==2024.8.30
+charset-normalizer==3.4.0
+Django==5.1.4
+et_xmlfile==2.0.0
+frozenlist==1.4.1
+google-api-core==2.24.2
+google-api-python-client==2.165.0
+google-auth==2.38.0
+google-auth-httplib2==0.2.0
+google-auth-oauthlib==1.2.1
+googleapis-common-protos==1.69.2
+greenlet==3.0.3
+gunicorn==23.0.0
+httplib2==0.22.0
+httpx==0.27.0
+idna==3.7
+multidict==6.0.5
+oauthlib==3.2.2
+openpyxl==3.1.5
+packaging==25.0
+pillow==11.0.0
+proto-plus==1.26.1
+protobuf==6.30.1
+psycopg==3.2.3
+psycopg-binary==3.2.3
+pyasn1==0.6.1
+pyasn1_modules==0.4.1
+pyparsing==3.2.1
+python-dateutil==2.9.0.post0
+python-dotenv==1.0.1
+python-telegram-bot==21.0.1
+python-slugify==8.0.4
+pytz==2024.2
+redis==5.2.1
+requests==2.32.3
+requests-oauthlib==2.0.0
+rsa==4.9
+six==1.17.0
+sentry-sdk==2.59.0
+soupsieve==2.6
+socksio==1.0.0
+sqlparse==0.5.3
+structlog==24.4.0
+typing_extensions==4.12.2
+tzdata==2024.2
+uritemplate==4.1.1
+urllib3==2.2.3
+yarl==1.9.4

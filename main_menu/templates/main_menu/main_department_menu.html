@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load permission_tag %}
+{% load static %}
+
+{% block title %}
+    {{ title }}
+{% endblock %}
+{% block back-link %}
+    {% url "main_menu:index" %}
+{% endblock %}
+
+{% block styles %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'styles/department_menu.css' %}">
+{% endblock %}
+{% block main-center-display %}
+    <div class="menu-city-block">
+
+        {% for city in all_city %}
+            {% check_city_permission request.user.id city.id as has_permission %}
+            {% if has_permission %}
+
+                <div class="city-info-block">
+                    {% include 'main_menu/city_display_info_block.html' with city=city department=department %}
+                </div>
+
+                {% if department == 'control' %}
+                    <div class="application-block-city scroll-info-block">
+                        {% if applications %}
+                            {% for application in applications.all %}
+                                {% if application.display.city == city %}
+                                    <div class="application-container" style="height: 100%">
+                                        {% include 'application/application_block.html' with application=application %}
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <span class="empty-application-warning">Заявок нет</span>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+            {% endif %}
+
+        {% endfor %}
+    </div>
+
+    {% include 'main_menu/modal.html' %}
+
+
+{% endblock %}
+{% block scripts %}
+    {{ block.super }}
+    <script src="{% static 'scripts/photo_display.js' %}"></script>
+
+{% endblock %}

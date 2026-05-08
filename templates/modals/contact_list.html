@@ -1,0 +1,18 @@
+<div class="modal-header">
+    <span>Контакт лист: {{ display.description }}</span>
+    <span class="close-cross">&times;</span>
+</div>
+<div class="modal-body">
+    {% if contacts %}
+        {% for contact in contacts %}
+            <p title="{{ contact.telegram_id }}">🟢{{ contact.first_name }} {{ contact.last_name }}
+                📞{{ contact.phone_number }} {{ contact.description }}</p>
+        {% endfor %}
+    {% else %}
+        <p>Контакты отсутствуют.</p>
+    {% endif %}
+</div>
+<div class="modal-footer">
+    <button class="action-btn cancel" type="button" id="closeModalBtn">Отмена</button>
+</div>
+

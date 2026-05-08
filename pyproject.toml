@@ -1,0 +1,162 @@
+[build-system]
+requires = ["setuptools>=65", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = [
+    "Config*",
+    "MsServiceControl*",
+    "shared*",
+    "apps*",
+    "application*",
+    "control*",
+    "departure*",
+    "mail*",
+    "main*",
+    "main_menu*",
+    "monitoring*",
+    "service*",
+    "user*",
+    "zip*",
+]
+exclude = [
+    "frontend*",
+    "dumps*",
+    "fixtures*",
+    "infra*",
+    "media*",
+    "static*",
+    "staticfiles*",
+    "templates*",
+]
+namespaces = false
+
+[project]
+name = "mstechnics"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    # Web framework
+    "django>=5.1,<5.2",
+    "djangorestframework>=3.15,<3.16",
+    "drf-spectacular>=0.27",
+    "gevent>=23.0",
+    "djangorestframework-simplejwt>=5.3",
+    "django-cors-headers>=4.3",
+
+    # Config
+    "django-environ>=0.11",
+    "python-dotenv>=1.0",
+
+    # Database
+    "psycopg[binary]>=3.2",
+
+    # Cache / Queue
+    "redis>=5.0",
+
+    # Logging
+    "structlog>=24.1",
+    "sentry-sdk[django]>=2.59,<3",
+
+    # Auth
+    "google-auth>=2.30",
+    "google-auth-oauthlib>=1.2",
+    "google-api-python-client>=2.130",
+
+    # Telegram
+    "python-telegram-bot>=21.0",
+
+    # HTTP
+    "httpx[socks]>=0.27",
+    "requests>=2.32",
+    "aiohttp>=3.10",
+
+    # Utilities
+    "pillow>=10.3",
+    "python-slugify>=8.0",
+    "beautifulsoup4>=4.13",
+    "openpyxl>=3.1",
+
+    # Prod server
+    "gunicorn>=22.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.5",
+    "black>=24.4",
+    "mypy>=1.10",
+    "django-stubs[compatible-mypy]>=5.0",
+    "djangorestframework-stubs>=3.15",
+    "pre-commit>=3.7",
+    "django-debug-toolbar>=4.4",
+]
+test = [
+    "pytest>=8.2",
+    "pytest-django>=4.8",
+    "pytest-cov>=5.0",
+    "factory-boy>=3.3",
+    "freezegun>=1.5",
+    "httpx[socks]>=0.27",
+]
+
+# ---------------------------------------------------------------------------
+# Ruff
+# ---------------------------------------------------------------------------
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "C4", "DJ", "N", "UP", "RET", "ARG", "SIM", "RUF"]
+ignore = [
+    "E501",   # line length — handled by black
+    "RUF012", # mutable class vars — common in Django models
+]
+
+[tool.ruff.lint.per-file-ignores]
+"*/migrations/*.py" = ["E501", "N", "RUF", "I"]
+"*/tests*.py" = ["ARG"]
+
+# ---------------------------------------------------------------------------
+# Black
+# ---------------------------------------------------------------------------
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+
+# ---------------------------------------------------------------------------
+# Mypy
+# ---------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.12"
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+strict = false              # включим strict поэтапно, сейчас legacy-код не типизирован
+disallow_untyped_defs = false
+warn_unused_ignores = true
+warn_return_any = false
+exclude = ["migrations/", "build/", "staticfiles/"]
+
+[tool.django-stubs]
+django_settings_module = "Config.settings"  # T-1-007 поменяет на Config.settings.dev
+
+# ---------------------------------------------------------------------------
+# Pytest
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "Config.settings_test"
+testpaths = ["apps", "tests"]
+python_files = ["test_*.py", "tests_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--nomigrations",
+    "--cov=.",
+    "--cov-config=.coveragerc",
+    "--cov-report=term-missing",
+    "--cov-fail-under=0",   # 0 сейчас — поднимем до 70 когда будут тесты (T-1-005)
+    "-v",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]

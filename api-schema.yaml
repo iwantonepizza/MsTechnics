@@ -1,0 +1,3286 @@
+openapi: 3.0.3
+info:
+  title: MsTechnics API
+  version: 1.0.0
+  description: REST API для системы управления LED-экранами MS Technics.
+paths:
+  /api/v1/auth/login/:
+    post:
+      operationId: auth_login_create
+      summary: Вход
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LoginRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LoginRequestRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+          description: ''
+        '401':
+          description: No response body
+  /api/v1/auth/refresh/:
+    post:
+      operationId: auth_refresh_create
+      description: |-
+        T-3-fix-002 / B4: Правильная rotation с blacklist старого токена.
+
+        - Читаем refresh из httpOnly cookie
+        - Blacklist старый токен (предотвращаем повторное использование)
+        - Создаём новый refresh + access для того же юзера
+        - Отдаём access в JSON, новый refresh в cookie
+      summary: Обновить токен
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+          description: ''
+        '401':
+          description: No response body
+  /api/v1/auth/logout/:
+    post:
+      operationId: auth_logout_create
+      summary: Выход
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: Успешно
+  /api/v1/me:
+    get:
+      operationId: me_retrieve
+      summary: Текущий пользователь
+      tags:
+      - me
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+          description: ''
+    patch:
+      operationId: me_partial_update
+      summary: Обновить профиль
+      tags:
+      - me
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedMeRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedMeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedMeRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+          description: ''
+  /api/v1/me/change-password:
+    post:
+      operationId: me_change_password_create
+      summary: Сменить пароль
+      tags:
+      - me
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: OK
+        '422':
+          description: No response body
+  /api/v1/cities/:
+    get:
+      operationId: cities_list
+      summary: Список городов
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - refs
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCityList'
+          description: ''
+  /api/v1/cities/{id}/:
+    get:
+      operationId: cities_retrieve
+      summary: Город
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - refs
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/City'
+          description: ''
+  /api/v1/colors/:
+    post:
+      operationId: colors_create
+      summary: Создать цвет
+      tags:
+      - refs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ColorRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ColorRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ColorRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Color'
+          description: ''
+    get:
+      operationId: colors_list
+      summary: Список цветов
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - refs
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedColorList'
+          description: ''
+  /api/v1/colors/{id}/:
+    delete:
+      operationId: colors_destroy
+      summary: Удалить цвет
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Цвет.
+        required: true
+      tags:
+      - refs
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+    get:
+      operationId: colors_retrieve
+      summary: Цвет
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Цвет.
+        required: true
+      tags:
+      - refs
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Color'
+          description: ''
+    patch:
+      operationId: colors_partial_update
+      summary: Обновить цвет
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Цвет.
+        required: true
+      tags:
+      - refs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedColorRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedColorRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedColorRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Color'
+          description: ''
+    put:
+      operationId: colors_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Цвет.
+        required: true
+      tags:
+      - colors
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ColorRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ColorRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ColorRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Color'
+          description: ''
+  /api/v1/conditions/:
+    get:
+      operationId: conditions_list
+      summary: Состояния панелей
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - refs
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedConditionList'
+          description: ''
+  /api/v1/conditions/{id}/:
+    get:
+      operationId: conditions_retrieve
+      summary: Состояние
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Состояние.
+        required: true
+      tags:
+      - refs
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Condition'
+          description: ''
+  /api/v1/smiles/:
+    get:
+      operationId: smiles_list
+      summary: Иконки
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - refs
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSmileList'
+          description: ''
+  /api/v1/smiles/{id}/:
+    get:
+      operationId: smiles_retrieve
+      summary: Иконка
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Иконка.
+        required: true
+      tags:
+      - refs
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Smile'
+          description: ''
+  /api/v1/departments/:
+    get:
+      operationId: departments_list
+      summary: Отделы
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - refs
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDepartmentList'
+          description: ''
+  /api/v1/departments/{id}/:
+    get:
+      operationId: departments_retrieve
+      summary: Отдел
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Отдел.
+        required: true
+      tags:
+      - refs
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Department'
+          description: ''
+  /api/v1/application-statuses/:
+    get:
+      operationId: application_statuses_list
+      summary: Статусы заявок
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - refs
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedApplicationStatusList'
+          description: ''
+  /api/v1/application-statuses/{id}/:
+    get:
+      operationId: application_statuses_retrieve
+      summary: Статус заявки
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Статус заявки.
+        required: true
+      tags:
+      - refs
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationStatus'
+          description: ''
+  /api/v1/departure-statuses/:
+    get:
+      operationId: departure_statuses_list
+      summary: Статусы выездов
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - refs
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDepartureStatusList'
+          description: ''
+  /api/v1/departure-statuses/{id}/:
+    get:
+      operationId: departure_statuses_retrieve
+      summary: Статус выезда
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Статус выезда.
+        required: true
+      tags:
+      - refs
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepartureStatus'
+          description: ''
+  /api/v1/displays/:
+    get:
+      operationId: displays_list
+      summary: Список экранов
+      parameters:
+      - in: query
+        name: city
+        schema:
+          type: string
+        description: Slug города
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - displays
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDisplayListList'
+          description: ''
+  /api/v1/displays/{slug}/:
+    get:
+      operationId: displays_retrieve
+      summary: Детали экрана
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - displays
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisplayDetail'
+          description: ''
+  /api/v1/displays/{slug}/alarms/:
+    get:
+      operationId: displays_alarms_list
+      summary: VNNOX-алармы экрана
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: resolved
+        schema:
+          type: boolean
+        description: true/false
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - displays
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAlarmEventList'
+          description: ''
+  /api/v1/displays/{slug}/contacts/:
+    get:
+      operationId: displays_contacts_retrieve
+      summary: Контакты экрана
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - displays
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisplayList'
+          description: ''
+  /api/v1/displays/{slug}/photos/:
+    get:
+      operationId: displays_photos_retrieve
+      summary: Фотографии экрана
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - displays
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisplayList'
+          description: ''
+  /api/v1/displays/{slug}/photos/upload/:
+    post:
+      operationId: displays_photos_upload_create
+      summary: Загрузить фото
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - displays
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PhotoUploadRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisplayList'
+          description: ''
+  /api/v1/panels/:
+    get:
+      operationId: panels_list
+      summary: Список панелей
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - in: query
+        name: department
+        schema:
+          type: string
+      - in: query
+        name: display
+        schema:
+          type: integer
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - panels
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPanelList'
+          description: ''
+  /api/v1/panels/{id}/:
+    get:
+      operationId: panels_retrieve
+      summary: Детали панели
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - panels
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Panel'
+          description: ''
+    patch:
+      operationId: panels_partial_update
+      summary: Обновить панель
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - panels
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPanelPatchRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPanelPatchRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPanelPatchRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Panel'
+          description: ''
+  /api/v1/panels/{id}/applications/:
+    get:
+      operationId: panels_applications_retrieve
+      summary: Заявки по панели
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - panels
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Panel'
+          description: ''
+  /api/v1/panels/{id}/change-department/:
+    post:
+      operationId: panels_change_department_create
+      summary: Сменить отдел
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - panels
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeDepartmentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ChangeDepartmentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ChangeDepartmentRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Panel'
+          description: ''
+  /api/v1/panels/{id}/history/:
+    get:
+      operationId: panels_history_retrieve
+      summary: История панели
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - panels
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Panel'
+          description: ''
+  /api/v1/panels/{id}/move-to-cell/:
+    post:
+      operationId: panels_move_to_cell_create
+      summary: Поставить панель в ячейку
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - panels
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoveToCellRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MoveToCellRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MoveToCellRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Panel'
+          description: ''
+  /api/v1/cells/:
+    get:
+      operationId: cells_list
+      summary: Список ячеек
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - in: query
+        name: display
+        schema:
+          type: integer
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - cells
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCellList'
+          description: ''
+  /api/v1/cells/{id}/:
+    get:
+      operationId: cells_retrieve
+      summary: Ячейка
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - cells
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cell'
+          description: ''
+  /api/v1/cells/{id}/assign-panel/:
+    post:
+      operationId: cells_assign_panel_create
+      summary: Назначить панель ячейке
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - cells
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignPanelRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AssignPanelRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AssignPanelRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cell'
+          description: ''
+  /api/v1/storage/wires/:
+    get:
+      operationId: storage_wires_list
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - in: query
+        name: display
+        schema:
+          type: string
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - storage
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedWiresList'
+          description: ''
+  /api/v1/storage/wires/{id}/:
+    delete:
+      operationId: storage_wires_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Провод.
+        required: true
+      tags:
+      - storage
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+    get:
+      operationId: storage_wires_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Провод.
+        required: true
+      tags:
+      - storage
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wires'
+          description: ''
+    patch:
+      operationId: storage_wires_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Провод.
+        required: true
+      tags:
+      - storage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedWiresRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedWiresRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedWiresRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wires'
+          description: ''
+  /api/v1/storage/hubs/:
+    get:
+      operationId: storage_hubs_list
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - in: query
+        name: display
+        schema:
+          type: string
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - storage
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedHubsList'
+          description: ''
+  /api/v1/storage/hubs/{id}/:
+    delete:
+      operationId: storage_hubs_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Хаб.
+        required: true
+      tags:
+      - storage
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+    get:
+      operationId: storage_hubs_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Хаб.
+        required: true
+      tags:
+      - storage
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Hubs'
+          description: ''
+    patch:
+      operationId: storage_hubs_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Хаб.
+        required: true
+      tags:
+      - storage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedHubsRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedHubsRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedHubsRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Hubs'
+          description: ''
+  /api/v1/storage/lamels/:
+    get:
+      operationId: storage_lamels_list
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - in: query
+        name: display
+        schema:
+          type: string
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - storage
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLamelsList'
+          description: ''
+  /api/v1/storage/lamels/{id}/:
+    delete:
+      operationId: storage_lamels_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Ламель.
+        required: true
+      tags:
+      - storage
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+    get:
+      operationId: storage_lamels_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Ламель.
+        required: true
+      tags:
+      - storage
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lamels'
+          description: ''
+    patch:
+      operationId: storage_lamels_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Ламель.
+        required: true
+      tags:
+      - storage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedLamelsRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLamelsRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLamelsRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lamels'
+          description: ''
+  /api/v1/applications/:
+    post:
+      operationId: applications_create
+      summary: Создать заявку
+      tags:
+      - applications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ApplicationCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ApplicationCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationCreate'
+          description: ''
+    get:
+      operationId: applications_list
+      summary: Список заявок
+      parameters:
+      - in: query
+        name: box
+        schema:
+          type: string
+      - in: query
+        name: cell
+        schema:
+          type: integer
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - in: query
+        name: display
+        schema:
+          type: string
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: panel
+        schema:
+          type: integer
+      tags:
+      - applications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedApplicationListItemList'
+          description: ''
+  /api/v1/applications/{id}/:
+    delete:
+      operationId: applications_destroy
+      description: |-
+        T-3-fix-002 / B3: Whitelist-подход — разрешено только is_creator OR is_admin.
+        Если creator is None (старая заявка) — не-admin НЕ проходит.
+      summary: Удалить заявку
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+    get:
+      operationId: applications_retrieve
+      summary: Детали заявки
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationDetail'
+          description: ''
+  /api/v1/applications/{id}/events/:
+    get:
+      operationId: applications_events_list
+      summary: Timeline событий заявки
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - applications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedApplicationEventList'
+          description: ''
+  /api/v1/applications/{id}/transition/:
+    post:
+      operationId: applications_transition_create
+      summary: Перевести заявку (FSM)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TransitionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TransitionRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransitionRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationDetail'
+          description: ''
+        '409':
+          description: No response body
+        '403':
+          description: No response body
+  /api/v1/departures/:
+    post:
+      operationId: departures_create
+      summary: Создать выезд
+      tags:
+      - departures
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepartureCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DepartureCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DepartureCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepartureList'
+          description: ''
+    get:
+      operationId: departures_list
+      summary: Список выездов
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+      tags:
+      - departures
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDepartureListList'
+          description: ''
+  /api/v1/departures/{id}/:
+    delete:
+      operationId: departures_destroy
+      summary: Удалить выезд
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - departures
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+    get:
+      operationId: departures_retrieve
+      summary: Детали выезда
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - departures
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepartureList'
+          description: ''
+    patch:
+      operationId: departures_partial_update
+      summary: Обновить выезд
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - departures
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedDeparturePatchRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedDeparturePatchRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedDeparturePatchRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepartureList'
+          description: ''
+  /api/v1/departures/{id}/archive/:
+    post:
+      operationId: departures_archive_create
+      summary: Архивировать выезд
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - departures
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepartureList'
+          description: ''
+  /api/v1/departures/{id}/complete/:
+    post:
+      operationId: departures_complete_create
+      summary: Завершить выезд
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - departures
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepartureCompleteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DepartureCompleteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DepartureCompleteRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepartureList'
+          description: ''
+  /api/v1/executors/:
+    get:
+      operationId: executors_list
+      summary: Список исполнителей
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - departures
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedExecutorList'
+          description: ''
+  /api/v1/executors/{id}/:
+    get:
+      operationId: executors_retrieve
+      summary: Детали исполнителя
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Исполнитель.
+        required: true
+      tags:
+      - departures
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Executor'
+          description: ''
+  /api/v1/activity-log/:
+    get:
+      operationId: activity_log_list
+      summary: Журнал активности
+      parameters:
+      - in: query
+        name: before
+        schema:
+          type: string
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - in: query
+        name: display
+        schema:
+          type: string
+      - in: query
+        name: kind
+        schema:
+          type: string
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: since
+        schema:
+          type: string
+      tags:
+      - activity
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedActivityLogList'
+          description: ''
+  /api/v1/activity-log/{id}/:
+    get:
+      operationId: activity_log_retrieve
+      summary: Запись журнала
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - activity
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivityLog'
+          description: ''
+  /api/v1/events/stream:
+    get:
+      operationId: events_stream_retrieve
+      summary: SSE поток событий
+      tags:
+      - events
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: text/event-stream
+  /api/v1/health/live:
+    get:
+      operationId: health_live_retrieve
+      summary: Liveness probe
+      tags:
+      - health
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/health/ready:
+    get:
+      operationId: health_ready_retrieve
+      summary: Readiness probe
+      tags:
+      - health
+      security:
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/dashboard/:
+    get:
+      operationId: dashboard_retrieve
+      summary: Сводка для главного меню
+      tags:
+      - dashboard
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+components:
+  schemas:
+    ActivityLog:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        event_type:
+          allOf:
+          - $ref: '#/components/schemas/EventTypeEnum'
+          title: Тип события
+        target_kind:
+          type: string
+          readOnly: true
+        target_id:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+          title: ID объекта
+        target_summary:
+          type: string
+          readOnly: true
+        actor_name:
+          type: string
+        occurred_at:
+          type: string
+          format: date-time
+          title: Время события
+        description:
+          type: string
+          title: Описание
+        comment:
+          type: string
+          title: Комментарий
+        payload:
+          title: Доп. данные
+          description: from_department, to_department, old_condition, etc.
+      required:
+      - actor_name
+      - event_type
+      - id
+      - target_kind
+      - target_summary
+    AlarmEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+        receiving_card_no:
+          type: integer
+        raw_position:
+          type: string
+        raw_email_subject:
+          type: string
+        occurred_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+        cell_id:
+          type: integer
+          nullable: true
+        cell_position:
+          type: string
+          readOnly: true
+        panel_id:
+          type: integer
+          nullable: true
+        panel_name:
+          type: string
+          readOnly: true
+      required:
+      - cell_id
+      - cell_position
+      - id
+      - occurred_at
+      - panel_id
+      - panel_name
+      - raw_email_subject
+      - raw_position
+      - receiving_card_no
+      - resolved_at
+      - type
+    ApplicationCreate:
+      type: object
+      properties:
+        display_id:
+          type: integer
+        panel_id:
+          type: integer
+        cell_id:
+          type: integer
+        comment:
+          type: string
+          maxLength: 2000
+        file:
+          type: string
+          format: uri
+          nullable: true
+      required:
+      - cell_id
+      - comment
+      - display_id
+      - panel_id
+    ApplicationCreateRequest:
+      type: object
+      properties:
+        display_id:
+          type: integer
+        panel_id:
+          type: integer
+        cell_id:
+          type: integer
+        comment:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        file:
+          type: string
+          format: binary
+          nullable: true
+      required:
+      - cell_id
+      - comment
+      - display_id
+      - panel_id
+    ApplicationDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ApplicationStatus'
+          readOnly: true
+        display:
+          allOf:
+          - $ref: '#/components/schemas/DisplayMini'
+          readOnly: true
+        panel:
+          allOf:
+          - $ref: '#/components/schemas/PanelMini'
+          readOnly: true
+        cell:
+          allOf:
+          - $ref: '#/components/schemas/CellMini'
+          readOnly: true
+        executor:
+          allOf:
+          - $ref: '#/components/schemas/ExecutorMini'
+          readOnly: true
+          nullable: true
+        initial_comment:
+          type: string
+          readOnly: true
+        last_update_date_time:
+          type: string
+          format: date-time
+          nullable: true
+          title: Время последней активности
+      required:
+      - cell
+      - display
+      - executor
+      - id
+      - initial_comment
+      - panel
+      - status
+    ApplicationEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        stage:
+          allOf:
+          - $ref: '#/components/schemas/StageEnum'
+          title: Этап
+        user:
+          type: string
+          readOnly: true
+        timestamp:
+          type: string
+          format: date-time
+        comment:
+          type: string
+          nullable: true
+          title: Комментарий
+        file_url:
+          type: string
+          format: uri
+          readOnly: true
+        state_from:
+          type: string
+          readOnly: true
+        state_to:
+          type: string
+          readOnly: true
+      required:
+      - file_url
+      - id
+      - stage
+      - state_from
+      - state_to
+      - timestamp
+      - user
+    ApplicationListItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ApplicationStatus'
+          readOnly: true
+        display:
+          allOf:
+          - $ref: '#/components/schemas/DisplayMini'
+          readOnly: true
+        panel:
+          allOf:
+          - $ref: '#/components/schemas/PanelMini'
+          readOnly: true
+        cell:
+          allOf:
+          - $ref: '#/components/schemas/CellMini'
+          readOnly: true
+        last_update_date_time:
+          type: string
+          format: date-time
+          nullable: true
+          title: Время последней активности
+      required:
+      - cell
+      - display
+      - id
+      - panel
+      - status
+    ApplicationStatus:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Название
+          maxLength: 40
+        description:
+          type: string
+          nullable: true
+          title: Описание
+        color:
+          allOf:
+          - $ref: '#/components/schemas/Color'
+          readOnly: true
+        color_text:
+          allOf:
+          - $ref: '#/components/schemas/Color'
+          readOnly: true
+        icon:
+          allOf:
+          - $ref: '#/components/schemas/Smile'
+          readOnly: true
+        next_possible:
+          type: array
+          items:
+            type: object
+            properties:
+              target_state:
+                type: string
+              allowed_for:
+                type: array
+                items:
+                  type: string
+            required:
+            - target_state
+            - allowed_for
+          readOnly: true
+      required:
+      - color
+      - color_text
+      - icon
+      - id
+      - name
+      - next_possible
+    AssignPanelRequest:
+      type: object
+      properties:
+        panel_id:
+          type: integer
+        comment:
+          type: string
+      required:
+      - panel_id
+    Cell:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        position:
+          type: string
+        row:
+          type: integer
+          readOnly: true
+          title: Ряд
+        col:
+          type: integer
+          readOnly: true
+          title: Столбец
+        panel:
+          allOf:
+          - $ref: '#/components/schemas/PanelOnCell'
+          readOnly: true
+      required:
+      - col
+      - id
+      - panel
+      - position
+      - row
+    CellMini:
+      type: object
+      properties:
+        id:
+          type: integer
+        position:
+          type: string
+          nullable: true
+      required:
+      - id
+      - position
+    ChangeDepartmentRequest:
+      type: object
+      properties:
+        department:
+          type: string
+          minLength: 1
+        comment:
+          type: string
+          maxLength: 500
+      required:
+      - department
+    ChangePasswordRequest:
+      type: object
+      properties:
+        old_password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        new_password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - new_password
+      - old_password
+    City:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Имя
+          maxLength: 15
+        description:
+          type: string
+          nullable: true
+          title: Описание
+        slug:
+          type: string
+          nullable: true
+          title: URL
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+      required:
+      - id
+      - name
+    CityMini:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+          nullable: true
+      required:
+      - id
+      - name
+      - slug
+    CityMiniRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          minLength: 1
+        slug:
+          type: string
+          nullable: true
+          minLength: 1
+      required:
+      - id
+      - name
+      - slug
+    Color:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Цвет
+          maxLength: 15
+        hex:
+          type: string
+      required:
+      - hex
+      - id
+      - name
+    ColorRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Цвет
+          maxLength: 15
+        hex:
+          type: string
+          minLength: 1
+      required:
+      - hex
+      - name
+    Condition:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Состояние
+          maxLength: 15
+        description:
+          type: string
+          nullable: true
+          title: Описание
+        color:
+          allOf:
+          - $ref: '#/components/schemas/Color'
+          readOnly: true
+        icon:
+          allOf:
+          - $ref: '#/components/schemas/Smile'
+          readOnly: true
+      required:
+      - color
+      - icon
+      - id
+      - name
+    Department:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Название отдела
+          maxLength: 20
+        description:
+          type: string
+          nullable: true
+          title: Описание
+      required:
+      - id
+      - name
+    DepartureCompleteRequest:
+      type: object
+      properties:
+        comment:
+          type: string
+        time_end:
+          type: string
+          format: date-time
+    DepartureCreateRequest:
+      type: object
+      properties:
+        description:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        executor_id:
+          type: integer
+          nullable: true
+        time_start:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - description
+    DepartureList:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        description:
+          type: string
+          nullable: true
+          title: Описание
+        status:
+          allOf:
+          - $ref: '#/components/schemas/DepartureStatus'
+          readOnly: true
+          nullable: true
+        executor:
+          allOf:
+          - $ref: '#/components/schemas/ExecutorMini'
+          readOnly: true
+          nullable: true
+        time_start:
+          type: string
+          format: date-time
+          nullable: true
+          title: Начало выезда
+        time_end:
+          type: string
+          format: date-time
+          nullable: true
+          title: Окончание выезда
+        time_updated:
+          type: string
+          format: date-time
+          nullable: true
+          title: Последнее взаимодействие
+      required:
+      - executor
+      - id
+      - status
+    DepartureStatus:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Код
+          maxLength: 40
+        description:
+          type: string
+          title: Название для UI
+          maxLength: 80
+      required:
+      - description
+      - id
+      - name
+    DisplayDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Экран
+          maxLength: 20
+        description:
+          type: string
+          nullable: true
+          title: Описание
+        slug:
+          type: string
+          nullable: true
+          title: URL
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        city:
+          allOf:
+          - $ref: '#/components/schemas/City'
+          readOnly: true
+        rows:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Кол-во рядов
+        cols:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Кол-во столбцов
+        file_url:
+          type: string
+          format: uri
+          readOnly: true
+        project_photo_url:
+          type: string
+          format: uri
+          readOnly: true
+        cells:
+          type: array
+          items:
+            $ref: '#/components/schemas/Cell'
+          readOnly: true
+      required:
+      - cells
+      - city
+      - file_url
+      - id
+      - name
+      - project_photo_url
+    DisplayList:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Экран
+          maxLength: 20
+        description:
+          type: string
+          nullable: true
+          title: Описание
+        slug:
+          type: string
+          nullable: true
+          title: URL
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        city:
+          allOf:
+          - $ref: '#/components/schemas/City'
+          readOnly: true
+        rows:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Кол-во рядов
+        cols:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Кол-во столбцов
+      required:
+      - city
+      - id
+      - name
+    DisplayMini:
+      type: object
+      properties:
+        id:
+          type: integer
+        slug:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+      required:
+      - description
+      - id
+      - slug
+    EventTypeEnum:
+      enum:
+      - panel_move
+      - panel_breakdown
+      - panel_condition_change
+      - panel_service
+      - panel_comment
+      - application_create
+      - application_transition
+      - application_delete
+      - application_executor_change
+      - departure_create
+      - departure_complete
+      - departure_archive
+      - display_panel_replace
+      - daily_task_complete
+      - daily_task_reset
+      - system
+      type: string
+      description: |-
+        * `panel_move` - Панель: перемещение
+        * `panel_breakdown` - Панель: поломка
+        * `panel_condition_change` - Панель: смена состояния
+        * `panel_service` - Панель: сервисные работы
+        * `panel_comment` - Панель: комментарий
+        * `application_create` - Заявка: создана
+        * `application_transition` - Заявка: смена статуса
+        * `application_delete` - Заявка: удалена
+        * `application_executor_change` - Заявка: смена исполнителя
+        * `departure_create` - Выезд: создан
+        * `departure_complete` - Выезд: выполнен
+        * `departure_archive` - Выезд: архивирован
+        * `display_panel_replace` - Экран: замена панели
+        * `daily_task_complete` - Задание: выполнено
+        * `daily_task_reset` - Задание: сброшено
+        * `system` - Системное
+    Executor:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        first_name:
+          type: string
+          title: Имя
+          maxLength: 150
+        last_name:
+          type: string
+          title: Фамилия
+          maxLength: 150
+        executor_role:
+          type: string
+          title: Должность
+          maxLength: 20
+        phone_number:
+          type: string
+          nullable: true
+          title: Телефон
+          maxLength: 15
+        telegram_id:
+          type: string
+          nullable: true
+          maxLength: 20
+      required:
+      - id
+    ExecutorMini:
+      type: object
+      properties:
+        id:
+          type: integer
+        first_name:
+          type: string
+        last_name:
+          type: string
+      required:
+      - first_name
+      - id
+      - last_name
+    Hubs:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Имя
+          maxLength: 20
+        count:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Количество
+        description:
+          type: string
+          nullable: true
+          title: Описание
+          maxLength: 100
+      required:
+      - id
+      - name
+    Lamels:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Имя
+          maxLength: 20
+        count:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Количество
+        description:
+          type: string
+          nullable: true
+          title: Описание
+          maxLength: 100
+      required:
+      - id
+      - name
+    LoginRequestRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 150
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+          maxLength: 128
+      required:
+      - password
+      - username
+    LoginResponse:
+      type: object
+      properties:
+        access:
+          type: string
+      required:
+      - access
+    Me:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          readOnly: true
+        email:
+          type: string
+          format: email
+        permission:
+          type: string
+          readOnly: true
+        allowed_cities:
+          type: array
+          items:
+            $ref: '#/components/schemas/CityMini'
+          readOnly: true
+        telegram_id:
+          type: string
+          nullable: true
+        max_chat_id:
+          type: string
+          nullable: true
+      required:
+      - allowed_cities
+      - id
+      - permission
+      - username
+    MoveToCellRequest:
+      type: object
+      properties:
+        cell_id:
+          type: integer
+        comment:
+          type: string
+      required:
+      - cell_id
+    PaginatedActivityLogList:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActivityLog'
+        next_cursor:
+          type: string
+          nullable: true
+        prev_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+    PaginatedAlarmEventList:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AlarmEvent'
+        next_cursor:
+          type: string
+          nullable: true
+        prev_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+    PaginatedApplicationEventList:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicationEvent'
+        next_cursor:
+          type: string
+          nullable: true
+        prev_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+    PaginatedApplicationListItemList:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicationListItem'
+        next_cursor:
+          type: string
+          nullable: true
+        prev_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+    PaginatedApplicationStatusList:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicationStatus'
+        next_cursor:
+          type: string
+          nullable: true
+        prev_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+    PaginatedCellList:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Cell'
+        next_cursor:
+          type: string
+          nullable: true
+        prev_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+    PaginatedCityList:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/City'
+        next_cursor:
+          type: string
+          nullable: true
+        prev_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+    PaginatedColorList:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Color'
+        next_cursor:
+          type: string
+          nullable: true
+        prev_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+    PaginatedConditionList:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Condition'
+        next_cursor:
+          type: string
+          nullable: true
+        prev_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+    PaginatedDepartmentList:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Department'
+        next_cursor:
+          type: string
+          nullable: true
+        prev_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+    PaginatedDepartureListList:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DepartureList'
+        next_cursor:
+          type: string
+          nullable: true
+        prev_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+    PaginatedDepartureStatusList:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DepartureStatus'
+        next_cursor:
+          type: string
+          nullable: true
+        prev_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+    PaginatedDisplayListList:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DisplayList'
+        next_cursor:
+          type: string
+          nullable: true
+        prev_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+    PaginatedExecutorList:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Executor'
+        next_cursor:
+          type: string
+          nullable: true
+        prev_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+    PaginatedHubsList:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Hubs'
+        next_cursor:
+          type: string
+          nullable: true
+        prev_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+    PaginatedLamelsList:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lamels'
+        next_cursor:
+          type: string
+          nullable: true
+        prev_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+    PaginatedPanelList:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Panel'
+        next_cursor:
+          type: string
+          nullable: true
+        prev_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+    PaginatedSmileList:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Smile'
+        next_cursor:
+          type: string
+          nullable: true
+        prev_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+    PaginatedWiresList:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Wires'
+        next_cursor:
+          type: string
+          nullable: true
+        prev_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+    Panel:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Идентификатор
+          maxLength: 15
+        comment:
+          type: string
+          nullable: true
+          title: Описание
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/Condition'
+          readOnly: true
+        department_name:
+          type: string
+          readOnly: true
+          nullable: true
+        display_id:
+          type: integer
+          readOnly: true
+        cell_id:
+          type: integer
+          readOnly: true
+        application_status_name:
+          type: string
+          readOnly: true
+      required:
+      - application_status_name
+      - cell_id
+      - condition
+      - department_name
+      - display_id
+      - id
+      - name
+    PanelMini:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+      required:
+      - id
+      - name
+    PanelOnCell:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/Condition'
+          readOnly: true
+        application_status_name:
+          type: string
+          readOnly: true
+        comment:
+          type: string
+          nullable: true
+      required:
+      - application_status_name
+      - comment
+      - condition
+      - id
+      - name
+    PatchedColorRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Цвет
+          maxLength: 15
+        hex:
+          type: string
+          minLength: 1
+    PatchedDeparturePatchRequest:
+      type: object
+      properties:
+        description:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        executor_id:
+          type: integer
+          nullable: true
+        time_start:
+          type: string
+          format: date-time
+          nullable: true
+    PatchedHubsRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Имя
+          maxLength: 20
+        count:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Количество
+        description:
+          type: string
+          nullable: true
+          title: Описание
+          maxLength: 100
+    PatchedLamelsRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Имя
+          maxLength: 20
+        count:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Количество
+        description:
+          type: string
+          nullable: true
+          title: Описание
+          maxLength: 100
+    PatchedMeRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        telegram_id:
+          type: string
+          nullable: true
+        max_chat_id:
+          type: string
+          nullable: true
+    PatchedPanelPatchRequest:
+      type: object
+      properties:
+        comment:
+          type: string
+          maxLength: 500
+        condition_id:
+          type: integer
+    PatchedWiresRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Имя
+          maxLength: 20
+        count:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Количество
+        description:
+          type: string
+          nullable: true
+          title: Описание
+          maxLength: 100
+    PhotoUploadRequest:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+        description:
+          type: string
+          maxLength: 200
+      required:
+      - file
+    Smile:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        unicode_symbol:
+          type: string
+      required:
+      - id
+      - unicode_symbol
+    StageEnum:
+      enum:
+      - monitoring_create
+      - control_apply
+      - control_send
+      - service_apply
+      - service_complete
+      - service_unable
+      - archive_done
+      - archive_unable
+      type: string
+      description: |-
+        * `monitoring_create` - Создана мониторингом
+        * `control_apply` - Принята контролем
+        * `control_send` - Отправлена в сервис
+        * `service_apply` - Принята сервисом
+        * `service_complete` - Ремонт выполнен
+        * `service_unable` - Ремонт невозможен
+        * `archive_done` - Архивирована (выполнена)
+        * `archive_unable` - Архивирована (невозможно)
+    TransitionRequest:
+      type: object
+      properties:
+        target_state:
+          type: string
+          minLength: 1
+        comment:
+          type: string
+          maxLength: 2000
+        executor_id:
+          type: integer
+          nullable: true
+        file:
+          type: string
+          format: binary
+          nullable: true
+      required:
+      - target_state
+    Wires:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Имя
+          maxLength: 20
+        count:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Количество
+        description:
+          type: string
+          nullable: true
+          title: Описание
+          maxLength: 100
+      required:
+      - id
+      - name
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+tags:
+- name: auth
+  description: Аутентификация
+- name: me
+  description: Текущий пользователь
+- name: refs
+  description: Справочники
+- name: displays
+  description: Экраны
+- name: panels
+  description: Панели
+- name: cells
+  description: Ячейки
+- name: storage
+  description: ЗИП-расходники
+- name: applications
+  description: Заявки
+- name: departures
+  description: Выезды
+- name: activity
+  description: Журнал активности
+- name: events
+  description: Real-time события (SSE)
+- name: health
+  description: Health checks

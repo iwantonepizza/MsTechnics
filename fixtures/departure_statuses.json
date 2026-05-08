@@ -1,0 +1,6 @@
+[
+  {"model": "workflow_departures.departurestatus", "pk": 1, "fields": {"name": "created",   "description": "Создан",   "order": 1, "is_terminal": false, "color": null, "icon": null}},
+  {"model": "workflow_departures.departurestatus", "pk": 2, "fields": {"name": "completed", "description": "Выполнен", "order": 2, "is_terminal": false, "color": null, "icon": null}},
+  {"model": "workflow_departures.departurestatus", "pk": 3, "fields": {"name": "archived",  "description": "В архиве", "order": 3, "is_terminal": true,  "color": null, "icon": null}},
+  {"model": "workflow_departures.departurestatus", "pk": 4, "fields": {"name": "deleted",   "description": "Удалён",   "order": 4, "is_terminal": true,  "color": null, "icon": null}}
+]

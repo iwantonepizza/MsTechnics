@@ -1,0 +1,19 @@
+<div class="modal-header">
+    <span>Вся история панели {{ panel_name }}</span>
+    <span class="close-cross">&times;</span>
+</div>
+<div class="modal-body">
+    {% for report in reports %}
+        <div class="report-box" title="
+        Комментарий : {% if report.comment %}{{ report.comment }}
+        {% else %}не дан
+        {% endif %}Сотрудник : {{ report.user }}
+        Тип: {{ report.type_report }}">
+            {{ report.description }} | {{ report.time }}
+        </div>
+    {% endfor %}
+
+</div>
+<div class="modal-footer">
+    <button class="action-btn cancel" type="button" id="closeModalBtn">Отмена</button>
+</div>

@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load permission_tag %}
+
+
+{% block title %}
+    {{ title }}
+{% endblock %}
+
+{% block styles %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'styles/slot_and_panel_info_container.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/department_menu.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/department_content.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/departure.css' %}">
+
+{% endblock %}
+
+{% block main-center-display %}
+    <div class="main-block-menu">
+        {% if request.user.permission in allowed.to_monitoring %}
+            <div class="menu-block menu-block-monitoring">
+                <a href="{% url "main:monitoring:index" %}" class="head-button" title="В отдел мониторинга">Отдел
+                    мониторинга</a>
+                <div class="scroll-info-block">
+                    {% for report in panel_reports %}
+                        <p class="pointed"
+                           title="Работник: {{ report.user }} {% if report.comment %}Комментарий: {{ report.comment }}{% endif %}"
+                           style="cursor: help">{{ report }}
+                            - {{ report.panel_id }} | {{ report.time }}</p>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+        {% if request.user.permission in allowed.to_control %}
+            <div class="menu-block menu-block-monitoring">
+                <a href="{% url "main:control:index" %}" class="head-button" title="В отдел контроля">Отдел контроля</a>
+                <div class="scroll-info-block">
+                    {% if applications %}
+                        {% for application in applications %}
+                            <div class="application-container">
+                                {% include 'application/application_block.html' with application=application %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <span class="empty-application-warning">Заявок нет</span>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+        {% if request.user.permission in allowed.to_service %}
+            <div class="menu-block menu-block-service">
+                <a href="{% url "main:service:index" %}" class="head-button" title="В отдел обслуживания">Отдел
+                    обслуживания</a>
+                <div class="scroll-info-block">
+                    {% if service_applications %}
+                        {% for application in service_applications %}
+                            <div class="application-container">
+                                {% include 'application/application_block.html' with application=application %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <span class="empty-application-warning">Заявок нет</span>
+                    {% endif %}
+
+
+                </div>
+            </div>
+            <div class="menu-block menu-block-serviceReport">
+                <a class="head-button" data-target="commentModal" title="Кнопка пока что ничего не делает">Сервис</a>
+                <div class="scroll-info-block">
+                    {% if panel_service_report %}
+                        {% for info in panel_service_report %}
+                            <div class="application-container">
+                                {% include 'html/comment_block.html' with info=info %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <span class="empty-application-warning">Комментариев нет</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="menu-block menu-block-departure">
+                <a class="head-button open-modal"
+                   data-api-url="/departure/create-modal/"
+                   title="Создать выезд">
+                    Выезд
+                </a>
+
+                <div class="scroll-info-block">
+                    {% if departures %}
+                        {% for departure in departures %}
+                            {% if departure.status != 'В архиве' %}
+                                <div class="departure-container">
+                                    {% include 'departure/departure_info_block.html' with departure=departure executors=executors %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <span class="empty-application-warning">Выездов нет</span>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+{% endblock %}

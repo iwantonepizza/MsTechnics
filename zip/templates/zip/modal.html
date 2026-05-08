@@ -1,0 +1,113 @@
+{% load permission_tag %}
+
+
+<div id="open_wire_list" class="overlay" style="display: none;">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 id="modalTitle">Список проводов на складе:</h2>
+            <span class="close-cross" id="closeModalBtn">&times;</span>
+        </div>
+        <div class="modal-body">
+            {% for wire in wires %}
+                <div title="{{ wire.description }}" class="hub-name-block">{{ wire.name }}</div>
+                <strong>
+                    <label>Количество:
+                        <input type="number"
+                               class="wire-input"
+                               value="{{ wire.count }}"
+                               data-wire-id="{{ wire.id }}"
+                               data-original-value="{{ wire.count }}">
+                    </label>
+                </strong>
+
+                {% if wire.photo %}
+                    <a href="{{ wire.photo.url }}" target="_blank" class="photo-link new-cool-button"
+                       title="Посмотреть фото">📷</a>
+                    <a class="delete-photo-btn new-cool-button" title="Удалить фото"
+                       data-wire-id="{{ wire.id }}">🗑</a>
+                {% endif %}
+                <input type="file" class="photo-upload" data-wire-id="{{ wire.id }}" style="display: none;"
+                       accept="image/*">
+                <a class="update-photo-btn new-cool-button" title="Сменить фото" data-wire-id="{{ wire.id }}">🔃</a>
+            {% endfor %}
+        </div>
+        <div class="modal-footer">
+            <button class="save-button" id="save-button">Сохранить изменения</button>
+        </div>
+    </div>
+</div>
+
+
+<div id="open_lamel_list" class="overlay" style="display: none;">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 id="modalTitle">Список ламелей на складе:</h2>
+            <span class="close-cross" id="closeModalBtn">&times;</span>
+        </div>
+        <div class="modal-body">
+            {% for lamel in lamels %}
+                <div title="{{ lamel.description }}" class="hub-name-block">{{ lamel.name }}</div>
+                <strong>
+                    <label>Количество:
+                        <input type="number"
+                               class="wire-input"
+                               value="{{ lamel.count }}"
+                               data-wire-id="{{ lamel.id }}"
+                               data-original-value="{{ lamel.count }}"></label>
+                </strong>
+
+                {% if lamel.photo %}
+                    <a href="{{ lamel.photo.url }}" target="_blank" class="photo-link new-cool-button"
+                       title="Посмотреть фото">📷</a>
+                    <a class="delete-photo-btn new-cool-button" title="Удалить фото" data-wire-id="{{ lamel.id }}">🗑</a>
+                {% endif %}
+                <input type="file" class="photo-upload" data-wire-id="{{ lamel.id }}" style="display: none;"
+                       accept="image/*">
+                <a class="update-photo-btn new-cool-button" title="Сменить фото" data-wire-id="{{ lamel.id }}">🔃</a>
+            {% endfor %}
+        </div>
+        <div class="modal-footer">
+            <button class="save-button" id="save-button">Сохранить изменения</button>
+        </div>
+
+    </div>
+</div>
+
+
+<div id="open_hub_list" class="overlay" style="display: none;">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 id="modalTitle">Список хабов на складе:</h2>
+            <span class="close-cross" id="closeModalBtn">&times;</span>
+
+        </div>
+        <div class="modal-body">
+            {% for hub in hubs %}
+                <div title="{{ hub.description }}" class="hub-name-block">{{ hub.name }}</div>
+                <strong>
+                    <label>Количество:
+                        <input type="number"
+                               class="wire-input"
+                               value="{{ hub.count }}"
+                               data-wire-id="{{ hub.id }}"
+                               data-original-value="{{ hub.count }}"></label>
+                </strong>
+
+                {% if hub.photo %}
+                    <a href="{{ hub.photo.url }}" target="_blank" class="photo-link new-cool-button"
+                       title="Посмотреть фото">📷</a>
+                    <a class="delete-photo-btn new-cool-button" title="Удалить фото"
+                       data-wire-id="{{ hub.id }}">🗑</a>
+                {% endif %}
+                <input type="file" class="photo-upload" data-wire-id="{{ hub.id }}" style="display: none;"
+                       accept="image/*">
+                <a class="update-photo-btn new-cool-button" title="Сменить фото" data-wire-id="{{ hub.id }}">🔃</a>
+            {% endfor %}
+        </div>
+        <div class="modal-footer">
+            <button class="save-button" id="save-button">Сохранить изменения</button>
+        </div>
+    </div>
+</div>
+
+

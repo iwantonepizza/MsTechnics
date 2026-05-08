@@ -1,0 +1,11 @@
+*.pyc
+__pycache__/
+.venv/
+
+# Игнорировать файлы настроек IDE
+.idea/
+.claude/
+# Игнорировать секретные данные
+.env
+/Config/
+/frontend/node_modules/

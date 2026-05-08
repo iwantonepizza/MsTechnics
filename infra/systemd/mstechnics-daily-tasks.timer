@@ -1,0 +1,10 @@
+[Unit]
+Description=Run MsTechnics DailyTask notification check four times per day
+
+[Timer]
+OnCalendar=*-*-* 08,12,16,20:00:00
+Persistent=true
+Unit=mstechnics-daily-tasks.service
+
+[Install]
+WantedBy=timers.target

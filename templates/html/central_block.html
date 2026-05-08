@@ -1,0 +1,38 @@
+<div class="display-visual" style="--cols: {{ display.cols }}; --rows: {{ display.rows }};">
+    {% for cell in display.cells %}
+        <a class="slot"
+           href="?position={{ cell.position }}&application_box_chosen={{ application_box_chosen }}&panel_id={{ cell.panel.name }}"
+                             title="{{ cell.panel.get_full_title }}">
+        
+
+            {% if cell.panel %}
+                <div class="cell_application {% if panel.name  == cell.panel.name %}selected{% endif %}"
+                     style="background-color: {{ cell.panel.application_status.color.hex_color }};
+                             color: {{ cell.panel.application_status.color_text.hex_color }};
+                             overflow: hidden;">
+                </div>
+                <div class="slot_number">
+                    {{ cell.position }}
+
+                </div>
+                <div class="slot_status">
+                    {% if  cell.panel.condition.name != 'work' %}
+                    {{ cell.panel.condition.icon }}
+                    {% endif %}
+                </div>
+
+                <div class="panel_id_hover_block">
+                    {{ cell.panel }}
+                </div>
+
+            {% else %}
+                <div class=cabinet_away title=Пусто style="overflow: hidden">
+                </div>
+                <div class="slot_number_full_size">
+                    {{ cell.position }} 
+                </div>
+            {% endif %}
+
+        </a>
+    {% endfor %}
+</div>

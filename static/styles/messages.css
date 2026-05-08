@@ -1,0 +1,52 @@
+#notification-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Стиль сообщения */
+.notification-banner {
+    padding: 10px 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 90%;
+    max-width: 500px;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.notification_success { background-color: green; color: white; }
+.notification_error { background-color: red; color: white; }
+.notification_info { background-color: blue; color: white; }
+.notification_warning { background-color: orange; color: white; }
+
+
+/* Кнопка закрытия */
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.close-btn:hover {
+    color: #000;
+}
+
+/* Анимация исчезновения */
+.notification-banner.hidden {
+    opacity: 0;
+    transform: translateY(-20px);
+    pointer-events: none;
+}

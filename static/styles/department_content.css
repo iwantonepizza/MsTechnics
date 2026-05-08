@@ -1,0 +1,187 @@
+
+.info-button {
+    grid-row: 1/2;
+    grid-column: 9/-1;
+}
+
+.right-bar-container {
+    min-height: 100%;
+    width: 30%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.panel-info-block {
+    grid-row: 2/5;
+    grid-column: 9/13;
+    width: 100%;
+    height: 100%;
+    color: rgba(255, 255, 255, 0.59); /* Белый шрифт */
+    background: rgba(192, 192, 192, 0.18);
+    border-radius: 10px;
+    padding: 1.5vh;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    row-gap: 5px;
+
+}
+
+.central-container {
+    display: grid;
+    place-items: center;
+    max-height: 100%;
+    grid-row: 1/-1;
+    grid-column: 1/9;
+    resize: both;
+    overflow: auto;
+    padding: 4px;
+
+}
+
+
+.application-control-block-monitoring {
+    grid-row: 5/9;
+    grid-column: 9/-1;
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+
+}
+
+.application-control-block-control {
+    grid-row: 7/10;
+    grid-column: 9/-1;
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+}
+
+.application-control-block-service {
+    grid-row: 7/11;
+    grid-column: 9/-1;
+
+
+}
+
+.task-control-block {
+    grid-row: -4/-1;
+    grid-column: 9/-1;
+}
+
+.application-scroll-box {
+    border-radius: 1vh; /* Чуть более угловатые */
+    background: rgba(168, 164, 164, 0.21);
+    color: rgba(255, 255, 255, 0.73);
+    width: 100%;
+    min-height: 30%;
+    max-height: 100%;
+    overflow: auto;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+
+
+}
+
+.application-scroll-box::-webkit-scrollbar {
+    width: 0;
+}
+
+
+.iframe-container {
+    margin-top: 1vh;
+    grid-row: 9/-1;
+    grid-column: 9/-1;
+    position: relative;
+    width: 100%; /* Занимает всю ширину родительского элемента */
+    /*padding-top: 56.25%; !* Соотношение сторон 16:9 (9 / 16 * 100) *!*/
+
+}
+
+.iframe-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0; /* Убираем рамки */
+}
+
+.panel-place-info-block {
+    grid-row: 9/12;
+    grid-column: 9/-1;
+
+}
+
+.panel-report-box {
+    display: flex;
+    flex-direction: column;
+    grid-row: 5/7;
+    grid-column: 9/11;
+    margin-top: 2vh;
+
+}
+
+.slot-report-box {
+    display: flex;
+    flex-direction: column;
+    margin-top: 2vh;
+    grid-row: 5/7;
+    grid-column: 11/-1;
+
+}
+
+@media (width < 900px) {
+    .info-button {
+        grid-column: 1/-1;
+    }
+
+
+    .central-container {
+        overflow: visible;
+
+
+    }
+
+    .panel-info-block {
+        grid-column: 1/-1;
+    }
+
+    .application-control-block-monitoring {
+        grid-column: 1/-1;
+    }
+
+    .iframe-container {
+        grid-column: 1/-1;
+    }
+
+    .panel-report-box {
+        grid-column: 1/-1;
+
+    }
+
+    .slot-report-box {
+        grid-column: 1/-1;
+
+    }
+
+    .application-control-block-control {
+        grid-row: span;
+        grid-column: 1/-1;
+    }
+
+    .task-control-block {
+        grid-row: span;
+        grid-column: 1/-1;
+    }
+
+    .application-control-block-service {
+        grid-row: span;
+        grid-column: 1/-1;
+
+    }
+}

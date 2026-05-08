@@ -1,0 +1,20 @@
+<div class="modal-header">
+    <span>Вы точно хотите удалить заявку {{ application_id }}?</span>
+    <span class="close-cross">&times;</span>
+</div>
+<div class="modal-body">
+    <form action="{% url 'main:application:delete' %}" method="post">
+        {% csrf_token %}
+        <label>
+            Комментарий
+            <input style="background: rgba(187,187,187,0.49); color: rgba(255,255,255,0.89); width: 100%; height: 5vh"
+                   name="comment" type="text">
+        </label>
+        <input type="hidden" id="application-id" name="application_id" value="{{ application_id }}">
+
+    </form>
+</div>
+<div class="modal-footer">
+    <button class="action-btn cancel" type="button" id="closeModalBtn">Отмена</button>
+    <button class="action-btn submit-btn" type="button">Принять</button>
+</div>

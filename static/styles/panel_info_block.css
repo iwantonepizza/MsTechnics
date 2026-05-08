@@ -1,0 +1,113 @@
+/* Основной контейнер */
+.panel-info-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Стили для информации о панели */
+.panel-info {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.needed-panel-info {
+    cursor: help;
+    display: grid;
+    place-items: center;
+    grid-row: 1/-1;
+    grid-column: 1/-1;
+}
+
+.insert-panel-warning {
+    grid-row: 2/3;
+    grid-column: 2/4;
+}
+
+.panel-id {
+    cursor: help;
+    grid-row: 1/2;
+    grid-column: 1/2;
+}
+
+.panel-model {
+    cursor: help;
+    grid-row: 1/2;
+    grid-column: 2/3;
+}
+
+.panel-description {
+    cursor: pointer;
+    grid-row: 3/4;
+    grid-column: 1/-1;
+    -webkit-line-clamp: 3; /* Показываем только 5 строк */
+    transition: height 3.9s ease;
+}
+
+.panel-description.expanded {
+    -webkit-line-clamp: unset; /* Убираем ограничение по строкам */
+}
+
+
+.panel-application {
+    cursor: help;
+    grid-row: 2/3;
+    grid-column: 1/-1;
+}
+
+.panel-status {
+    grid-row: 1/2;
+    grid-column: -2/-1;
+}
+
+
+/* Кнопки-ссылки в левом нижнем углу */
+.panel-links {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    gap: 1vw;
+}
+
+.switch-panel-status-button-work, .switch-panel-status-button-broken {
+    display: block;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    padding: 10px;
+    box-shadow: 3px 4px 7px rgba(0, 0, 0, 0.1);
+    border-radius: 8px; /* Чуть более угловатые */
+    text-decoration: none;
+    color: rgba(250, 238, 238, 0.94); /* Белый шрифт */
+    font-weight: bold;
+    transition: background-color 0.3s;
+    text-align: center;
+
+}
+
+.switch-panel-status-button-work {
+    background: rgba(59, 128, 59, 0.62);
+
+
+}
+
+.switch-panel-status-button-work:hover {
+    background: rgba(85, 179, 85, 0.62);
+    color: rgba(225, 201, 123, 0.87); /* Белый шрифт */
+
+}
+
+.switch-panel-status-button-broken {
+    background: rgba(128, 43, 43, 0.68)
+
+
+}
+
+.switch-panel-status-button-broken:hover {
+    background: rgba(193, 61, 61, 0.68);
+    color: rgba(225, 201, 123, 0.87); /* Белый шрифт */
+
+}
+

@@ -1,0 +1,313 @@
+{% extends 'base.html' %}
+
+{% load permission_tag %}
+{% load static %}
+
+
+{% block title %}
+    {{ title }}
+{% endblock %}
+
+
+{% block back-link %}
+    {% url "main_menu:service:index" %}
+{% endblock %}
+
+{% block styles %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'styles/panel_info_block.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/slot_and_panel_info_container.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/displays.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/department_content.css' %}">
+{% endblock %}
+
+{% block main-center-display %}
+    {% if request.user.permission in allowed.to_service %}
+
+        {% check_city_permission request.user.id display.city.id as has_permission %}
+        {% if has_permission %}
+            <div class="main-grid-12x12">
+
+                <div class="info-button">
+                    <a class="head-button open-modal" data-target="application_info"
+                       title="Нажмите чтобы получить информацию о заявках">
+                        Сервис {{ display.description }}
+                    </a>
+                    <a class="head-button"
+                       href="{% url 'main:zip:at_display' display.slug %}"
+                       title="Переключить на зип этого экрана">
+                        ЗИП
+                    </a>
+                </div>
+
+                <div class="central-container">
+                    {% include 'html/central_block.html' with display=display cell=cell application_box_chosen=application_box_chosen free_panels=free_panels %}
+                </div>
+
+
+
+
+                    {% if not panel.condition.name %}
+                    <div class="panel-info-block">
+                        {% if cell %}
+                            <div class="dropdown insert-panel-warning">
+
+                                <a class="dropdown-button head-button"
+                                   title="Нажмите чтобы выбрать панель для установки">
+                                    Поставить панель на ячейку {{ cell.position }}
+                                </a>
+
+                                <div class="dropdown-menu" style="overflow: auto; max-height: 50vh; width: 100%">
+                                    {% for free_panel in free_panels %}
+                                        <a class="head-button open-modal"
+                                           data-api-url="/service/change-panel-modal/"
+                                           data-cell-id="{{ cell.id }}"
+                                           data-panel-id="{{ free_panel.name }}"
+                                           data-display-id="{{ display_id }}"
+                                           title="{% if free_panel.comment %}Комментарий: {{ free_panel.comment }} {% endif %}Состояние: {{ free_panel.condition.description }}">
+                                            {{ free_panel.name }} {{ free_panel.condition.icon }}
+                                        </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                        {% else %}
+                            <a class="needed-panel-info" title="Выберите ячейку на экране панелей">
+                                Выберите панель
+                            </a>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                        {% include 'html/panel_info_block.html' with applications=applications.all_new department='service' panel=panel params=params position=position application_box_chosen=application_box_chosen empty_slot=empty_slot free_panels=free_panels cell_id=cell.id display_id=display_id %}
+                    {% endif %}
+
+                {% include 'html/place_and_panel_history_block.html' %}
+
+                <div class="application-control-block-service">
+                    <nav class=button-bar-fill-width>
+                        <a href="?{% if position %}position={{ position }}&{% endif %}{% if panel.name %}panel_id={{ panel.name }}{% endif %}&application_box_chosen=received"
+                           class="head-button{% if application_box_chosen == 'received' %} chosen {% endif %}"
+                           title="Заявки поступившие от мониторинга">
+                            Запросы
+                        </a>
+                        <a href="?{% if position %}position={{ position }}&{% endif %}{% if panel.name %}panel_id={{ panel.name }}{% endif %}&application_box_chosen=at_work"
+                           class="head-button{% if application_box_chosen == 'at_work' %} chosen {% endif %}"
+                           title=" Заявки которые приняты но не отправлены в сервис">
+                            В работе
+                        </a>
+                        <a href="?{% if position %}position={{ position }}&{% endif %}{% if panel.name %}panel_id={{ panel.name }}{% endif %}&application_box_chosen=complete"
+                           class="head-button{% if application_box_chosen == 'complete' %} chosen {% endif %}"
+                           title="Заявки отправленные в сервис и еще не принятые">
+                            Выполненные
+                        </a>
+                        <div class="dropdown">
+                            {% if application_box_chosen == 'archive' %}
+                                <a class="dropdown-button head-button {% if application_box_chosen == 'archive' %}chosen{% endif %}">
+                                    Архив</a>
+                            {% elif application_box_chosen == 'application_history' %}
+                                <a class="dropdown-button head-button {% if application_box_chosen == 'application_history' %}chosen{% endif %}">
+                                    Последнее</a>
+                            {% elif application_box_chosen == 'all_application' %}
+                                <a class="dropdown-button head-button {% if application_box_chosen == 'all_application' %}chosen{% endif %}">
+                                    Все</a>
+                            {% elif application_box_chosen == 'unable' %}
+                                <a class="dropdown-button head-button {% if application_box_chosen == 'unable' %}chosen{% endif %}">
+                                    Невозможные</a>
+                            {% else %}
+                                <a class="dropdown-button head-button" title="Другие варианты">
+                                    Другое</a>
+                            {% endif %}
+
+                            <div class="dropdown-menu">
+
+                                <a class="head-button {% if application_box_chosen == 'archive' %} chosen {% endif %}"
+                                   title="Архив заявок"
+                                   href="?{% if position %}position={{ position }}&{% endif %}{% if panel.name %}panel_id={{ panel.name }}{% endif %}&application_box_chosen=archive&central_bar_status={{ central_bar_status }}">
+                                    Архив
+                                </a>
+
+                                <a class="head-button{% if application_box_chosen == 'application_history' %} chosen {% endif %}"
+                                   title="История изменений заявок"
+                                   href="?{% if position %}position={{ position }}&{% endif %}{% if panel.name %}panel_id={{ panel.name }}{% endif %}&application_box_chosen=application_history&central_bar_status={{ central_bar_status }}">
+                                    История заявок
+                                </a>
+
+                                <a class="head-button{% if application_box_chosen == 'all_application' %} chosen {% endif %}"
+                                   title="Все активные заявки"
+                                   href="?{% if position %}position={{ position }}&{% endif %}{% if panel.name %}panel_id={{ panel.name }}{% endif %}&application_box_chosen=all_application&central_bar_status={{ central_bar_status }}">
+                                    Все заявки
+                                </a>
+
+                                <a class="head-button{% if application_box_chosen == 'unable' %} chosen {% endif %}"
+                                   title="Заявки, ремонт по которым не возможен"
+                                   href="?{% if position %}position={{ position }}&{% endif %}{% if panel.name %}panel_id={{ panel.name }}{% endif %}&application_box_chosen=unable&central_bar_status={{ central_bar_status }}">
+                                    Невозможные
+                                </a>
+
+                            </div>
+                        </div>
+                    </nav>
+
+
+                    <div class="scroll-info-block">
+
+                        {% if application_box_chosen == 'received' %}
+                            {% if applications.application_sent_to_service %}
+                                {% for application in applications.application_sent_to_service %}
+                                    <div class="application-container">
+                                        {% include 'application/application_block.html' %}
+                                        <div class="application-button-container">
+                                            <a class="head-button open-modal"
+                                               data-api-url="/application/modal-next-step/"
+                                               data-target-step="service_unable"
+                                               data-application-id="{{ application.id }}"
+                                               title="Заявка невозможна">
+                                                ❌
+                                            </a>
+                                            <a class="head-button open-modal"
+                                               data-api-url="/application/modal-next-step/"
+                                               data-target-step="service_apply"
+                                               data-application-id="{{ application.id }}"
+                                               title="Принять заявку">
+                                                ✅
+                                            </a>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <span class="empty-application-warning">Заявок нет</span>
+                            {% endif %}
+
+
+                        {% elif application_box_chosen == 'at_work' %}
+                            {% if applications.application_work_in_service %}
+                                {% for application in applications.application_work_in_service %}
+                                    <div class="application-container">
+                                        {% include 'application/application_block.html'  %}
+
+                                        <div class="application-button-container">
+
+                                            <a class="head-button open-modal"
+                                               data-api-url="/application/modal-next-step/"
+                                               data-target-step="service_unable"
+                                               data-application-id="{{ application.id }}"
+                                               title="Ремонт невозможен">
+                                                ❌
+                                            </a>
+                                            <a class="head-button open-modal"
+                                               data-api-url="/application/modal-next-step/"
+                                               data-target-step="service_complete"
+                                               data-application-id="{{ application.id }}"
+                                               title="Выполнить ремонт">
+                                                ✅
+                                            </a>
+                                            {% if application.cell.panel %}
+                                                <a class="head-button open-modal"
+                                                   data-api-url="/zip/modal-panel-remove/"
+                                                   data-cell-id="{{ application.cell.id }}"
+                                                   data-display-id="{{ display.name }}"
+                                                   data-panel-name="{{ application.panel.name }}"
+                                                   title="Снять панель {{ application.panel }}">
+                                                    ⤵️
+                                                </a>
+                                            {% endif %}
+
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <span class="empty-application-warning">Заявок нет</span>
+                            {% endif %}
+
+                        {% elif application_box_chosen == 'complete' %}
+                            {% if applications.done %}
+                                {% for application in applications.done %}
+                                    <div class="application-container">
+                                        {% include 'application/application_block.html' %}
+                                        <div class="application-button-container">
+                                            <a class="head-button open-modal"
+                                               data-api-url="/application/modal-next-step/"
+                                               data-target-step="archive_done"
+                                               data-application-id="{{ application.id }}" title="В архив">
+                                                🗄
+                                            </a>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <span class="empty-application-warning">Заявок нет</span>
+                            {% endif %}
+
+
+                        {% elif application_box_chosen == 'unable' %}
+                            {% if applications.application_unable %}
+                                {% for application in applications.application_unable %}
+                                    <div class="application-container">
+                                        {% include 'application/application_block.html' %}
+
+                                        <div class="application-button-container">
+                                            <a class="head-button open-modal"
+                                               data-api-url="/application/modal-next-step/"
+                                               data-target-step="archive_unable"
+                                               data-application-id="{{ application.id }}" title="В архив">
+                                                🗄
+                                            </a>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <span class="empty-application-warning">Заявок нет</span>
+                            {% endif %}
+
+                        {% elif application_box_chosen == 'archive' %}
+                            {% if applications.archive %}
+                                {% for application in applications.archive %}
+                                    <div class="application-container"
+                                            {% if application.status.name == 'archive_unable' %}
+                                         style="background: rgba(62,9,27,0.63)"
+                                            {% elif application.status.name == 'archive_done' %}
+                                         style="background: rgba(5,106,24,0.51)"
+                                            {% endif %}>
+                                        {% include 'application/application_block.html' %}
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <span class="empty-application-warning">Заявок нет</span>
+                            {% endif %}
+                        {% elif application_box_chosen == 'application_history' %}
+                            {% if application_report %}
+                                {% for application in application_report %}
+                                    <p>ID:{{ application.application_id }} | {{ application.description }}
+                                        | {{ application.user }} | {{ application.time }}</p>
+                                {% endfor %}
+                            {% else %}
+                                <span class="empty-application-warning">Заявок нет</span>
+                            {% endif %}
+
+                        {% elif application_box_chosen == 'all_application' %}
+                            {% if applications.all %}
+                                {% for application in applications.all %}
+                                    <div class="application-container">
+                                        {% include 'application/application_block.html' %}
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <span class="empty-application-warning">Заявок нет</span>
+                            {% endif %}
+
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+            {% include 'modal.html' with panel=panel %}
+        {% else %}
+            <span class="empty-application-warning"
+                  style="height: 90vh">Доступа к этому городу нет, обратитесь к администратору.</span>
+        {% endif %}
+    {% else %}
+        <span class="empty-application-warning"
+              style="height: 90vh">Доступа к отделу сервиса нет, обратитесь к администратору.</span>
+    {% endif %}
+
+{% endblock %}

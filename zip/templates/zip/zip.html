@@ -1,0 +1,308 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% load permission_tag %}
+{% load panel_tags %}
+
+
+{% block styles %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'styles/zip.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/panel_info_block.css' %}">
+
+{% endblock %}
+
+
+{% block title %}
+    {{ title }}
+{% endblock %}
+
+{% block header %}
+{% endblock %}
+
+
+{% block main-center-display %}
+    {% if request.user.permission in allowed.to_zip %}
+
+        <div class="main-grid-12x12" style="row-gap: 1vh">
+            <div class="panel-zip-block">
+
+                <a class="head-button open-modal"
+                   data-target="xxx"
+                   title="Панели в ЗИПЕ">
+                    ЗИП
+                </a>
+                <div class="scroll-info-block">
+                    <div class="panel-grid-zip">
+                        {% qtg_get_panels user=request.user department_name='zip' display_slug=filtered_displays condition_filter=list_of_condition_filter as panels %}
+                        {% for panel in panels %}
+                            <a class="panel-badge-zip" href="{% url "main:zip:at_display" panel.id %}"
+                               target="_self">
+                            <span title="{{ panel.get_full_title }}">
+                            {{ panel.name }}  {{ panel.condition.icon }}
+                            </span>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="panel-zip-block">
+                <a class="head-button open-modal"
+                   data-target="xxx"
+                   title="Панели в данный момент на руках">
+                    На руках
+                </a>
+
+                <div class="scroll-info-block">
+                    <div class="panel-grid-zip">
+
+                        {% qtg_get_panels user=request.user department_name='hand' display_slug=filtered_displays condition_filter=list_of_condition_filter as panels %}
+                        {% for panel in panels %}
+                            <a class="panel-badge-zip" href="{% url "main:zip:at_display" panel.id %}"
+                               target="_self">
+                            <span title="{{ panel.get_full_title }}">
+                            {{ panel.name }}  {{ panel.condition.icon }}
+                            </span>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+
+            </div>
+            <div class="panel-zip-block">
+
+                <a class="head-button open-modal"
+                   data-target="xxx"
+                   title="Панели в сервисе">
+                    Сервис
+                </a>
+
+                <div class="scroll-info-block">
+                    <div class="panel-grid-zip">
+
+                        {% qtg_get_panels user=request.user department_name='service' display_slug=filtered_displays condition_filter=list_of_condition_filter as panels %}
+                        {% for panel in panels %}
+                            <a class="panel-badge-zip" href="{% url "main:zip:at_display" panel.id %}"
+                               target="_self">
+                            <span title="{{ panel.get_full_title }}">
+                            {{ panel.name }}  {{ panel.condition.icon }}
+                            </span>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+
+            </div>
+            <div class="panel-zip-block">
+
+                <a class="head-button open-modal"
+                   data-target="xxx"
+                   title="Панели находящиеся на экранах">
+                    В работе
+                </a>
+                <div class="scroll-info-block">
+                    <div class="panel-grid-zip">
+                        {% qtg_get_panels user=request.user department_name='monitor' display_slug=filtered_displays condition_filter=list_of_condition_filter as panels %}
+                        {% for panel in panels %}
+                            <a class="panel-badge-zip" href="{% url "main:zip:at_display" panel.id %}"
+                               target="_self">
+                            <span title="{{ panel.get_full_title }}">
+                            {{ panel.name }}  {{ panel.condition.icon }}
+                            </span>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-container">
+                {% if not panel.condition.name %}
+                    <a class="needed-panel-info" title="Выберите ячейку на экране панелей">
+                        Выберите панель
+                    </a>
+                {% else %}
+                    {% include 'html/panel_info_block.html' with department='zip' panel=panel %}
+                {% endif %}
+            </div>
+
+            <div class="zip-bar">
+
+                <a class="action-button"
+                   data-target="open_lamel_list"
+                   title="Ламели">
+                    📺
+                </a>
+                <a class="action-button"
+                   data-target="open_hub_list"
+                   title="Хабы">
+                    🕹
+                </a>
+                <a class="action-button"
+                   data-target="open_wire_list"
+                   title="Провода питания и сигнальные провода">
+                    ⛓️
+                </a>
+            </div>
+
+            <div class="report-zip-block">
+
+                {% if panel.name %}
+                    <a class="head-button open-modal"
+                       data-panel-id="{{ panel.id }}"
+                       data-api-url="/zip/add-panel-comment-modal/"
+                       data-type-report="moving"
+                       title="Добавить комментарий передвижения">
+                        История перемещения панели - {{ panel.name }}
+                    </a>
+                {% else %}
+                    <a class="head-button"
+                       title="Выберите панель">
+                        История перемещения панелей
+                    </a>
+                {% endif %}
+
+                <div class="scroll-info-block">
+                    {% for report in panel_report_history.moving %}
+
+                        <p class="pointed"
+                           title="Работник: {{ report.user }} {% if report.comment %}Комментарий: {{ report.comment }}{% endif %}">
+                            {{ report }} | {{ report.time }}
+                        </p>
+
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="report-zip-block">
+
+                {% if panel.name %}
+                    <a class="head-button open-modal"
+                       data-panel-id="{{ panel.id }}"
+                       data-api-url="/zip/add-panel-comment-modal/"
+                       data-type-report="condition"
+                       title="Добавить комментарий состояния">
+                        История состояний панели {{ panel.name }}
+                    </a>
+                {% else %}
+                    <a class="head-button"
+                       title="Выберите панель">
+                        История состояний панелей
+                    </a>
+                {% endif %}
+
+                <div class="scroll-info-block">
+                    {% for report in panel_report_history.condition %}
+                        <p class="pointed"
+                           title="Работник: {{ report.user }} {% if report.comment %}Комментарий: {{ report.comment }}{% endif %}">
+                            {{ report }} | {{ report.time }}
+                        </p>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="report-zip-block">
+
+                {% if panel.name %}
+                    <a class="head-button open-modal"
+                       data-panel-id="{{ panel.id }}"
+                       data-api-url="/zip/add-panel-comment-modal/"
+                       data-type-report="breakdown"
+                       title="Добавить комментарий поломки">
+                        История поломок панели {{ panel.name }}
+                    </a>
+                {% else %}
+                    <a class="head-button"
+                       title="Выберите панель">
+                        История поломок панелей
+                    </a>
+                {% endif %}
+
+                <div class="scroll-info-block">
+                    {% for report in panel_report_history.breakdown %}
+
+                        <p class="pointed"
+                           title="Работник: {{ report.user }} {% if report.comment %}Комментарий: {{ report.comment }}{% endif %}">
+                            {{ report }} | {{ report.time }}
+                        </p>
+
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="report-zip-block">
+                {% if panel.name %}
+                    <a class="head-button open-modal"
+                       data-panel-id="{{ panel.id }}"
+                       data-api-url="/zip/add-panel-comment-modal/"
+                       data-type-report="service"
+                       title="Добавить комментарий сервиса">
+                        История сервиса панели {{ panel.name }}
+                    </a>
+                {% else %}
+                    <a class="head-button"
+                       title="Выберите панель">
+                        История сервиса панелей
+                    </a>
+                {% endif %}
+
+                <div class="scroll-info-block">
+                    {% for report in panel_report_history.service %}
+                        <p class="pointed"
+                           title="Работник: {{ report.user }} {% if report.comment %}Комментарий: {{ report.comment }}{% endif %}">
+                            {{ report }} | {{ report.time }}
+                        </p>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="report-zip-block">
+                {% if panel.name %}
+                    <a class="head-button open-modal"
+                       data-panel-id="{{ panel.id }}"
+                       data-api-url="/zip/add-panel-comment-modal/"
+                       data-type-report="none_type"
+                       title="Добавить общий комментарий">
+                        История панели {{ panel.name }}
+                    </a>
+                {% else %}
+                    <a class="head-button"
+                       title="Выберите панель">
+                        История панелей
+                    </a>
+                {% endif %}
+                <div class="scroll-info-block">
+                    {% for report in panel_report_history.none_type %}
+                        <p class="pointed"
+                           title="Работник: {{ report.user }} {% if report.comment %}Комментарий: {{ report.comment }}{% endif %}">
+                            {{ report }} | {{ report.time }}
+                        </p>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="report-zip-block">
+                <a class="head-button"
+                   title="Все заявки панели">
+                    История заявок панели {% if panel.name %} {{ panel.name }}{% endif %}
+                </a>
+
+                <div class="scroll-info-block">
+
+                </div>
+            </div>
+        </div>
+
+        {% include 'zip/modal.html' %}
+    {% else %}
+        <span class="empty-application-warning"
+              style="height: 90vh">Доступа к зипу нет, обратитесь к администратору.</span>
+    {% endif %}
+
+
+{% endblock %}
+
+{% block scripts %}
+    {{ block.super }}
+    <script src="{% static 'scripts/zip_modal.js' %}"></script>
+    <script type="text/javascript">
+        window.updateWiresUrl = "{% url 'main:zip:update_wires' %}";
+        window.deletePhotoUrl = "{% url 'main:zip:delete_photo' %}";
+        window.updatePhotoUrl = "{% url 'main:zip:update_photo' %}";
+    </script>
+{% endblock %}

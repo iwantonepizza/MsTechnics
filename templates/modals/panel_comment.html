@@ -1,0 +1,20 @@
+<div class="modal-header">
+    <span>Добавление комментария к панели {{ panel_id }}</span>
+    <span class="close-cross">&times;</span>
+</div>
+<div class="modal-body">
+    <form action="{% url 'main:zip:add_panel_comment' %}" method="post">
+        {% csrf_token %}
+        <label>
+            Комментарий
+            <input name="comment" type="text" placeholder="Введите комментарий">
+        </label>
+        <input type="hidden" id="target-panel-id" name="panel_id" value="{{ panel_id }}">
+        <input type="hidden" id="target-type-report" name="type_report" value="{{ type_report }}">
+
+    </form>
+</div>
+<div class="modal-footer">
+    <button class="action-btn cancel" type="button" id="closeModalBtn">Отмена</button>
+    <button class="action-btn submit-btn" type="button">Принять</button>
+</div>

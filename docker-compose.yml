@@ -1,0 +1,38 @@
+services:
+  web:
+    build: .
+    image: ms-service:1.0.1
+    volumes:
+      - ./staticfiles:/app/staticfiles
+      - ./media:/app/media
+    ports:
+      - "8000:8000"
+    env_file:
+      - Config/.env
+    networks:
+      - backend
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    command: >
+      bash -c "python manage.py migrate &&
+               python manage.py collectstatic --noinput &&
+               gunicorn Config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120"
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    networks:
+      - backend
+
+volumes:
+  static_volume:
+  media_volume:
+  pgdata:
+
+networks:
+  backend:

@@ -1,6 +1,6 @@
 from django.contrib.auth.decorators import login_required
 
-from Config.settings import ALLOWED_DEPARTMENT
+from project_config.settings import ALLOWED_DEPARTMENT
 from departure.models import Departure, Executor
 from main_menu.models import PanelHistoryReport
 from application.models import Application

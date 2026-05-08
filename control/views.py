@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 
-from Config.settings import ALLOWED_DEPARTMENT
+from project_config.settings import ALLOWED_DEPARTMENT
 from application.models import Application, ApplicationHistoryReport
 from main.Db.orm_query import get_today_daily
 from application.utils import get_display_application

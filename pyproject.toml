@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 include = [
-    "Config*",
+    "project_config*",
     "MsServiceControl*",
     "shared*",
     "apps*",
@@ -138,13 +138,13 @@ warn_return_any = false
 exclude = ["migrations/", "build/", "staticfiles/"]
 
 [tool.django-stubs]
-django_settings_module = "Config.settings"  # T-1-007 поменяет на Config.settings.dev
+django_settings_module = "project_config.settings"
 
 # ---------------------------------------------------------------------------
 # Pytest
 # ---------------------------------------------------------------------------
 [tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "Config.settings_test"
+DJANGO_SETTINGS_MODULE = "project_config.settings_test"
 testpaths = ["apps", "tests"]
 python_files = ["test_*.py", "tests_*.py"]
 python_classes = ["Test*"]

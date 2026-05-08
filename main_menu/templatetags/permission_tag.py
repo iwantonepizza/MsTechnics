@@ -1,5 +1,5 @@
 from django import template
-from Config.settings import ALLOWED_DEPARTMENT
+from project_config.settings import ALLOWED_DEPARTMENT
 
 from apps.core.users.models import MsUser
 

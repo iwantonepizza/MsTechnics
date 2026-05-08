@@ -26,7 +26,7 @@ def index(request):
 
     service_applications = applications.filter(status__name='sent_to_service')
 
-    departures = Departure.objects.select_related("executor", "status").exclude(status__name="archived").order_by("-time_updated")
+    departures = []
 
     executors = Executor.objects.all()
 

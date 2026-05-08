@@ -38,7 +38,7 @@ def qtg_get_panels(department_name: str = None, panels_filter: list = None, disp
                    condition_filter: list = None, user=None):
     """кверисет по параметрам, может и не нужон"""
     user_cities = user.allowed_city.all()
-    queryset = Panels.objects.select_related('department', 'display', 'condition__icon', 'application_status', ).filter(
+    queryset = Panels.objects.select_related('department', 'display', 'condition__icon').filter(
         display__city__in=user_cities)
     logger.debug(
         "panels_queryset_built",

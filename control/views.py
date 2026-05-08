@@ -22,7 +22,7 @@ def index_control(request):
         'cell',
         'status',
         'executor'
-    ).exclude(status__in=['archive_done', 'archive_unable']).order_by('-last_update_date_time')
+    ).exclude(status__name__in=['archive_done', 'archive_unable']).order_by('-last_update_date_time')
 
     context = {'title': 'Меню Контроль',
 

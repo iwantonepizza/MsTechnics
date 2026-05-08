@@ -1,11 +1,36 @@
 *.pyc
+*.pyo
+*.pyd
 __pycache__/
 .venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
-# Игнорировать файлы настроек IDE
+# Local IDE and agent state
 .idea/
 .claude/
-# Игнорировать секретные данные
+
+# Local env and secrets
 .env
+.env.*
+!.env.example
 /Config/
+token.pickle
+credentials.json
+client_secret.json
+
+# Test and coverage artifacts
+.coverage
+.pytest_collect.txt
+*.sqlite3
+
+# Build and generated artifacts
 /frontend/node_modules/
+/frontend/dist/
+/frontend/test-results/
+/frontend/tsconfig.tsbuildinfo
+/mstechnics.egg-info/
+/staticfiles/*
+!/staticfiles/spa/
+!/staticfiles/spa/**

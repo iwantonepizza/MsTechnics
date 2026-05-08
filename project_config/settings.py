@@ -134,11 +134,11 @@ WSGI_APPLICATION = "project_config.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": env("DATABASE_NAME", default="mstechnics"),
-        "USER": env("DATABASE_USER", default="mstechnics"),
-        "PASSWORD": env("DATABASE_PASSWORD", default=""),
-        "HOST": env("DATABASE_HOST", default="db"),
-        "PORT": env("DATABASE_PORT", default="5432"),
+        "NAME": env("DATABASE_NAME", default=env("POSTGRES_DB", default="mstechnics")),
+        "USER": env("DATABASE_USER", default=env("POSTGRES_USER", default="mstechnics")),
+        "PASSWORD": env("DATABASE_PASSWORD", default=env("POSTGRES_PASSWORD", default="")),
+        "HOST": env("DATABASE_HOST", default=env("POSTGRES_HOST", default="db")),
+        "PORT": env("DATABASE_PORT", default=env("POSTGRES_PORT", default="5432")),
     }
 }
 
@@ -321,4 +321,3 @@ structlog.configure(
     wrapper_class=structlog.stdlib.BoundLogger,
     cache_logger_on_first_use=True,
 )
-

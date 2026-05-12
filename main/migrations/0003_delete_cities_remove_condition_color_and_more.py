@@ -5,6 +5,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ("main", "0002_remove_models_from_state"),
         ("application", "0005_delete_applicationstatus"),
+        ("user", "0002_alter_msuser_options_alter_msuser_allowed_city_and_more"),
     ]
 
     operations = [

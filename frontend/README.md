@@ -15,7 +15,7 @@ npm run dev
 
 ```bash
 npm run build
-# → выводит в ../staticfiles/spa/
+# → выводит в ../static/spa/
 ```
 
 ## Генерация TypeScript типов из OpenAPI

@@ -15,7 +15,7 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: '../staticfiles/spa',
+    outDir: '../static/spa',
     emptyOutDir: true,
   },
 })

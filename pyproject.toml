@@ -43,6 +43,7 @@ dependencies = [
     "gevent>=23.0",
     "djangorestframework-simplejwt>=5.3",
     "django-cors-headers>=4.3",
+    "whitenoise>=6.8",
 
     # Config
     "django-environ>=0.11",

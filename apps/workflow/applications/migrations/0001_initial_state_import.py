@@ -12,6 +12,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ("core_references", "0001_initial_state_import"),
         ("user", "0001_initial_state_import"),
+        ("application", "0003_initial"),
     ]
 
     operations = [

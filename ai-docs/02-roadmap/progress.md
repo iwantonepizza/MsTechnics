@@ -1,8 +1,8 @@
 # Прогресс проекта
 
-**Текущая фаза:** Фаза 5 (Integrations) — функциональная часть и оба hotfix в review; единственный остаточный gate перед staging — `T-5-fix-003` (live-DB verification 19 alignment-миграций).
-**Процент готовности:** ~92% (graph/state blocker снят кодером в T-5-fix-001/002, нужен один прогон migrate на копии прод-БД)
-**Последнее обновление:** 2026-05-06 (Claude Opus, followup-review после hotfix-раунда)
+**Текущая фаза:** Фаза 6 (Production cutover). Все Фазы 1-5 закрыты (review→done после T-5-fix-003). На сервере у владельца — ошибка миграций из-за конфликта `prod_dump_compat.sql` ↔ forward-only migrations. Разруливает `T-6-001`.
+**Процент готовности:** ~96% (Phase 5 закрыт, остаются runbook + post-cutover задачи)
+**Последнее обновление:** 2026-05-07 (Claude Opus, апрув T-5-fix-003 + постановка T-6-001..004)
 
 ---
 
@@ -11,80 +11,67 @@
 | Фаза | Готовность | Примечание |
 |------|------------|------------|
 | 0. Архитектура | ✅ 100% | |
-| 0.5. Дизайн-эталон | ✅ 100% | Display View v2 + Main Menu v2 приняты, ждём ещё 5 экранов |
-| 1. Фундамент | ✅ 95% | T-1-005 (CI) отложен до прод-репо |
-| 2. Модели и миграции | ✅ 95% | 16/19 done; ждут пауз: T-2-021, T-2-023, T-2-024 |
+| 0.5. Дизайн-эталон | ✅ 100% | Display View v2 + Main Menu v2 приняты, остаются 5 экранов на polish |
+| 1. Фундамент | ✅ 100% | T-1-005 (CI) blocked до prod-репо — не блокер кода |
+| 2. Модели и миграции | ✅ 95% | done; ждут пауз: T-2-021, T-2-023, T-2-024 |
 | 3. REST API | ✅ 100% | 20 задач done + 2 hotfix done |
-| 4. React SPA | ✅ 90% | основные экраны/модалки/SSE/OpenAPI types в review; остаются staging polish и дизайнерские follow-up |
-| 5. Integrations | 🟡 85% | notifications, TG proxy, MAX, VNNOX, timers в review; T-5-050 blocked до SPA prod + 2 недели |
+| 4. React SPA | ✅ 100% | все экраны/модалки/SSE/OpenAPI типы done; staging polish/coverage — на post-cutover |
+| 5. Integrations | ✅ 100% | notifications/TG/MAX/VNNOX/timers done; 3 hotfix done; T-5-050 blocked до prod+2нед |
+| 6. Production cutover | 🟡 0% → starts now | T-6-001..004 ready |
 
 ---
 
-## Что сделано в этом раунде
+## Что закрыто после T-5-fix-003
 
-### Hotfixes Фазы 3
+### Hotfix Фазы 5 (T-5-fix-001/002/003)
 
-- **T-3-fix-001:** ✅ done. Миграция `0004_strip_application_prefix.py`. Имена в БД синхронизированы с api-contract.md.
-- **T-3-fix-002:** ✅ done. RefreshView блэклистит, destroy() whitelist подход.
+- **T-5-fix-001 done.** Legacy models → shim/proxy, state-only DeleteModel, 19 alignment миграций.
+- **T-5-fix-002 done.** dev/test extras в `.venv`, UTF-8 `requirements.txt`, bootstrap-скрипты обновлены.
+- **T-5-fix-003 done.** На копии прод-БД (`db_dumps/mstechnics.dump`) полный цикл `restore → migrate → smoke` отработал. **Реальные данные:** 7 users, 8 displays, 2333 panels, 10 applications. HTTP smoke зелёный. pytest 79/79, coverage 57%.
 
-### Фаза 4
+### Forward-only data migrations добавлены
 
-- **T-4-001 (tokens):** ✅ done. tokens.css + Tailwind config с CSS-vars.
-- **T-4-002 (OpenAPI types):** ✅ review. `api-schema.yaml` и `frontend/src/shared/api/schema.d.ts` сгенерированы, `types.ts` переведён на aliases.
-- **T-4-003 (routing):** ✅ done. BrowserRouter + RequireAuth.
-- **T-4-004 (Header):** ✅ done. SSE-индикатор + nav counts.
-- **T-4-013 (DisplayViewPage):** ✅ done. 357 строк, role-based, новые статусы.
-- **T-4-020 (TransitionModal):** ✅ done базово, transitionConfigs.ts на месте.
-- **T-4-030 (SSE):** ✅ done. sse.ts с reconnect/backoff, useSSESubscription инициализирована в App.
-- **T-4-032 (skeleton/states):** ✅ done. useDeferredLoading.ts.
+- `apps/core/users/migrations/0003_align_user_physical_schema.py` — `max_id` + `telegram_id` varchar(20).
+- `apps/directory/displays/migrations/0005_convert_display_city_fk_to_id.py` — конверсия `display.city_id`.
+- `apps/directory/displays/migrations/0006_convert_cell_fk_storage_to_id.py` — конверсия `cell.display_id/panel_id`.
+- `apps/directory/panels/migrations/0004_convert_panel_fk_storage_to_id.py` — конверсия `panel.{display,condition,department}_id`.
 
-### Фаза 5
+Все с `atomic=False`, RunSQL backfill + RunPython validation + RENAME COLUMN. Это идиоматичный Django путь для крупной prod-data migration.
 
-- **T-5-001/T-5-002/T-5-006:** ✅ review. Notification models/channels/dispatcher/triggers.
-- **T-5-010/T-5-011:** ✅ review. Telegram proxy healthcheck, legacy `sender_tg_message.py`/`tg_sender` удалены после снятия блока.
-- **T-5-020:** ✅ review. MAX channel + webhook + `/start <username>` binding через `MsUser.max_id`.
-- **T-5-030..033:** ✅ review. VNNOX Gmail parser, `AlarmEvent`, DisplayView VNNOX tab, unresolved alarm notifications.
-- **T-5-040/041:** ✅ review. `daily_checker.py` и `ManageControl.py` удалены, systemd timers добавлены.
-- **T-5-050:** blocked до SPA в prod/staging stability window.
+### review → done одной волной
 
-### Новое / синхронизация
-
-- `apps/interface/api/v1/dashboard/` — endpoint для KPI-strip MainMenu.
-- `Makefile` с командами api-schema/fe-types/dev-setup.
-- Добавлен `ai-docs/06-integrations/phase-5-rollout-runbook.md`.
-- Добавлены отчёты по T-3 hotfix и ключевым T-4/T-5 задачам.
-- **T-1-008:** ✅ review. Optional Sentry init, request_id/user_id context middleware, docker log rotation.
-- `ai-docs/03-tasks` синхронизирован: `T-5-fix-001` и `T-5-fix-002` в `review`; свободных `ready` задач нет.
-- `T-5-fix-002`: `.venv` теперь поднимает `pytest/ruff/black/mypy/factory-boy/freezegun`, `requirements.txt` в UTF-8, `pytest --collect-only` собирает 79 тестов.
-- `T-5-fix-001`: legacy duplicate-model blocker снят, `python manage.py check` зелёный, `python manage.py makemigrations --check --dry-run` -> `No changes detected`.
+- T-1-008 (prod logging) → done
+- T-3-fix-001, T-3-fix-002 → done
+- T-4-001..T-4-032 (13 задач Phase 4) → done
+- T-5-001..T-5-040 (7 задач Phase 5) → done
+- T-5-fix-001, T-5-fix-002, T-5-fix-003 → done
 
 ---
 
 ## Что НЕ доделано
 
-### Критично (блокеры staging)
+### Критично (блокеры prod cutover)
 
-- **T-5-fix-003** — live-DB verification: 19 state-only alignment-миграций ещё ни разу не прогонялись на живой БД (`migrate --plan/migrate` упал на `getaddrinfo failed`). Без сравнения схем `clean ↔ prod-after-migrate` нельзя гарантировать, что физическая прод-схема совпадает с тем, что Django state теперь утверждает. См. `08-reports/architect-review-2026-05-06-followup.md`.
-- Прод-БД дамп от владельца — нужен для Шага 3 в T-5-fix-003.
-- Перед prod/staging переключением заполнить реальные env: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_PROXY_URL`, `MAX_*`, Gmail OAuth token. См. `phase-5-rollout-runbook.md`.
+- **T-6-001 (P0)** — production cutover runbook. На сервере владельца сейчас ошибка миграций из-за конфликта `scripts/prod_dump_compat.sql` ↔ forward-only migrations из T-5-fix-003. Карточка прописывает: удалить compat-патч, переписать `restore_to_dev.sh`, прогнать на staging-копии, написать step-by-step runbook для владельца. См. `08-reports/architect-review-2026-05-07-prod-cutover.md`.
+- **T-6-004 (P0 security)** — прод-дамп `db_dumps/mstechnics.dump` (и `mstechnics.dump` в корне) могут быть в git. Это PII утечка. Закрыть `.gitignore`, при необходимости — `git filter-repo`.
 
-### Серьёзно
+### Серьёзно (нужно до закрытия post-cutover окна)
 
-- Backend coverage полностью не измерен: tooling поднят, точечный smoke 9/9 зелёных, но 79 collected pytest-ов на живой БД ещё не прогонялись. Закрывает T-5-fix-003.
-- Frontend coverage `≥ 60%` (чек-лист Фазы 4) — заявлено зелёным, но конкретного числа в отчётах нет. Попросить кодера прогнать `npm run test -- --coverage` отдельным шагом.
-- T-3-fix-001/T-3-fix-002, T-4-*, T-5-001..040 в `03-tasks/README.md` всё ещё `review` — архитектор переведёт их в `done` **одной волной** после T-5-fix-003 (раньше нет смысла, т.к. live-DB прогон может выявить регрессии в любой из этих задач).
+- **T-6-002 (P1)** — backup strategy. Без операционного backup'а первый сбой = потеря данных.
+- **T-6-003 (P1)** — observability (django-prometheus + Grafana + uptime + 4 alerts). Без этого падение прода обнаруживается по жалобе пользователя.
 
-### Backlog (P3, после prod stable)
+### В наблюдении (post-cutover, 2 недели stable)
 
-- `T-5-fix-002-followup` — `ruff/black/mypy` baseline (291/96/16). Blocked корректно.
-- `Executor → MsUser` явный FK (вместо текущего поиска по совпадению `telegram_id`). Не P0.
-- Переезд `AUTH_USER_MODEL='user.MsUser'` → `apps.core.users.MsUser`. Отдельная итерация, требует пересоздания auth-таблиц.
-- ADR «proxy-models pattern для legacy compat при переезде Django apps» — задокументировать решение из `zip/models.py`.
+- T-2-021 (drop 28 fields), T-2-023 (backfill ActivityLog), T-2-024 (drop 5 history) — Phase-2 паузы.
+- T-5-050 (templates/views/shims cleanup) — blocked до 2 недель prod-stable.
+- T-5-fix-002-followup-ruff — lint baseline (291/96/16) — blocked до cutover.
 
-### В работе
+### Backlog (P3, после prod-stable)
 
-- Staging smoke по `phase-5-rollout-runbook.md`.
-- Дизайн/UX polish оставшихся SPA экранов после просмотра владельцем.
+- ADR-002 «proxy-models pattern для legacy compat при переезде Django apps» (то, как сделан `zip/models.py`).
+- `Executor → MsUser` явный FK (вместо matching по `telegram_id`).
+- Переезд `AUTH_USER_MODEL='user.MsUser'` → `apps.core.users.MsUser`. Большая отдельная итерация.
+- Frontend coverage measurement (`npm run test -- --coverage`).
 
 ---
 
@@ -92,10 +79,12 @@
 
 | Что | Чем | Когда |
 |-----|-----|-------|
-| T-2-021 (drop 28 fields) | T-2-020 deploy + 2 нед | май-июнь 2026 |
-| T-2-023 (backfill ActivityLog) | прод-данные | владелец даёт дамп |
-| T-2-024 (drop legacy history) | T-2-023 + 2 нед | июнь 2026 |
-| T-5-050 (legacy cleanup) | SPA в проде/staging + 2 недели без отката | июль-август 2026 |
+| T-2-021 (drop 28 fields) | T-2-020 deploy + 2 нед prod-stable | июнь 2026 |
+| T-2-023 (backfill ActivityLog) | прод-данные (есть в `db_dumps/`, но backfill требует анализа форматов) | май-июнь 2026 |
+| T-2-024 (drop legacy history) | T-2-023 + 2 нед | июнь-июль 2026 |
+| T-5-050 (legacy cleanup) | prod + 2 нед без отката | июль-август 2026 |
+| T-5-fix-002-followup-ruff | вне staging churn | после cutover |
+| T-1-005 (CI) | прод-репо | когда переедем в нормальный git-репо |
 
 ---
 
@@ -103,19 +92,19 @@
 
 | Запрос | Куда |
 |--------|------|
-| Поля DisplaySpec (задача 16) | Фаза 2/4 — не блокер |
-| Поля сортировки tabs (задача 6) | T-4-013 — UX можно без |
-| Корп. номер для MAX-бота | T-5-020 |
+| Поля DisplaySpec (задача 16) | долгосрочно, не блокер |
+| Поля сортировки tabs (задача 6) | UX-улучшение, не блокер |
+| Корп. номер для MAX-бота | T-5-020 smoke |
 | MAX bot token | T-5-020 smoke |
 | Доступ на VPS вне РФ | T-5-010 smoke |
-| Прод-БД дамп | T-2-001, T-3-fix-001 |
+| Старая прод-БД дамп | ✅ получен (`db_dumps/mstechnics.dump`) |
 
 ---
 
-## Roadmap (примерные даты)
+## Roadmap (новые даты)
 
-- **Май 2026:** staging smoke новых SPA + integrations, реальные env и Telegram/MAX/VNNOX проверки
-- **Июнь:** фиксы после staging smoke, подготовка prod cutover
-- **Июль:** деплой SPA/integrations на staging/prod по runbook
-- **Август:** мониторинг staging, T-2-021/024, T-5-050 cleanup
-- **Сентябрь 2026:** прод-релиз
+- **Май 2026 — текущая неделя:** T-6-001 (production cutover runbook) + T-6-004 (gitignore/leak check). Реальный cutover на сервере владельца.
+- **Май-июнь:** T-6-002 (backup) + T-6-003 (observability). Наблюдение прода 2 недели.
+- **Июнь-июль:** T-5-050 (legacy cleanup) + T-2-021/023/024 (Phase-2 паузы).
+- **Июль-август:** T-5-fix-002-followup-ruff (lint baseline) + backlog задачи.
+- **Сентябрь 2026:** проект закрыт, переход в обычную продуктовую разработку (15 задач владельца + long-tail).

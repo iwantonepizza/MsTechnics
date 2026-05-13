@@ -30,7 +30,7 @@
 | [T-1-005](phase-1-foundation/T-1-005-ci.md)               | GitHub Actions: lint + test                 | blocked | 2     |
 | [T-1-006](phase-1-foundation/T-1-006-critical-bugfixes.md)| Критические багфиксы (signal, if Panels)    | done   | 2     |
 | [T-1-007](phase-1-foundation/T-1-007-env-secrets.md)      | django-environ, секреты из git, отзыв OAuth | done   | 2     |
-| [T-1-008](phase-1-foundation/T-1-008-prod-logging.md)     | Prod logging: JSON stdout + Sentry          | review | 1.5   |
+| [T-1-008](phase-1-foundation/T-1-008-prod-logging.md)     | Prod logging: JSON stdout + Sentry          | done   | 1.5   |
 | [T-1-009](phase-1-foundation/T-1-009-safe-redirect.md)    | safe_redirect вместо redirect(HTTP_REFERER) | done   | 1     |
 | [T-1-010](phase-1-foundation/T-1-010-limit-querysets.md)  | Ограничить querysets в views                | done   | 0.5   |
 | [T-1-011](phase-1-foundation/T-1-011-hide-archived.md)    | Скрыть архивные заявки в панели (от владельца) | done | 1     |
@@ -108,8 +108,8 @@
 | [T-3-041](phase-3-rest-api/T-3-041-sse-stream.md) | SSE через Redis Streams | done | 2 |
 | [T-3-050](phase-3-rest-api/T-3-050-health-checks.md) | Health checks | done | 0.5 |
 | [T-3-051](phase-3-rest-api/T-3-051-e2e-tests.md) | E2E API tests | done | 2 |
-| [T-3-fix-001](phase-3-rest-api/T-3-fix-001-status-names-sync.md) | **HOTFIX:** sync статусов БД↔контракт | review | 2 |
-| [T-3-fix-002](phase-3-rest-api/T-3-fix-002-destroy-and-refresh.md) | **HOTFIX:** destroy() + refresh rotation | review | 1 |
+| [T-3-fix-001](phase-3-rest-api/T-3-fix-001-status-names-sync.md) | **HOTFIX:** sync статусов БД↔контракт | done | 2 |
+| [T-3-fix-002](phase-3-rest-api/T-3-fix-002-destroy-and-refresh.md) | **HOTFIX:** destroy() + refresh rotation | done | 1 |
 
 **Итого фаза 3:** ~32 часа (29 done + 3 hotfix). Hotfix-ы критичны до старта Фазы 4.
 
@@ -117,19 +117,19 @@
 
 | ID | Название | Статус | Часов |
 |----|----------|--------|-------|
-| [T-4-001](phase-4-spa/T-4-001-design-tokens.md) | tokens.css + Tailwind config | review | 2 |
-| [T-4-002](phase-4-spa/T-4-002-openapi-types.md) | Generate TS types from schema | review | 1.5 |
-| [T-4-003](phase-4-spa/T-4-003-routing.md) | React Router + ProtectedRoute | review | 2 |
-| [T-4-004](phase-4-spa/T-4-004-app-layout.md) | AppLayout + Header + crumbs | review | 2 |
-| [T-4-010](phase-4-spa/T-4-010-login-page.md) | LoginPage | review | 1.5 |
-| [T-4-011](phase-4-spa/T-4-011-main-menu-page.md) | MainMenu v2 | review | 3 |
-| [T-4-012](phase-4-spa/T-4-012-department-list.md) | DepartmentList | review | 3 |
-| [T-4-013](phase-4-spa/T-4-013-display-view-pages.md) | DisplayView 3 ролей | review | 7 |
-| [T-4-016](phase-4-spa/T-4-016-zip-page.md) | ZipPage | review | 3 |
-| [T-4-020](phase-4-spa/T-4-020-transition-modals.md) | TransitionModal universal | review | 3 |
-| [T-4-021](phase-4-spa/T-4-021-specialized-modals.md) | Specialized modals (5 шт.) | review | 4 |
-| [T-4-030](phase-4-spa/T-4-030-sse-optimistic.md) | SSE + Optimistic mutations | review | 3.5 |
-| [T-4-032](phase-4-spa/T-4-032-states-shortcuts-tests.md) | States + shortcuts + tests | review | 5 |
+| [T-4-001](phase-4-spa/T-4-001-design-tokens.md) | tokens.css + Tailwind config | done | 2 |
+| [T-4-002](phase-4-spa/T-4-002-openapi-types.md) | Generate TS types from schema | done | 1.5 |
+| [T-4-003](phase-4-spa/T-4-003-routing.md) | React Router + ProtectedRoute | done | 2 |
+| [T-4-004](phase-4-spa/T-4-004-app-layout.md) | AppLayout + Header + crumbs | done | 2 |
+| [T-4-010](phase-4-spa/T-4-010-login-page.md) | LoginPage | done | 1.5 |
+| [T-4-011](phase-4-spa/T-4-011-main-menu-page.md) | MainMenu v2 | done | 3 |
+| [T-4-012](phase-4-spa/T-4-012-department-list.md) | DepartmentList | done | 3 |
+| [T-4-013](phase-4-spa/T-4-013-display-view-pages.md) | DisplayView 3 ролей | done | 7 |
+| [T-4-016](phase-4-spa/T-4-016-zip-page.md) | ZipPage | done | 3 |
+| [T-4-020](phase-4-spa/T-4-020-transition-modals.md) | TransitionModal universal | done | 3 |
+| [T-4-021](phase-4-spa/T-4-021-specialized-modals.md) | Specialized modals (5 шт.) | done | 4 |
+| [T-4-030](phase-4-spa/T-4-030-sse-optimistic.md) | SSE + Optimistic mutations | done | 3.5 |
+| [T-4-032](phase-4-spa/T-4-032-states-shortcuts-tests.md) | States + shortcuts + tests | done | 5 |
 
 **Итого фаза 4:** ~40 часов. Параллелится: 4-001..4-004 (база) → 4-010..4-016 (страницы) + 4-020..4-021 (модалки) → 4-030 (SSE) → 4-032 (полировка).
 
@@ -137,20 +137,31 @@
 
 | ID | Название | Статус | Часов |
 |----|----------|--------|-------|
-| [T-5-001](phase-5-integrations/T-5-001-notification-architecture.md) | apps/notifications/ infra | review | 3 |
-| [T-5-002](phase-5-integrations/T-5-002-channels.md) | Telegram + MAX + Email channels | review | 4.5 |
-| [T-5-006](phase-5-integrations/T-5-006-triggers.md) | 6 правил уведомлений | review | 2 |
-| [T-5-010](phase-5-integrations/T-5-010-tg-proxy-worker.md) | TG SOCKS5 + replace sender_tg_message | review | 2.5 |
-| [T-5-020](phase-5-integrations/T-5-020-max-bot.md) | MAX bot (setup + integration + webhook + binding) | review | 5 |
-| [T-5-030](phase-5-integrations/T-5-030-gmail-alarms.md) | VNNOX gmail-парсер + AlarmEvent | review | 6 |
-| [T-5-040](phase-5-integrations/T-5-040-worker-rewrite.md) | daily_checker rewrite + ManageControl + structlog | review | 4 |
+| [T-5-001](phase-5-integrations/T-5-001-notification-architecture.md) | apps/notifications/ infra | done | 3 |
+| [T-5-002](phase-5-integrations/T-5-002-channels.md) | Telegram + MAX + Email channels | done | 4.5 |
+| [T-5-006](phase-5-integrations/T-5-006-triggers.md) | 6 правил уведомлений | done | 2 |
+| [T-5-010](phase-5-integrations/T-5-010-tg-proxy-worker.md) | TG SOCKS5 + replace sender_tg_message | done | 2.5 |
+| [T-5-020](phase-5-integrations/T-5-020-max-bot.md) | MAX bot (setup + integration + webhook + binding) | done | 5 |
+| [T-5-030](phase-5-integrations/T-5-030-gmail-alarms.md) | VNNOX gmail-парсер + AlarmEvent | done | 6 |
+| [T-5-040](phase-5-integrations/T-5-040-worker-rewrite.md) | daily_checker rewrite + ManageControl + structlog | done | 4 |
 | [T-5-050](phase-5-integrations/T-5-050-legacy-cleanup.md) | Legacy cleanup (templates/views/shims/MsServiceControl) | blocked | 4.5 |
-| [T-5-fix-001](phase-5-integrations/T-5-fix-001-migration-graph-cleanup.md) | **HOTFIX (P0):** legacy models → shim + state-only DeleteModel | review | 4-5 |
-| [T-5-fix-002](phase-5-integrations/T-5-fix-002-dev-test-deps.md) | **HOTFIX (P1):** dev/test extras в .venv + UTF-8 requirements.txt | review | 1 |
+| [T-5-fix-001](phase-5-integrations/T-5-fix-001-migration-graph-cleanup.md) | **HOTFIX (P0):** legacy models → shim/proxy + state-only DeleteModel + 19 alignment миграций | done | 4-5 |
+| [T-5-fix-002](phase-5-integrations/T-5-fix-002-dev-test-deps.md) | **HOTFIX (P1):** dev/test extras в .venv + UTF-8 requirements.txt | done | 1 |
 | [T-5-fix-002-followup](phase-5-integrations/T-5-fix-002-followup-ruff.md) | Follow-up: ruff/black/mypy baseline cleanup (291/96/16) | blocked | 2-3 |
-| [T-5-fix-003](phase-5-integrations/T-5-fix-003-live-db-verification.md) | **HOTFIX (P0):** live-DB verify 19 alignment-миграций + полный pytest | ready | 2-3 |
+| [T-5-fix-003](phase-5-integrations/T-5-fix-003-live-db-verification.md) | **HOTFIX (P0):** live-DB verify + 4 forward-only data-migrations (users/displays/panels FK) | done | 2-3 |
 
-**Итого фаза 5:** ~31 час + 7-9 часов hotfix перед staging cutover (T-5-fix-001/002/003). T-5-050 и T-5-fix-002-followup — после деплоя SPA + 2 недели стабильной работы.
+**Итого фаза 5:** ~31 час + ~9 часов hotfix (T-5-fix-001/002/003). T-5-050 и T-5-fix-002-followup — после деплоя + 2 недели стабильной работы.
+
+### Фаза 6. Production cutover + post-cutover
+
+| ID | Название | Статус | Часов |
+|----|----------|--------|-------|
+| [T-6-001](phase-5-integrations/T-6-001-production-cutover-runbook.md) | **P0:** prod cutover runbook + удаление `prod_dump_compat.sql` + переписать `restore_to_dev.sh` | ready | 3-4 |
+| [T-6-002](phase-5-integrations/T-6-002-backup-strategy.md) | **P1:** pgBackRest или pg_dump cron + off-host копия + тест восстановления | ready | 2-3 |
+| [T-6-003](phase-5-integrations/T-6-003-observability.md) | **P1:** django-prometheus + Grafana + uptime monitor + 4 alerts | ready | 3-4 |
+| [T-6-004](phase-5-integrations/T-6-004-gitignore-and-dump-leakage.md) | **P0 security:** .gitignore + проверка утечки прод-дампа в git | ready | 0.5-2 |
+
+**Итого фаза 6:** ~9-13 часов перед prod-релизом + наблюдение.
 
 ---
 

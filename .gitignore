@@ -9,22 +9,39 @@ __pycache__/
 
 # Local IDE and agent state
 .idea/
+.vscode/
 .claude/
 
 # Local env and secrets
 .env
 .env.*
 !.env.example
-!/Config/.env
+Config/.env
+Config/.env.*
+Config/token.pickle
+Config/client_secret.json
+*.pickle
 token.pickle
 credentials.json
 client_secret.json
-!/Config/client_secret.json
 
 # Test and coverage artifacts
 .coverage
+.coverage.*
+htmlcov/
 .pytest_collect.txt
 *.sqlite3
+
+# Database dumps and restore artefacts
+*.dump
+*.sql.gz
+/db_dumps/
+/dumps/
+
+# Logs and local run artefacts
+/logs/
+*.log
+!*.example.log
 
 # Build and generated artifacts
 /frontend/node_modules/
@@ -32,6 +49,5 @@ client_secret.json
 /frontend/test-results/
 /frontend/tsconfig.tsbuildinfo
 /mstechnics.egg-info/
-/staticfiles/*
-!/staticfiles/spa/
-!/staticfiles/spa/**
+*.egg-info/
+/staticfiles/

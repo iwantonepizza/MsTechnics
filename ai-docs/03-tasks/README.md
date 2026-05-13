@@ -159,7 +159,7 @@
 | [T-6-001](phase-5-integrations/T-6-001-production-cutover-runbook.md) | **P0:** prod cutover runbook + удаление `prod_dump_compat.sql` + переписать `restore_to_dev.sh` | ready | 3-4 |
 | [T-6-002](phase-5-integrations/T-6-002-backup-strategy.md) | **P1:** pgBackRest или pg_dump cron + off-host копия + тест восстановления | ready | 2-3 |
 | [T-6-003](phase-5-integrations/T-6-003-observability.md) | **P1:** django-prometheus + Grafana + uptime monitor + 4 alerts | ready | 3-4 |
-| [T-6-004](phase-5-integrations/T-6-004-gitignore-and-dump-leakage.md) | **P0 security:** .gitignore + проверка утечки прод-дампа в git | in-progress | 0.5-2 |
+| [T-6-004](phase-5-integrations/T-6-004-gitignore-and-dump-leakage.md) | **P0 security:** .gitignore + проверка утечки прод-дампа в git | review | 0.5-2 |
 
 **Итого фаза 6:** ~9-13 часов перед prod-релизом + наблюдение.
 

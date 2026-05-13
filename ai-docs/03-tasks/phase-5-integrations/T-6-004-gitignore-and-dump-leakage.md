@@ -4,7 +4,7 @@
 > **Приоритет:** P0 (security — прод-дамп с PII в git)
 > **Оценка:** 30 минут — 2 часа (зависит от того, утекло ли в публичный remote)
 > **Фаза:** 6 (production)
-> **Статус:** in-progress
+> **Статус:** review
 > **Исполнитель:** GPT-5 Codex
 
 ---
@@ -188,4 +188,20 @@ git push --force origin main
 
 ## Отчёт
 
-(Заполняет кодер.)
+### Что сделано
+
+- Обновлен `.gitignore` для дампов, логов, локальных секретов, build-артефактов и `staticfiles/`.
+- Добавлен `ai-docs/04-conventions/security-conventions.md`.
+- Из индекса убраны `Config/.env`, `Config/client_secret.json`, `db_dumps/`, `logs/`, `staticfiles/`.
+- Установлен `git-filter-repo`, переписана история по путям `mstechnics.dump`, `db_dumps/`, `logs/`, `staticfiles/`, `Config/.env`, `Config/client_secret.json`, `mstechnics.egg-info/`.
+- Выполнен `git push --force --all origin` и `git push --force --tags origin`.
+
+### Что найдено
+
+- Утечка была не только по прод-дампу и логам, но и по tracked `Config/.env` и `Config/client_secret.json`.
+- Чувствительные артефакты уже были pushed в GitHub remote `origin`.
+
+### Что осталось владельцу
+
+- Пересоздать все старые клоны репозитория или сделать жесткий resync после переписанной истории.
+- Оценить необходимость ротации Google OAuth credentials и сброса пользовательских паролей.

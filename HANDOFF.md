@@ -8,22 +8,20 @@
 
 ## 0. TL;DR — что делать прямо сейчас (≤30 минут)
 
-1. **Смержить ветку `feature/phase-7-prod-readiness` в `main`** (PR: https://github.com/iwantonepizza/MsTechnics/pull/new/feature/phase-7-prod-readiness). Там 4 коммита:
-   - `Phase 6: production-hardening package (T-6-001..006)`
-   - `Phase 7: scaffolding (ADR-002 + design Round 4 docs + task cards)`
-   - `Phase 7: product features + Design Round 4 + multi-role permissions`
-   - `Docs sync: mark Phase 1-5 done, refresh HANDOFF/progress/roadmap`
+1. **На сервере `git pull origin main`** — всё уже в main, никаких merge'ей открывать не нужно. Ветка `feature/phase-7-prod-readiness` уже смержена fast-forward и удалена.
 2. **Выполнить T-6-005 secret rotation** (~30 мин ваших действий, см. раздел ниже).
 3. **Прогнать prod cutover по `ai-docs/06-integrations/production-cutover-runbook.md`** в maintenance окно 22:00–08:00 МСК.
 4. После cutover включить systemd-таймер бэкапов (`ai-docs/06-integrations/backup-runbook.md`) и поднять Prometheus+Grafana (`ai-docs/06-integrations/observability-runbook.md`).
 
 **Проверки перед прод-деплоем уже выполнены:**
-- ✅ `docker compose up db redis web` поднимается на чистой БД, миграции (`0001..0006` по всем приложениям) проходят без ошибок.
-- ✅ `/api/v1/health/live` → 200, `/api/v1/health/ready` → 200 (DB+Redis OK), `/metrics` → 200 (Prometheus), `/api/schema/` → 200, `/api/v1/auth/login/` → 200.
+- ✅ **Полный prod-copy smoke 2026-05-20** (`db_dumps/mstechnics.dump` → `pg_restore` → `migrate` → `check` → HTTP smoke на 24 endpoints). Все миграции (включая T-7-003 backfill ролей) отработали на реальных данных. Полный отчёт: [`ai-docs/08-reports/smoke-2026-05-20-prod-copy.md`](ai-docs/08-reports/smoke-2026-05-20-prod-copy.md).
+- ✅ Data-integrity post-migration: **7 users, 8 displays, 2333 panels, 10 applications** — точно как ожидалось.
+- ✅ **T-7-003 multi-role backfill безопасен:** все 7 user-ов получили роли (`permission='all'` корректно разворачивается в 3 роли monitoring+control+service).
+- ✅ `/api/v1/health/live` → 200, `/api/v1/health/ready` → 200 (DB+Redis OK), `/metrics` → 200 (Prometheus), `/api/schema/?format=json` → 200 (OpenAPI 3.0.3, 64+ маршрутов), `/api/v1/auth/login/` → 200 (JWT с `permission`+`roles`+`extra_permissions`).
 - ✅ Backend pytest: **114/114 passed**.
 - ✅ Frontend vitest: **16 files / 60 tests passed**.
-- ✅ Frontend typecheck: **clean** (T-7-042 закрыт).
-- ✅ Git: всё закоммичено, ветка запушена, working tree clean.
+- ✅ Frontend typecheck: **clean**.
+- ✅ Git: всё в `main`, working tree clean, никаких feature-веток.
 
 ---
 

@@ -2,7 +2,7 @@
 
 **Текущая фаза:** Фаза 6 (Production cutover) — в работе + **Фаза 7** в активной фазе после раунда дизайнера 2026-05-19. T-6-004/006 done. T-6-005 coder-side готова, owner-side ротации pending. T-6-001 (prod cutover runbook) — главный остаточный блокер сервера. Phase 7: rebranding в «Суперсимметрия» (ADR-002), новая палитра, dark mode, **T-7-100 Design Round 4 закрыт по automated acceptance** (PR-1..13), **T-7-003 multi-role + fine-grained permissions переведена в `review`** (Wave 1+2 backend сделаны, Wave 3 — отдельная итерация через 2-4 недели).
 **Процент готовности:** ~97% по рефакторингу. Phase 7 — основной массив фронт-PR'ов и backend follow-up'ов закрыт; остаётся manual visual sweep + Wave 3 multi-role.
-**Последнее обновление:** 2026-05-20 — закрыты `T-7-100` (PR-1..13, automated acceptance зелёный, остаётся ручная визуальная приёмка), `T-7-003` (Wave 1: модель `Role` + M2M + JSONField + миграция + backfill; Wave 2: переписаны 30+ мест с `user.permission in (...)` на `has_role/is_admin`, notification triggers через `role_membership_q` для BC-friendly работы). Три backend follow-up (`applications-display-city`, `display-aggregated-condition`, `bell-deeplink-resolve`) → `review`. Backend test suite **114 passed**.
+**Последнее обновление:** 2026-05-20 — закрыты `T-7-100` (PR-1..13, automated acceptance зелёный, остаётся ручная визуальная приёмка), `T-7-003` (Wave 1: модель `Role` + M2M + JSONField + миграция + backfill; Wave 2: переписаны 30+ мест с `user.permission in (...)` на `has_role/is_admin`, notification triggers через `role_membership_q` для BC-friendly работы). Три backend follow-up (`applications-display-city`, `display-aggregated-condition`, `bell-deeplink-resolve`) → `review`. **Docker compose smoke прогнан на чистой БД (db+redis+web)**: миграции, `/api/v1/health/live`, `/api/v1/health/ready` (DB+Redis), `/metrics`, `/api/schema/`, `/api/v1/auth/login/` — все 200. Backend test suite **114 passed**, frontend **60 passed**, typecheck **clean**. **Git:** 4 чистых коммита запушены в `feature/phase-7-prod-readiness`. До прод-деплоя осталось только owner-side: merge ветки в main + ротация секретов (T-6-005) + execution `ai-docs/06-integrations/production-cutover-runbook.md`.
 
 ---
 
@@ -17,7 +17,7 @@
 | 3. REST API | ✅ 100% | 20 задач done + 2 hotfix done |
 | 4. React SPA | ✅ 100% | все экраны/модалки/SSE/OpenAPI типы done; staging polish/coverage — на post-cutover |
 | 5. Integrations | ✅ 100% | notifications/TG/MAX/VNNOX/timers done; 3 hotfix done; T-5-050 blocked до prod+2нед |
-| 6. Production cutover | 🟡 в работе | T-6-004/006 ✅ done; T-6-001/002/003 in-progress; T-6-005 owner-side pending |
+| 6. Production cutover | 🟢 coder-side готов | T-6-001/002/003/004/006 ✅ coder-side done (отчёты + runbooks); T-6-005 coder-side done (owner-side ротация секретов pending). Docker stack smoke-tested. |
 | 7. Product / redesign | 🟢 основной массив закрыт | ADR-002 rebranding; T-7-001/002/005/007/010/013/030/031/035/036/008/012/014 done; **T-7-100 Round 4 → review** (PR-1..13 закрыты, automated acceptance ✅); **T-7-003 Wave 1+2 → review**; полный трекер 36 задач в `phase-7-product/README.md` |
 
 ---

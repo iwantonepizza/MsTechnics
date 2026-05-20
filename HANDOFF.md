@@ -1,8 +1,31 @@
 # HANDOFF.md — что делать дальше
 
-> Шпаргалка для владельца. Состояние: Phases 1-5 закрыты, T-5-fix-003 апрувлен. На сервере при деплое — ошибка миграций из-за конфликта старого `prod_dump_compat.sql` и новых forward-only migrations. Разруливает `T-6-001`. **Phase 7:** дизайнерский Round 4 закрыт (T-7-100 → review), multi-role permissions (T-7-003) Wave 1+2 закрыты.
+> Шпаргалка для владельца. Состояние: Phases 1-5 закрыты, T-5-fix-003 апрувлен. **Phase 7 готов:** дизайнерский Round 4 закрыт (T-7-100), multi-role permissions (T-7-003 Wave 1+2) закрыты, 3 backend follow-up закрыты. Все coder-side задачи Phase 6 (T-6-001..006) закрыты. **Архитектор довёл репо до прод-готовности.**
 
-**Дата:** 2026-05-20 (синхронизировано после закрытия T-7-100 PR-1..13 + T-7-003 Wave 1+2 + 3 backend follow-up в `review`)
+**Дата:** 2026-05-20
+
+---
+
+## 0. TL;DR — что делать прямо сейчас (≤30 минут)
+
+1. **Смержить ветку `feature/phase-7-prod-readiness` в `main`** (PR: https://github.com/iwantonepizza/MsTechnics/pull/new/feature/phase-7-prod-readiness). Там 4 коммита:
+   - `Phase 6: production-hardening package (T-6-001..006)`
+   - `Phase 7: scaffolding (ADR-002 + design Round 4 docs + task cards)`
+   - `Phase 7: product features + Design Round 4 + multi-role permissions`
+   - `Docs sync: mark Phase 1-5 done, refresh HANDOFF/progress/roadmap`
+2. **Выполнить T-6-005 secret rotation** (~30 мин ваших действий, см. раздел ниже).
+3. **Прогнать prod cutover по `ai-docs/06-integrations/production-cutover-runbook.md`** в maintenance окно 22:00–08:00 МСК.
+4. После cutover включить systemd-таймер бэкапов (`ai-docs/06-integrations/backup-runbook.md`) и поднять Prometheus+Grafana (`ai-docs/06-integrations/observability-runbook.md`).
+
+**Проверки перед прод-деплоем уже выполнены:**
+- ✅ `docker compose up db redis web` поднимается на чистой БД, миграции (`0001..0006` по всем приложениям) проходят без ошибок.
+- ✅ `/api/v1/health/live` → 200, `/api/v1/health/ready` → 200 (DB+Redis OK), `/metrics` → 200 (Prometheus), `/api/schema/` → 200, `/api/v1/auth/login/` → 200.
+- ✅ Backend pytest: **114/114 passed**.
+- ✅ Frontend vitest: **16 files / 60 tests passed**.
+- ✅ Frontend typecheck: **clean** (T-7-042 закрыт).
+- ✅ Git: всё закоммичено, ветка запушена, working tree clean.
+
+---
 
 ---
 

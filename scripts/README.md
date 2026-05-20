@@ -1,7 +1,9 @@
 # scripts/
 
-- `dump_prod.sh` — дамп прод-БД. Требует `PROD_DATABASE_URL=postgres://...`
-- `restore_to_dev.sh` — импорт дампа в dev. Требует `DATABASE_URL=postgres://...`
-- `scrub_pii.sql` — очистка PII из dev-БД (email, telegram_id, phone, пароли)
-- `bootstrap_dev.sh` — полный bootstrap dev: restore + scrub + migrate
-- `compile-deps.sh` — регенерация requirements.lock через uv
+- `dump_prod.sh` — dump prod PostgreSQL. Requires `PROD_DATABASE_URL=postgres://...`
+- `restore_to_dev.sh` — restore `*.dump` into dev/staging, then run `showmigrations`, `migrate`, `check`. Accepts `DATABASE_URL=postgres://...` or `DATABASE_*`
+- `backup-db.sh` — operational PostgreSQL backup: `pg_dump -Fc` + retention + optional encrypted off-host sync
+- `restore-db.sh` — restore artifact created by `backup-db.sh` (`*.dump`, `*.dump.enc`, `*.sql`, `*.sql.gz`)
+- `scrub_pii.sql` — scrub PII from dev DB (email, telegram_id, phone, passwords)
+- `bootstrap_dev.sh` — full dev bootstrap: restore + scrub + migrate
+- `compile-deps.sh` — regenerate `requirements.lock` via `uv`

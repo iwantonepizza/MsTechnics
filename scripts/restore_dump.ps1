@@ -7,7 +7,6 @@ $ErrorActionPreference = "Stop"
 
 $repoRoot = (Resolve-Path $ComposeProjectDir).Path
 $dumpFullPath = (Resolve-Path $DumpPath).Path
-$compatSqlPath = Join-Path $repoRoot "scripts\\prod_dump_compat.sql"
 $envFilePath = Join-Path $repoRoot "Config\\.env"
 
 Set-Location $repoRoot
@@ -36,7 +35,6 @@ if (-not $pgUser -or -not $pgPassword -or -not $pgDb) {
 }
 
 docker compose down -v --remove-orphans
-
 docker compose up -d db
 
 $dbContainer = (docker compose ps -q db).Trim()
@@ -46,6 +44,5 @@ if (-not $dbContainer) {
 
 docker cp $dumpFullPath "${dbContainer}:/tmp/mstechnics.dump"
 docker exec $dbContainer sh -lc "PGPASSWORD=`"$pgPassword`" pg_restore --clean --if-exists --no-owner --no-privileges -U `"$pgUser`" -d `"$pgDb`" /tmp/mstechnics.dump"
-Get-Content -Raw $compatSqlPath | docker exec -i $dbContainer psql -U $pgUser -d $pgDb
 
 docker compose up -d --build redis web

@@ -5,6 +5,8 @@ from collections.abc import Iterable
 import structlog
 from django.utils import timezone
 
+from shared.metrics import notification_all_channels_failed_total, notification_delivery_total
+
 from .channels import BaseChannel, EmailChannel, MaxChannel, TelegramChannel
 from .models import Notification, NotificationDeliveryAttempt
 
@@ -53,6 +55,10 @@ class NotificationDispatcher:
                 error_message=result.get("error") or "",
                 response_payload=result.get("response") or {},
             )
+            notification_delivery_total.labels(
+                channel=channel_name,
+                status="success" if result["succeeded"] else "failed",
+            ).inc()
 
             if result["succeeded"]:
                 notification.status = Notification.Status.SENT
@@ -75,6 +81,7 @@ class NotificationDispatcher:
 
         notification.status = Notification.Status.FAILED
         notification.save(update_fields=["status"])
+        notification_all_channels_failed_total.inc()
         logger.error("notification_all_channels_failed", notification_id=notification.id)
         return False
 

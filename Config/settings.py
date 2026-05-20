@@ -293,8 +293,8 @@ SIMPLE_JWT = {
 ENABLE_API_DOCS = env.bool("ENABLE_API_DOCS", default=DEBUG)
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "MsTechnics API",
-    "DESCRIPTION": "REST API для системы управления LED-экранами MS Technics.",
+    "TITLE": "Суперсимметрия API",
+    "DESCRIPTION": "REST API для системы управления LED-экранами Суперсимметрия.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,

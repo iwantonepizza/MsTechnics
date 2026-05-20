@@ -92,7 +92,7 @@ class EmailChannelTests(SimpleTestCase):
 
         assert result["succeeded"] is True
         send.assert_called_once_with(
-            subject="[MsTechnics] Уведомление",
+            subject="[Суперсимметрия] Уведомление",
             message="Hello",
             from_email="noreply@example.test",
             recipient_list=["user@example.test"],

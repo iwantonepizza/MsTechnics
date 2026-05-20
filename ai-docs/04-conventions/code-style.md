@@ -311,3 +311,12 @@ import { useLocalState } from "./useLocalState";
 ## Git
 
 - Подробно в `git-workflow.md` и `commit-format.md`.
+
+## Кодировка Файлов
+
+- Все текстовые файлы в репозитории храним как `UTF-8` без BOM.
+- Для Unix-ориентированных файлов используем окончания строк `LF`.
+- Для `*.ps1` допускается `CRLF`, остальной текст держим в `LF`.
+- Настройки редакторов фиксируются в корневом `.editorconfig`.
+- Нормализация line endings и текстовых атрибутов фиксируется в `.gitattributes`.
+- Перед коммитом срабатывает hook `check-encoding`, который блокирует BOM, invalid UTF-8 и типичный mojibake.

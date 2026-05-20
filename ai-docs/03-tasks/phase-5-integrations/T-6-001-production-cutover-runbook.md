@@ -4,8 +4,8 @@
 > **Приоритет:** P0 (текущий блокер — пользователь не может задеплоить)
 > **Оценка:** 3-4 часа (1ч исследование сервера + 1.5ч runbook + 1ч прогон на staging-копии + 0.5ч документация)
 > **Фаза:** 6 (production)
-> **Статус:** ready
-> **Исполнитель:** (заполняется при взятии в работу)
+> **Статус:** review
+> **Исполнитель:** GPT-5 Codex
 
 ---
 
@@ -30,7 +30,7 @@
 
 ### Путь B — forward-only migrations (новое, правильное)
 
-Из T-5-fix-003:
+з T-5-fix-003:
 - `apps/core/users/migrations/0003_align_user_physical_schema.py`
 - `apps/directory/displays/migrations/0005_convert_display_city_fk_to_id.py`
 - `apps/directory/displays/migrations/0006_convert_cell_fk_storage_to_id.py`
@@ -85,7 +85,7 @@
 
 - Linux-дистрибутив сервера (Ubuntu/Debian/RHEL/…).
 - Версия PostgreSQL на сервере.
-- Использует ли владелец `docker compose` или нативный PostgreSQL.
+- спользует ли владелец `docker compose` или нативный PostgreSQL.
 - Путь к прод-дампу на сервере.
 - Как сейчас запускается Django (gunicorn? supervisor? systemd?).
 - Текущий вывод `python manage.py showmigrations | tail -100` с сервера — **ключевой артефакт**, который покажет, какие миграции сервер считает applied.
@@ -107,7 +107,7 @@ git rm scripts/prod_dump_compat.sql
 ```bash
 #!/usr/bin/env bash
 # restore_to_dev.sh — залить прод-дамп в dev/staging БД и прогнать миграции
-# Использование: DATABASE_URL="postgres://..." ./scripts/restore_to_dev.sh db_dumps/mstechnics.dump
+# спользование: DATABASE_URL="postgres://..." ./scripts/restore_to_dev.sh db_dumps/mstechnics.dump
 set -euo pipefail
 
 DUMP_FILE="${1:?Укажи файл дампа: $0 <path/to/mstechnics.dump>}"
@@ -222,7 +222,7 @@ curl -sf -H "Authorization: Bearer $TOKEN" http://localhost:8000/api/v1/displays
 
 1. **Pre-flight checklist** — что должно быть готово на сервере (Postgres 16, Python 3.12, .venv, .env, dump).
 2. **Backup current prod** — `pg_dump текущая_прод_бд > backup_pre_cutover.dump` **обязательно** перед чем-либо.
-3. **Maintenance window** — оценка времени downtime, что показать пользователям («сервис на профилактике»).
+3. **Maintenance window** — **подтверждено владельцем 2026-05-17**: пользователи работают **08:00–22:00 МСК**, ночью никогда. Cutover планировать **после 22:00**, окно до 6 часов гарантированно без пользователей. Простой режим: downtime, не нужен blue/green. Что показать пользователям утром (если упало) — «сервис на профилактике», но это не должно случиться, потому что прогон на копии прод-БД (T-5-fix-003) уже зелёный.
 4. **Step-by-step shell-commands** для Linux:
    ```bash
    # 1. Остановить старый прод

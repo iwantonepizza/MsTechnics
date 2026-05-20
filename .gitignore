@@ -40,10 +40,12 @@ htmlcov/
 
 # Logs and local run artefacts
 /logs/
+/frontend/logs/
 *.log
 !*.example.log
 
 # Build and generated artifacts
+/node_modules/
 /frontend/node_modules/
 /frontend/dist/
 /frontend/test-results/

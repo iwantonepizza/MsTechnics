@@ -15,7 +15,7 @@ class EmailChannel(BaseChannel):
     def deliver(self, recipient, text: str, *, context: dict | None = None) -> DeliveryResult:
         try:
             sent = send_mail(
-                subject="[MsTechnics] Уведомление",
+                subject="[Суперсимметрия] Уведомление",
                 message=text,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[recipient.email],

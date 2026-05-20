@@ -43,6 +43,8 @@ dependencies = [
     "gevent>=23.0",
     "djangorestframework-simplejwt>=5.3",
     "django-cors-headers>=4.3",
+    "django-prometheus>=2.4,<2.5",
+    "prometheus-client>=0.25,<0.26",
     "whitenoise>=6.8",
 
     # Config

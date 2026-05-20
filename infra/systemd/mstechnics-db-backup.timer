@@ -1,0 +1,10 @@
+[Unit]
+Description=Run MsTechnics PostgreSQL backup once per day
+
+[Timer]
+OnCalendar=*-*-* 02:30:00
+Persistent=true
+Unit=mstechnics-db-backup.service
+
+[Install]
+WantedBy=timers.target

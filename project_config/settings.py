@@ -1,12 +1,11 @@
 """Tracked Django settings package for Linux-safe deployments."""
 
-from datetime import timedelta
 import logging
+from datetime import timedelta
 from pathlib import Path
 
 import environ
 import structlog
-
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -68,6 +67,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django_prometheus",
     "rest_framework",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
@@ -97,6 +97,7 @@ if DEBUG:
     INSTALLED_APPS.append("debug_toolbar")
 
 MIDDLEWARE = [
+    "django_prometheus.middleware.PrometheusBeforeMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -107,6 +108,7 @@ MIDDLEWARE = [
     "shared.middleware.RequestContextMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]
 
 if DEBUG:
@@ -258,6 +260,7 @@ SPECTACULAR_SETTINGS = {
         {"name": "panels", "description": "Panels"},
         {"name": "cells", "description": "Cells"},
         {"name": "storage", "description": "Storage"},
+        {"name": "search", "description": "Global search"},
         {"name": "applications", "description": "Applications"},
         {"name": "departures", "description": "Departures"},
         {"name": "activity", "description": "Activity log"},

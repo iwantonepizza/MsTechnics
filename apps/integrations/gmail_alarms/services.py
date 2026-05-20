@@ -4,6 +4,7 @@ import base64
 import json
 from collections.abc import Iterable
 from dataclasses import dataclass
+from pathlib import Path
 
 from django.conf import settings
 from django.db import transaction
@@ -61,7 +62,7 @@ def process_alarm_record(record: AlarmRecord, *, gmail_message_id: str = "") -> 
 
 
 def pull_unread_vnnox_messages(query: str = "from:service@alimail.vnnox.com is:unread") -> Iterable[GmailAlarmMessage]:
-    service = _build_gmail_service()
+    service = build_gmail_service()
     response = service.users().messages().list(userId="me", q=query, includeSpamTrash=False).execute()
     for item in response.get("messages", []):
         message = service.users().messages().get(userId="me", id=item["id"], format="full").execute()
@@ -73,12 +74,54 @@ def pull_unread_vnnox_messages(query: str = "from:service@alimail.vnnox.com is:u
 
 
 def mark_message_as_read(message_id: str) -> None:
-    service = _build_gmail_service()
+    service = build_gmail_service()
     service.users().messages().modify(
         userId="me",
         id=message_id,
         body={"removeLabelIds": ["UNREAD"]},
     ).execute()
+
+
+def gmail_client_secret_file() -> Path:
+    client_secret_file = Path(settings.GOOGLE_CREDENTIALS_FILE)
+    if not client_secret_file.is_absolute():
+        client_secret_file = settings.BASE_DIR / client_secret_file
+    return client_secret_file
+
+
+def gmail_token_file() -> Path:
+    return settings.BASE_DIR / "Config" / "token.pickle"
+
+
+def check_gmail_oauth(
+    query: str = "from:service@alimail.vnnox.com is:unread",
+    *,
+    max_results: int = 1,
+) -> dict[str, object]:
+    client_secret_file = gmail_client_secret_file()
+    token_file = gmail_token_file()
+    if not client_secret_file.exists():
+        raise FileNotFoundError(f"Google client secret file not found: {client_secret_file}")
+    if not token_file.exists():
+        raise FileNotFoundError(f"Gmail token file not found: {token_file}")
+
+    service = build_gmail_service()
+    response = service.users().messages().list(
+        userId="me",
+        q=query,
+        includeSpamTrash=False,
+        maxResults=max(1, max_results),
+    ).execute()
+    messages = response.get("messages", [])
+
+    return {
+        "ok": True,
+        "query": query,
+        "client_secret_file": str(client_secret_file),
+        "token_file": str(token_file),
+        "result_size_estimate": int(response.get("resultSizeEstimate", 0)),
+        "message_ids": [item["id"] for item in messages[:max_results] if "id" in item],
+    }
 
 
 def _resolve_open_faulty(recovery_event: AlarmEvent) -> None:
@@ -101,12 +144,12 @@ def _resolve_open_faulty(recovery_event: AlarmEvent) -> None:
     faulty.save(update_fields=["resolved_at", "resolved_by_alarm"])
 
 
-def _build_gmail_service():
+def build_gmail_service():
     from google.auth.transport.requests import Request
     from google.oauth2.credentials import Credentials
     from googleapiclient.discovery import build
 
-    token_file = settings.BASE_DIR / "Config" / "token.pickle"
+    token_file = gmail_token_file()
     with open(token_file, encoding="utf-8") as token:
         credentials_data = json.load(token)
     if isinstance(credentials_data, str):

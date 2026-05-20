@@ -1,0 +1,10 @@
+[Unit]
+Description=MsTechnics PostgreSQL backup
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/mstechnics
+EnvironmentFile=/opt/mstechnics/Config/.env
+ExecStart=/opt/mstechnics/scripts/backup-db.sh

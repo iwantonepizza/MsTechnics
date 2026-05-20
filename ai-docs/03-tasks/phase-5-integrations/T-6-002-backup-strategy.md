@@ -4,8 +4,8 @@
 > **Приоритет:** P1 (нужно до prod-cutover, иначе первый сбой = потеря данных)
 > **Оценка:** 2-3 часа
 > **Фаза:** 6 (production)
-> **Статус:** ready
-> **Исполнитель:** (заполняется при взятии в работу)
+> **Статус:** review
+> **Исполнитель:** GPT-5 Codex
 
 ---
 
@@ -163,4 +163,15 @@ psql mstechnics_test -c "SELECT COUNT(*) FROM application;"
 
 ## Отчёт
 
-(Заполняет кодер.)
+### Что сделано кодером
+
+- Реализован repo-side operational minimum: `scripts/backup-db.sh` и `scripts/restore-db.sh`.
+- Добавлены systemd unit/timer для ежедневного backup.
+- Написан `ai-docs/06-integrations/backup-runbook.md`.
+- Создан `ai-docs/08-reports/T-6-002.md`.
+
+### Что остаётся владельцу
+
+- Установить зависимости на сервере и включить timer.
+- Настроить `BACKUP_REMOTE_TARGET` и `BACKUP_ENCRYPTION_PASSPHRASE`.
+- Выполнить хотя бы один manual backup и один test restore на staging/test DB после `T-6-001`.

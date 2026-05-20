@@ -52,3 +52,12 @@ repos:
         args: [--ignore-missing-imports]
         # Исключаем миграции и legacy-скрипты из корня
         exclude: ^(migrations/|.+/migrations/|manage\.py|sender_tg_message\.py|ManageControl\.py|daily_checker\.py|sorting_message\.py|get_time\.py)
+
+  - repo: local
+    hooks:
+      - id: check-encoding
+        name: Check files for UTF-8 BOM and mojibake
+        entry: python scripts/check_encoding.py
+        language: system
+        pass_filenames: true
+        files: '\.(cfg|ini|json|md|ps1|py|sh|toml|ts|tsx|txt|yaml|yml)$'

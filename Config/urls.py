@@ -4,6 +4,10 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path, include
 
+admin.site.site_header = "Суперсимметрия"
+admin.site.site_title = "Суперсимметрия"
+admin.site.index_title = "Администрирование"
+
 urlpatterns = [
     path("admin/", admin.site.urls),
 

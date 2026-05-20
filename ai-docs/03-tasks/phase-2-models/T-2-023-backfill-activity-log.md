@@ -1,10 +1,11 @@
-﻿# T-2-023. Миграция: 5 HistoryReport → `ActivityLog`
+# T-2-023. Миграция: 5 HistoryReport → `ActivityLog`
 
 > **Тип:** migration / data
 > **Приоритет:** P0
 > **Оценка:** 3 часа
 > **Фаза:** 2
-> **Статус:** blocked
+> **Статус:** review
+> **Исполнитель:** GPT-5 Codex
 
 ---
 
@@ -294,3 +295,14 @@ python manage.py verify_activity_log
 ## Follow-up
 
 После T-2-024 (удаление старых таблиц) записи в `ActivityLog` останутся навсегда, `legacy_source` + `legacy_id` можно оставить для аудита.
+
+---
+
+## Отчёт по выполнению
+
+- Добавлены `legacy_source` и `legacy_id` в `ActivityLog` с уникальностью для идемпотентного backfill.
+- Реализованы management-команды `backfill_activity_log` и `verify_activity_log`.
+- Покрыты все 5 legacy-источников: panel, display, application, departure, daily.
+- Прогон на `db_dumps/mstechnics.dump` подтвердил: `migrate`, `backfill_activity_log --dry-run`, `backfill_activity_log`, `verify_activity_log`, повторный `backfill_activity_log` без дублей.
+- На prod-copy найден и исправлен баг в ветке `departure_history`: backfill нельзя было завязывать на materialized `Departure` ORM-объект из-за legacy-колонки `status_legacy`.
+- Подробности вынесены в `ai-docs/08-reports/T-2-023.md`.

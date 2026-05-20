@@ -1,4 +1,4 @@
-﻿# T-3-033. Departures — list / detail / create / transitions
+# T-3-033. Departures — list / detail / create / transitions
 
 > **Тип:** API
 > **Приоритет:** P1

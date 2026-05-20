@@ -1,4 +1,4 @@
-﻿# T-3-032. ApplicationEvents — read-only timeline
+# T-3-032. ApplicationEvents — read-only timeline
 
 > **Тип:** API
 > **Приоритет:** P1

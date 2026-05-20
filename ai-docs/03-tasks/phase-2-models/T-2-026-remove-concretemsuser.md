@@ -1,4 +1,4 @@
-﻿# T-2-026. Удалить `ConcreteMsUser`
+# T-2-026. Удалить `ConcreteMsUser`
 
 > **Тип:** refactor
 > **Приоритет:** P2

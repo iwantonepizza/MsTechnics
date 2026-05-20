@@ -1,4 +1,4 @@
-﻿# T-2-fix-002. Перенести `DailyTask` в `apps/workflow/daily_tasks/`
+# T-2-fix-002. Перенести `DailyTask` в `apps/workflow/daily_tasks/`
 
 > **Тип:** refactor / migration
 > **Приоритет:** P2

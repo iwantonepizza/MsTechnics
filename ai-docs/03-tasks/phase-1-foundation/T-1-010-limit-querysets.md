@@ -1,4 +1,4 @@
-﻿# T-1-010. Ограничить querysets в reports до 50 записей
+# T-1-010. Ограничить querysets в reports до 50 записей
 
 > **Тип:** performance / bugfix
 > **Приоритет:** P2

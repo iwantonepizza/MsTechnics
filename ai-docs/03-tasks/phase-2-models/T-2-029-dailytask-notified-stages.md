@@ -1,4 +1,4 @@
-﻿# T-2-029. `DailyTask.*_notification_sent` → `notified_stages: JSONField`
+# T-2-029. `DailyTask.*_notification_sent` → `notified_stages: JSONField`
 
 > **Тип:** migration / refactor
 > **Приоритет:** P2

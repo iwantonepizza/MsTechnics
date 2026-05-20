@@ -64,10 +64,10 @@
 | ID                                                           | Название                                       | Статус  | Часов |
 |--------------------------------------------------------------|------------------------------------------------|---------|-------|
 | [T-2-020](phase-2-models/T-2-020-application-event-model.md) | Создать ApplicationEvent + backfill 28 полей   | done    | 3     |
-| [T-2-021](phase-2-models/T-2-021-drop-denormalized-fields.md)| Удалить 28 старых полей (после паузы)          | blocked | 1     |
+| [T-2-021](phase-2-models/T-2-021-drop-denormalized-fields.md)| Удалить 28 старых полей (после T-2-020 на проде) | ready  | 1     |
 | [T-2-022](phase-2-models/T-2-022-activity-log-model.md)      | Создать ActivityLog с GenericForeignKey        | done    | 2     |
-| [T-2-023](phase-2-models/T-2-023-backfill-activity-log.md)   | Миграция данных: 5 History → ActivityLog       | blocked | 3     |
-| [T-2-024](phase-2-models/T-2-024-drop-legacy-history.md)     | Удалить 5 старых History-таблиц                | blocked | 1     |
+| [T-2-023](phase-2-models/T-2-023-backfill-activity-log.md)   | Миграция данных: 5 History → ActivityLog (нужен прод-дамп) | review | 3     |
+| [T-2-024](phase-2-models/T-2-024-drop-legacy-history.md)     | Удалить 5 старых History-таблиц (после T-2-023) | ready  | 1     |
 | [T-2-025](phase-2-models/T-2-025-fk-to-id.md)                | FK to_field='name' → to_field='id'             | done    | 4     |
 | [T-2-026](phase-2-models/T-2-026-remove-concretemsuser.md)   | Удалить ConcreteMsUser                         | done    | 0.5   |
 | [T-2-027](phase-2-models/T-2-027-display-service.md)         | Display.save → DisplayService.create_with_layout | done | 2     |
@@ -144,7 +144,7 @@
 | [T-5-020](phase-5-integrations/T-5-020-max-bot.md) | MAX bot (setup + integration + webhook + binding) | done | 5 |
 | [T-5-030](phase-5-integrations/T-5-030-gmail-alarms.md) | VNNOX gmail-парсер + AlarmEvent | done | 6 |
 | [T-5-040](phase-5-integrations/T-5-040-worker-rewrite.md) | daily_checker rewrite + ManageControl + structlog | done | 4 |
-| [T-5-050](phase-5-integrations/T-5-050-legacy-cleanup.md) | Legacy cleanup (templates/views/shims/MsServiceControl) | blocked | 4.5 |
+| [T-5-050](phase-5-integrations/T-5-050-legacy-cleanup.md) | Legacy cleanup (templates/views/shims/MsServiceControl) | ready | 4.5 |
 | [T-5-fix-001](phase-5-integrations/T-5-fix-001-migration-graph-cleanup.md) | **HOTFIX (P0):** legacy models → shim/proxy + state-only DeleteModel + 19 alignment миграций | done | 4-5 |
 | [T-5-fix-002](phase-5-integrations/T-5-fix-002-dev-test-deps.md) | **HOTFIX (P1):** dev/test extras в .venv + UTF-8 requirements.txt | done | 1 |
 | [T-5-fix-002-followup](phase-5-integrations/T-5-fix-002-followup-ruff.md) | Follow-up: ruff/black/mypy baseline cleanup (291/96/16) | blocked | 2-3 |
@@ -156,12 +156,40 @@
 
 | ID | Название | Статус | Часов |
 |----|----------|--------|-------|
-| [T-6-001](phase-5-integrations/T-6-001-production-cutover-runbook.md) | **P0:** prod cutover runbook + удаление `prod_dump_compat.sql` + переписать `restore_to_dev.sh` | ready | 3-4 |
-| [T-6-002](phase-5-integrations/T-6-002-backup-strategy.md) | **P1:** pgBackRest или pg_dump cron + off-host копия + тест восстановления | ready | 2-3 |
-| [T-6-003](phase-5-integrations/T-6-003-observability.md) | **P1:** django-prometheus + Grafana + uptime monitor + 4 alerts | ready | 3-4 |
-| [T-6-004](phase-5-integrations/T-6-004-gitignore-and-dump-leakage.md) | **P0 security:** .gitignore + проверка утечки прод-дампа в git | review | 0.5-2 |
+| [T-6-001](phase-5-integrations/T-6-001-production-cutover-runbook.md) | **P0:** prod cutover runbook + удаление `prod_dump_compat.sql` + переписать `restore_to_dev.sh` | in-progress | 3-4 |
+| [T-6-002](phase-5-integrations/T-6-002-backup-strategy.md) | **P1:** pgBackRest или pg_dump cron + off-host копия + тест восстановления | in-progress | 2-3 |
+| [T-6-003](phase-5-integrations/T-6-003-observability.md) | **P1:** django-prometheus + Grafana + uptime monitor + 4 alerts | in-progress | 3-4 |
+| [T-6-004](phase-5-integrations/T-6-004-gitignore-and-dump-leakage.md) | **P0 security:** .gitignore + filter-repo + force-push (history переписана) | done | 0.5-2 |
+| [T-6-005](phase-5-integrations/T-6-005-rotate-leaked-secrets.md) | **P0 security:** ротация утёкших секретов (Google OAuth + `SECRET_KEY` + БД + TG/MAX токены) | in-progress | 1-2 |
+| [T-6-006](phase-5-integrations/T-6-006-encoding-hygiene.md) | **P1 hygiene:** UTF-8 без BOM + pre-commit hook + восстановление 54 markdown + T-6-001 cp1251-mojibake | done | 1-2 |
 
-**Итого фаза 6:** ~9-13 часов перед prod-релизом + наблюдение.
+**Итого фаза 6:** ~11-17 часов перед prod-релизом + наблюдение.
+
+### Фаза 7. Продуктовые требования + редизайн (раунд 2026-05-13)
+
+Полное оглавление — [`phase-7-product/README.md`](phase-7-product/README.md). Здесь только top-level карточки с детальной разверткой.
+
+| ID | Название | Статус | Часов |
+|----|----------|--------|-------|
+| [T-7-001](phase-7-product/T-7-001-rebranding-supersymmetria.md) | Rebranding: имя «Суперсимметрия» + новый логотип в UI | done | 1.5-2 |
+| [T-7-002](phase-7-product/T-7-002-design-tokens-v2-dark-mode.md) | Design tokens v2 + dark mode + theme toggle | done | 3-4 |
+| [T-7-003](phase-7-product/T-7-003-multi-role-and-fine-grained-permissions.md) | Multi-role + fine-grained permissions (A5, Z5) | review (Wave 1+2) | 6-8 |
+| T-7-004 | Departure ↔ Application FK → ManyToMany (DE5) | ready | 4-5 |
+| [T-7-005](phase-7-product/T-7-005-storage-extensions-and-low-stock.md) | Storage: PowerBlocks/Connectors + `low_stock_threshold=3` | done | 2-3 + 1.5 |
+| [T-7-007](phase-7-product/T-7-007-panel-removal-conditional-reason.md) | Снятие панели: 2 сценария (DV-S6) | done | 1.5-2 |
+| T-7-008 | ConfirmDialog для опасных действий (Md5) | review | 1 |
+| T-7-012 | Звук при новой заявке + opt-in в Profile (A8) | review | 1-2 |
+| T-7-035 | Создание панели (Z7) — backend + UI | review | 1.5 |
+| T-7-036 | Удаление панели (Z8, admin-only) — backend + UI с ConfirmDialog | review | 1 |
+| [T-7-010](phase-7-product/T-7-010-global-search.md) | Глобальный поиск `/` по 6 категориям (X1) | done | 4-6 |
+| [T-7-013](phase-7-product/T-7-013-print-application-card.md) | Print-friendly карточка заявки (X4) | done | 2-3 |
+| T-7-014 | История юзера в Profile (P2) | review | 1.5 |
+| T-7-030 / T-7-031 | Sort экранов + city filter в DepartmentPage | done | 1 + 1 |
+| [T-7-100](phase-7-product/T-7-100-design-round-4-integration.md) | **Design Round 4 integration (10 PR'ов)** — полировка UI под брендгайд | review | 25-30 |
+| T-7-followup-applications-display-city / display-aggregated-condition / bell-deeplink-resolve | Backend следствия Round 4 | review | ~2 |
+| T-7-004..T-7-036 | См. полный реестр в `phase-7-product/README.md` | mixed | ~30-40 |
+
+**Итого фаза 7:** ~50-65 часов продуктовой разработки + дизайн-итерации.
 
 ---
 
@@ -169,11 +197,13 @@
 
 - Фаза 1 (foundation): ~17ч → **done**
 - Фаза 2 (models): ~27ч → **done** (3 задачи в паузах)
-- Фаза 3 (API): ~32ч → **30ч done, 3ч hotfix**
-- Фаза 4 (SPA): ~40ч → **review / staging polish**
-- Фаза 5 (integrations): ~31ч → **review, T-5-050 blocked**
+- Фаза 3 (API): ~32ч → **done** (20 + 2 hotfix)
+- Фаза 4 (SPA): ~40ч → **done**
+- Фаза 5 (integrations): ~31ч + ~9ч hotfix → **done** (T-5-050 blocked)
+- Фаза 6 (production): ~11-17ч → **в работе**, T-6-004/006 done
+- Фаза 7 (product/redesign): ~50-65ч → **starts after prod stable** (часть rebranding можно параллельно)
 
-**Полный объём проекта:** ~150 часов кодинга
+**Полный объём проекта:** ~150 часов рефакторинга + ~15 часов production + ~55 часов продуктовой Phase 7.
 
 ---
 

@@ -1,4 +1,4 @@
-﻿# T-3-021. Panels — list / detail / move / replace
+# T-3-021. Panels — list / detail / move / replace
 
 > **Тип:** API
 > **Приоритет:** P0

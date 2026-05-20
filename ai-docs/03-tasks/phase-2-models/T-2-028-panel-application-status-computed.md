@@ -1,4 +1,4 @@
-﻿# T-2-028. `Panel.application_status` — удалить поле, вычислять
+# T-2-028. `Panel.application_status` — удалить поле, вычислять
 
 > **Тип:** migration / refactor
 > **Приоритет:** P1

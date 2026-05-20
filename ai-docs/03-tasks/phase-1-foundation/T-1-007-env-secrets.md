@@ -1,4 +1,4 @@
-﻿# T-1-007. django-environ, .env.example, отзыв утекших секретов
+# T-1-007. django-environ, .env.example, отзыв утекших секретов
 
 > **Тип:** security / infra
 > **Приоритет:** P0

@@ -1,4 +1,4 @@
-﻿# T-3-023. ZIP storage — Wires, Hubs, Lamels
+# T-3-023. ZIP storage — Wires, Hubs, Lamels
 
 > **Тип:** API
 > **Приоритет:** P2

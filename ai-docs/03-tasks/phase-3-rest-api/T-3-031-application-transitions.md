@@ -1,4 +1,4 @@
-﻿# T-3-031. Application transitions — FSM endpoint
+# T-3-031. Application transitions — FSM endpoint
 
 > **Тип:** API
 > **Приоритет:** P0

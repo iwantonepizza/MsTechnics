@@ -1,4 +1,4 @@
-﻿# T-3-011. Справочники: Cities, Colors, Conditions, Smiles, Departments
+# T-3-011. Справочники: Cities, Colors, Conditions, Smiles, Departments
 
 > **Тип:** API
 > **Приоритет:** P1

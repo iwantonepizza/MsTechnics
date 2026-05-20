@@ -1,4 +1,4 @@
-﻿# T-3-020. Displays — list / detail / photos / contacts
+# T-3-020. Displays — list / detail / photos / contacts
 
 > **Тип:** API
 > **Приоритет:** P0

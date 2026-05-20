@@ -1,4 +1,4 @@
-﻿# T-2-010. Переименовать `MsServiceControl/` → `config/`
+# T-2-010. Переименовать `MsServiceControl/` → `config/`
 
 > **Тип:** refactor
 > **Приоритет:** P1

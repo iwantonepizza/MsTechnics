@@ -20,16 +20,16 @@ ai-docs/
 │   └── performance-issues.md          Узкие места
 │
 ├── 02-roadmap/                        План работ
-│   └── roadmap.md                     4 фазы рефакторинга, порядок и зависимости
+│   └── roadmap.md                     6 фаз рефакторинга и production cutover
 │
 ├── 03-tasks/                          Атомарные задачи (1-3 часа каждая)
 │   ├── README.md                      Навигация по задачам
 │   ├── TEMPLATE.md                    Шаблон задачи
 │   ├── phase-1-foundation/            Фаза 1: базис (безопасность, конфиг, типы)
 │   ├── phase-2-models/                Фаза 2: нормализация моделей, миграции
-│   ├── phase-3-api-services/          Фаза 3: REST API, сервисы, use-cases
-│   ├── phase-4-frontend/              Фаза 4: React SPA
-│   └── phase-5-integrations/          Фаза 5: уведомления, MAX, обход блокировки
+│   ├── phase-3-rest-api/              Фаза 3: REST API, сервисы, use-cases
+│   ├── phase-4-spa/                   Фаза 4: React SPA
+│   └── phase-5-integrations/          Фазы 5-6: integrations, security, production cutover
 │
 ├── 04-conventions/                    Как мы пишем
 │   ├── code-style.md                  Python/TS style

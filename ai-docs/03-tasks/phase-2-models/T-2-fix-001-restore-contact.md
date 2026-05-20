@@ -1,4 +1,4 @@
-﻿# T-2-fix-001. Перенести `Contact` в `apps/workflow/departures/`
+# T-2-fix-001. Перенести `Contact` в `apps/workflow/departures/`
 
 > **Тип:** hotfix / migration
 > **Приоритет:** P0 (BLOCKER запуска)

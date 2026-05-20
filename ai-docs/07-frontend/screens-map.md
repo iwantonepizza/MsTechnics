@@ -1,6 +1,48 @@
-# Screens Map — карта экранов MsTechnics SPA
+# Screens Map — карта экранов «Суперсимметрия» SPA
 
-Детализация каждого экрана: путь, data requirements, компоненты, состояния, действия.
+> **Имя продукта:** Суперсимметрия (внутреннее code-имя `mstechnics`).
+> **Детализация каждого экрана:** путь, data requirements, компоненты, состояния, действия.
+
+---
+
+## Phase 7 status — что внедрено (2026-05-19)
+
+Свежий обзор для дизайнера / архитектора. ✅ done, 🟡 review/частично, 🔴 blocked, ⬜ не начато.
+
+| Экран | URL | Реализация | Brand polish | Dark theme | Mobile |
+|---|---|---|---|---|---|
+| Login | `/login` | ✅ | 🟡 | ✅ | ⬜ |
+| Main Menu | `/menu` | ✅ (v2) | ✅ | ✅ | ⬜ |
+| Department List — monitoring | `/monitoring` | ✅ + quick-links/sort/filter | 🟡 | ✅ | ⬜ |
+| Department List — control | `/control` | ✅ | 🟡 | ✅ | ⬜ |
+| Department List — service | `/service` | ✅ | 🟡 | ✅ | ⬜ |
+| DisplayView — monitoring | `/monitoring/:city/:slug` | ✅ | 🟡 | ✅ | ⬜ |
+| DisplayView — control | `/control/:city/:slug` | ✅ | 🟡 | ✅ | ⬜ |
+| DisplayView — service | `/service/:city/:slug` | ✅ (эталон) | ✅ | ✅ | ⬜ |
+| ZIP overview | `/zip`, `/zip/:slug` | ✅ + DnD + Create/Delete | 🟡 | ✅ | 🔴 (не для phone) |
+| Departures | `/departures` | ✅ | 🟡 | ✅ | ⬜ |
+| Profile (лк) | `/lk` | ✅ + theme + sound + activity | 🟡 | ✅ | ⬜ |
+| ApplicationDetailSheet (print) | inside DisplayView | ✅ + `@media print` | 🟡 | n/a | n/a |
+
+### Глобальные компоненты Phase 7
+
+| Компонент | Статус | Файл |
+|---|---|---|
+| Header с NotificationBell + ThemeToggle | ✅ | `src/widgets/navigation/Header.tsx` |
+| CommandPalette (поиск через `/` или Cmd+K) | ✅ | `src/shared/ui/CommandPalette.tsx` |
+| NotificationBell + popover | ✅ | `src/widgets/navigation/NotificationBell.tsx` |
+| ConfirmDialog (универсальный «Точно?») | ✅ | `src/shared/ui/ConfirmDialog.tsx` |
+| ThemeToggle (☀️/🌙) | ✅ | `src/shared/ui/ThemeToggle.tsx` |
+| Tokens v2 + Dark mode | ✅ | `src/app/styles/tokens.css` |
+| TT Travels font | ✅ | `src/app/styles/fonts.css` |
+| Biform font | 🔴 | ждём файлы от владельца |
+
+**Чего нет в коде, что в roadmap:**
+- Mobile breakpoints (Round 4 design-brief, потом исполнение).
+- Multi-role permissions (T-7-003, требует прод-БД).
+- Departure↔Application M2M (T-7-004, требует прод-БД).
+- VK community-bot (T-7-021, ждём token).
+- Admin password reset (T-7-015, blocked после T-7-003).
 
 ---
 

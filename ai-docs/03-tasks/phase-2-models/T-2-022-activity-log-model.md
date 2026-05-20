@@ -1,4 +1,4 @@
-﻿# T-2-022. Создать `ActivityLog` с GenericForeignKey
+# T-2-022. Создать `ActivityLog` с GenericForeignKey
 
 > **Тип:** migration / model
 > **Приоритет:** P0 (ключ Фазы 2)

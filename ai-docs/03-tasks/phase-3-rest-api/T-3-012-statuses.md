@@ -1,4 +1,4 @@
-﻿# T-3-012. ApplicationStatus + DepartureStatus справочники
+# T-3-012. ApplicationStatus + DepartureStatus справочники
 
 > **Тип:** API
 > **Приоритет:** P1

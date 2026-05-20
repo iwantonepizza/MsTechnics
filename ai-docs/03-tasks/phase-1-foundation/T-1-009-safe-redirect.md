@@ -1,4 +1,4 @@
-﻿# T-1-009. Заменить `redirect(HTTP_REFERER)` на `safe_redirect`
+# T-1-009. Заменить `redirect(HTTP_REFERER)` на `safe_redirect`
 
 > **Тип:** security / bugfix
 > **Приоритет:** P1

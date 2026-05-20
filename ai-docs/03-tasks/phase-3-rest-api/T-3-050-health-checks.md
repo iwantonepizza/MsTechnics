@@ -1,4 +1,4 @@
-﻿# T-3-050. Health-check endpoints
+# T-3-050. Health-check endpoints
 
 > **Тип:** infra
 > **Приоритет:** P2

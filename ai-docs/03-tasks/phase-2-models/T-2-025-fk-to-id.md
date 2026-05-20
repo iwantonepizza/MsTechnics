@@ -1,4 +1,4 @@
-﻿# T-2-025. FK `to_field='name'` → `to_field='id'`
+# T-2-025. FK `to_field='name'` → `to_field='id'`
 
 > **Тип:** migration
 > **Приоритет:** P1

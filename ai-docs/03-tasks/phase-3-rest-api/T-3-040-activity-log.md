@@ -1,4 +1,4 @@
-﻿# T-3-040. ActivityLog read endpoint + фильтры
+# T-3-040. ActivityLog read endpoint + фильтры
 
 > **Тип:** API
 > **Приоритет:** P1

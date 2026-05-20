@@ -1,4 +1,4 @@
-﻿# T-2-001. Baseline прод-данных: дамп, импорт в dev, fixture minimal-seed
+# T-2-001. Baseline прод-данных: дамп, импорт в dev, fixture minimal-seed
 
 > **Тип:** infra / data
 > **Приоритет:** P0 (blocker для всех миграций Фазы 2)

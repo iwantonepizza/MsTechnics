@@ -1,4 +1,4 @@
-﻿# T-3-030. Applications — list / detail / create / delete + filters
+# T-3-030. Applications — list / detail / create / delete + filters
 
 > **Тип:** API
 > **Приоритет:** P0

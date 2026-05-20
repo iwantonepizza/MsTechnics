@@ -1,4 +1,4 @@
-﻿# T-1-006. Фиксы критических багов: registration view, signals, if Panels
+# T-1-006. Фиксы критических багов: registration view, signals, if Panels
 
 > **Тип:** bugfix
 > **Приоритет:** P0

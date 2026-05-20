@@ -1,4 +1,4 @@
-﻿# T-2-030. `Departure.status: CharField` → `FK(DepartureStatus)`
+# T-2-030. `Departure.status: CharField` → `FK(DepartureStatus)`
 
 > **Тип:** migration / refactor
 > **Приоритет:** P2

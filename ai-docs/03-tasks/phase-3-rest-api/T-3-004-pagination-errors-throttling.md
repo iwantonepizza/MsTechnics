@@ -1,4 +1,4 @@
-﻿# T-3-004. Pagination, error format, throttling
+# T-3-004. Pagination, error format, throttling
 
 > **Тип:** infra
 > **Приоритет:** P0

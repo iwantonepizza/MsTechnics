@@ -1,4 +1,4 @@
-﻿# T-3-041. SSE stream для real-time
+# T-3-041. SSE stream для real-time
 
 > **Тип:** API / infra
 > **Приоритет:** P1

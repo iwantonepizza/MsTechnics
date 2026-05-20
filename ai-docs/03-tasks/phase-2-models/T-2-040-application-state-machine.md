@@ -1,4 +1,4 @@
-﻿# T-2-040. `ApplicationStateMachine` + `Transition` декларативно
+# T-2-040. `ApplicationStateMachine` + `Transition` декларативно
 
 > **Тип:** refactor / architecture
 > **Приоритет:** P0 (ключ Фазы 2)

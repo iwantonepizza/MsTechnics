@@ -1,4 +1,4 @@
-﻿# T-2-013. `zip/` → `apps/directory/` + переименование `Panels` → `Panel`
+# T-2-013. `zip/` → `apps/directory/` + переименование `Panels` → `Panel`
 
 > **Тип:** refactor / migration
 > **Приоритет:** P1

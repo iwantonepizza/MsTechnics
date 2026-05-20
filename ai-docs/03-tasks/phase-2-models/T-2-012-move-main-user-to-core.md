@@ -1,4 +1,4 @@
-﻿# T-2-012. Перенос `main` + `user` → `apps/core`
+# T-2-012. Перенос `main` + `user` → `apps/core`
 
 > **Тип:** refactor / migration
 > **Приоритет:** P1

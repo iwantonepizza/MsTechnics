@@ -1,4 +1,4 @@
-﻿# T-2-014. `application/` + `departure/` → `apps/workflow/`
+# T-2-014. `application/` + `departure/` → `apps/workflow/`
 
 > **Тип:** refactor / migration
 > **Приоритет:** P1

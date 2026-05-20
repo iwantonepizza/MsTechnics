@@ -1,6 +1,8 @@
 # Roadmap — план работ
 
-Проект переписывается в 5 фаз. Фазы идут **последовательно**, пересечения между кодерами — только в рамках одной фазы и только на разных приложениях.
+Проект переписывается в 6 фаз. Фазы идут **последовательно**, пересечения между кодерами — только в рамках одной фазы и только на разных приложениях.
+
+Актуальный статус по задачам живёт в `ai-docs/03-tasks/README.md`, а текущий прогресс — в `ai-docs/02-roadmap/progress.md`. Этот файл фиксирует целевую последовательность фаз и их смысл.
 
 ---
 
@@ -10,7 +12,7 @@
 2. **Тесты до рефакторинга.** Перед тем как трогать модель — покрыть её текущее поведение regression-тестами. Иначе не узнаем, что сломали.
 3. **Фаза = 1-2 недели** при 2-3 часах/день. Каждая задача = до 3 часов.
 4. **Фронт и бэк параллельно, начиная с фазы 3.** До этого — только backend: без нормализации моделей API разрабатывать бессмысленно.
-5. **Каждая фаза завершается релизом в прод.** Не «все 5 фаз = один релиз». После фазы 1 прод должен быть в рабочем состоянии, даже если фронт старый.
+5. **Каждая фаза завершается релизом в прод.** Не «все 6 фаз = один релиз». После фазы 1 прод должен быть в рабочем состоянии, даже если фронт старый.
 
 ---
 
@@ -178,27 +180,55 @@
 
 ---
 
-## Фаза 5. Integrations (уведомления, MAX, Gmail)
+## Фаза 5. Integrations + cleanup
 
-**Цель:** починить уведомления, добавить МАХ, обойти блокировку TG.
+**Цель:** довести интеграции до production-grade состояния: починить уведомления, добавить МАХ, перенести Gmail parser и убрать legacy-хвост.
 
-**Продолжительность:** ~15 часов. Может идти параллельно с фазой 4.
+**Продолжительность:** ~31 час + hotfix-волна. Может идти параллельно с фазой 4.
 
 | ID | Задача | Время |
 |----|--------|-------|
-| T-5-001 | Notification + NotificationPreference модели, админка | 2ч |
-| T-5-002 | Перевод очереди с PubSub на Redis Streams + consumer group | 3ч |
-| T-5-003 | Абстракция `NotificationChannel`, адаптер `TelegramChannel` | 2ч |
-| T-5-004 | SOCKS5 proxy для TG (aiohttp + aiohttp-socks), env-конфиг | 1.5ч |
-| T-5-005 | Адаптер `MaxChannel` (HTTP API МАХ), клон TG-логики | 2.5ч |
-| T-5-006 | Бот в МАХ: базовая обработка команд `/start`, получение chat_id | 2ч |
-| T-5-007 | Health-monitor: systemd unit + healthcheck endpoint + retry | 1ч |
-| T-5-008 | Миграция Gmail парсера в `apps/integrations/gmail/` + тесты парсера | 1ч |
+| T-5-001 | Архитектура notifications-приложения | 3ч |
+| T-5-002 | Каналы доставки: Telegram + MAX + Email | 4.5ч |
+| T-5-006 | Триггеры уведомлений по ключевым бизнес-событиям | 2ч |
+| T-5-010 | TG proxy worker и отказ от legacy `sender_tg_message.py` | 2.5ч |
+| T-5-020 | MAX bot: setup, webhook, binding, integration | 5ч |
+| T-5-030 | Gmail/VNNOX parser + `AlarmEvent` | 6ч |
+| T-5-040 | Rewrite `daily_checker` и фоновых процессов | 4ч |
+| T-5-050 | Legacy cleanup (templates/views/shims/MsServiceControl) | 4.5ч |
+| T-5-fix-001 | Hotfix: migration graph cleanup | 4-5ч |
+| T-5-fix-002 | Hotfix: dev/test deps baseline | 1ч |
+| T-5-fix-003 | Hotfix: live-DB verification + forward-only data migrations | 2-3ч |
 
 **Выход фазы 5:**
 - Уведомления гарантированно доставляются
-- При падении TG (РФ) автоматически шлёт через МАХ
-- Панель «лога уведомлений» в админке
+- При падении TG (РФ) есть рабочий proxy/fallback-контур
+- Gmail alarms и daily jobs встроены в целевую архитектуру
+- Legacy-слой сжат до контролируемого минимального остатка
+
+---
+
+## Фаза 6. Production cutover + post-cutover
+
+**Цель:** безопасно довести репозиторий и инфраструктуру до production release: единый cutover runbook, проверяемые backups, observability, remediation после secret leak и repo hygiene.
+
+**Продолжительность:** ~11-17 часов перед релизом + owner-side rollout.
+
+| ID | Задача | Время |
+|----|--------|-------|
+| T-6-001 | Production cutover runbook + удаление `prod_dump_compat.sql` + один сценарий restore | 3-4ч |
+| T-6-002 | Backup strategy: backup/restore scripts + off-host copy + restore drill | 2-3ч |
+| T-6-003 | Observability: Prometheus, Grafana, uptime monitor, alert rules | 3-4ч |
+| T-6-004 | Security hotfix: `.gitignore`, leak verification, `git-filter-repo`, force-push | 0.5-2ч |
+| T-6-005 | Post-incident secret rotation (Google OAuth, Django, DB, TG/MAX) | 1-2ч |
+| T-6-006 | Encoding hygiene: UTF-8 without BOM enforcement + markdown recovery | 1-2ч |
+
+**Выход фазы 6:**
+- Есть один рабочий cutover/runbook вместо конкурирующих сценариев
+- Бэкапы не только создаются, но и реально восстанавливаются
+- У приложения есть базовая observability-поверхность и alerting
+- Репозиторий очищен от утёкших артефактов, а секреты выведены в owner-side ротацию
+- Новые markdown/code commits не ломают UTF-8 и task registry
 
 ---
 
@@ -206,8 +236,6 @@
 
 Не обязательные, но полезные после выхода в прод:
 
-- **Мониторинг:** django-prometheus + Grafana dashboard
-- **Backups:** pgBackRest или WAL-G
 - **Документация пользователя:** `docs.mstechnics.ru`
 - **Импорт/экспорт:** CSV экспорт истории, импорт контактов
 - **Мобильная адаптация:** PWA + офлайн-режим для техников на объектах

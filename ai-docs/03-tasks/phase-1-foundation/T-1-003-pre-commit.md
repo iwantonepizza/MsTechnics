@@ -1,4 +1,4 @@
-﻿# T-1-003. Pre-commit hooks: ruff + black + mypy + проверка секретов
+# T-1-003. Pre-commit hooks: ruff + black + mypy + проверка секретов
 
 > **Тип:** infra
 > **Приоритет:** P1

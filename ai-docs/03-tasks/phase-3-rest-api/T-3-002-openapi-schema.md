@@ -1,4 +1,4 @@
-﻿# T-3-002. OpenAPI schema через drf-spectacular
+# T-3-002. OpenAPI schema через drf-spectacular
 
 > **Тип:** infra
 > **Приоритет:** P0

@@ -1,4 +1,4 @@
-﻿# T-1-002. Правка docker-compose: postgres в compose, env_files, сети
+# T-1-002. Правка docker-compose: postgres в compose, env_files, сети
 
 > **Тип:** infra
 > **Приоритет:** P0

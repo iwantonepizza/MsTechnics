@@ -1,4 +1,4 @@
-﻿# T-2-027. Вынести `Display.save()` в `DisplayService.create()`
+# T-2-027. Вынести `Display.save()` в `DisplayService.create()`
 
 > **Тип:** refactor
 > **Приоритет:** P1

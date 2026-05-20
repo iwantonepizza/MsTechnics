@@ -1,35 +1,39 @@
-from drf_spectacular.utils import extend_schema, OpenApiParameter
-from rest_framework.permissions import IsAuthenticated
+from drf_spectacular.utils import extend_schema
 from rest_framework.viewsets import ModelViewSet
-from apps.directory.storage.models import Wires, Hubs, Lamels
-from shared.permissions import HasDepartmentAccess
-from .serializers import WiresSerializer, HubsSerializer, LamelsSerializer
+
+from apps.directory.storage.models import Connectors, Hubs, Lamels, PowerBlocks, Wires
+
+from .permissions import CanManageStorageItems
+from .serializers import (
+    ConnectorsSerializer,
+    HubsSerializer,
+    LamelsSerializer,
+    PowerBlocksSerializer,
+    WiresSerializer,
+)
 
 
 def _make_storage_viewset(model, serializer_cls, tag):
     class _VS(ModelViewSet):
         serializer_class = serializer_cls
-        http_method_names = ["get", "patch", "delete", "head", "options"]
+        http_method_names = ["get", "post", "patch", "delete", "head", "options"]
 
         def get_queryset(self):
-            qs = model.objects.all()
-            if slug := self.request.query_params.get("display"):
-                qs = qs.filter(display__slug=slug)
-            return qs.order_by("id")
+            return model.objects.order_by("id")
 
-        def get_permissions(self):
-            if self.action in ("partial_update", "destroy"):
-                return [HasDepartmentAccess.for_("control", "admin", "all")()]
-            return [IsAuthenticated()]
-
-        @extend_schema(tags=[tag], parameters=[OpenApiParameter("display", str)])
+        @extend_schema(tags=[tag])
         def list(self, *args, **kwargs):
             return super().list(*args, **kwargs)
+
+        def get_permissions(self):
+            return [CanManageStorageItems()]
 
     _VS.__name__ = f"{model.__name__}ViewSet"
     return _VS
 
 
-WiresViewSet  = _make_storage_viewset(Wires,  WiresSerializer,  "storage")
-HubsViewSet   = _make_storage_viewset(Hubs,   HubsSerializer,   "storage")
+WiresViewSet = _make_storage_viewset(Wires, WiresSerializer, "storage")
+HubsViewSet = _make_storage_viewset(Hubs, HubsSerializer, "storage")
 LamelsViewSet = _make_storage_viewset(Lamels, LamelsSerializer, "storage")
+PowerBlocksViewSet = _make_storage_viewset(PowerBlocks, PowerBlocksSerializer, "storage")
+ConnectorsViewSet = _make_storage_viewset(Connectors, ConnectorsSerializer, "storage")

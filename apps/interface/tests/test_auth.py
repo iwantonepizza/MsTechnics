@@ -66,3 +66,11 @@ def test_health_live_no_auth(client):
     response = client.get("/api/v1/health/live")
     assert response.status_code == 200
     assert response.data["status"] == "alive"
+
+
+def test_metrics_endpoint_no_auth(client):
+    response = client.get("/metrics")
+
+    assert response.status_code == 200
+    assert "text/plain" in response["Content-Type"]
+    assert "django_http" in response.content.decode("utf-8")

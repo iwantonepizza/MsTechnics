@@ -16,6 +16,7 @@ from typing import Callable
 
 import structlog
 
+from apps.core.users.permissions import has_role
 from apps.workflow.applications.exceptions import InvalidTransition, TransitionPermissionDenied
 
 logger = structlog.get_logger(__name__)
@@ -76,49 +77,49 @@ TRANSITIONS: list[Transition] = [
         from_status="sent_to_control",
         to_status="apply_in_control",
         stage="control_apply",
-        allowed_roles=("control", "all", "admin"),
+        allowed_roles=("control", "admin"),
         on_transition=[_set_panel_condition_error, _sync_panel_application_status],
     ),
     Transition(
         from_status="apply_in_control",
         to_status="sent_to_service",
         stage="control_send",
-        allowed_roles=("control", "all", "admin"),
+        allowed_roles=("control", "admin"),
         on_transition=[_sync_panel_application_status],
     ),
     Transition(
         from_status="sent_to_service",
         to_status="work_in_service",
         stage="service_apply",
-        allowed_roles=("service", "all", "admin"),
+        allowed_roles=("service", "admin"),
         on_transition=[_sync_panel_application_status],
     ),
     Transition(
         from_status="work_in_service",
         to_status="done",
         stage="service_complete",
-        allowed_roles=("service", "all", "admin"),
+        allowed_roles=("service", "admin"),
         on_transition=[_set_panel_condition_work, _sync_panel_application_status],
     ),
     Transition(
         from_status="work_in_service",
         to_status="unable",
         stage="service_unable",
-        allowed_roles=("service", "all", "admin"),
+        allowed_roles=("service", "admin"),
         on_transition=[_sync_panel_application_status],
     ),
     Transition(
         from_status="done",
         to_status="archive_done",
         stage="archive_done",
-        allowed_roles=("control", "all", "admin"),
+        allowed_roles=("control", "admin"),
         on_transition=[_set_panel_status_default],
     ),
     Transition(
         from_status="unable",
         to_status="archive_unable",
         stage="archive_unable",
-        allowed_roles=("control", "all", "admin"),
+        allowed_roles=("control", "admin"),
         on_transition=[_set_panel_status_default],
     ),
 ]
@@ -190,9 +191,9 @@ class ApplicationStateMachine:
         transition = self.get_transition(current_status, target_status)
 
         # Проверка прав
-        if actor and actor.permission not in transition.allowed_roles:
+        if actor and not has_role(actor, *transition.allowed_roles):
             raise TransitionPermissionDenied(
-                f"Роль '{actor.permission}' не может выполнить переход в '{target_status}'.",
+                f"Пользователь '{actor.username}' не может выполнить переход в '{target_status}'.",
                 actor=actor.username,
                 target_status=target_status,
             )

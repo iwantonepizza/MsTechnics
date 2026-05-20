@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
+from apps.core.users.permissions import is_admin
 from apps.directory.displays.models import Cell
 from apps.directory.panels.services import panel_mover
 from shared.throttling import TransitionRateThrottle
@@ -21,7 +22,7 @@ class CellViewSet(ReadOnlyModelViewSet):
         if d := self.request.query_params.get("display"):
             qs = qs.filter(display_id=d)
         user = self.request.user
-        if user.permission not in ("admin", "all"):
+        if not is_admin(user):
             qs = qs.filter(display__city__in=user.allowed_city.all())
         return qs.order_by("display", "row", "col")
 

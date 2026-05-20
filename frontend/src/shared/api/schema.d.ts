@@ -81,7 +81,7 @@ export interface paths {
         patch: operations["me_partial_update"];
         trace?: never;
     };
-    "/api/v1/me/change-password": {
+    "/api/v1/mechange-password": {
         parameters: {
             query?: never;
             header?: never;
@@ -91,7 +91,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Сменить пароль */
-        post: operations["me_change_password_create"];
+        post: operations["mechange_password_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -451,7 +451,8 @@ export interface paths {
         /** Список панелей */
         get: operations["panels_list"];
         put?: never;
-        post?: never;
+        /** Создать новую панель (T-7-035, Z7) */
+        post: operations["panels_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -469,7 +470,8 @@ export interface paths {
         get: operations["panels_retrieve"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Удалить панель (T-7-036, admin-only, Z8) */
+        delete: operations["panels_destroy"];
         options?: never;
         head?: never;
         /** Обновить панель */
@@ -544,6 +546,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/panels/{id}/remove/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Снять панель с ячейки */
+        post: operations["panels_remove_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/cells/": {
         parameters: {
             query?: never;
@@ -604,7 +623,7 @@ export interface paths {
         };
         get: operations["storage_wires_list"];
         put?: never;
-        post?: never;
+        post: operations["storage_wires_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -636,7 +655,7 @@ export interface paths {
         };
         get: operations["storage_hubs_list"];
         put?: never;
-        post?: never;
+        post: operations["storage_hubs_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -668,7 +687,7 @@ export interface paths {
         };
         get: operations["storage_lamels_list"];
         put?: never;
-        post?: never;
+        post: operations["storage_lamels_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -689,6 +708,104 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["storage_lamels_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/storage/power-blocks/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["storage_power_blocks_list"];
+        put?: never;
+        post: operations["storage_power_blocks_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/storage/power-blocks/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["storage_power_blocks_retrieve"];
+        put?: never;
+        post?: never;
+        delete: operations["storage_power_blocks_destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["storage_power_blocks_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/storage/connectors/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["storage_connectors_list"];
+        put?: never;
+        post: operations["storage_connectors_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/storage/connectors/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["storage_connectors_retrieve"];
+        put?: never;
+        post?: never;
+        delete: operations["storage_connectors_destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["storage_connectors_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/search/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Глобальный поиск по 6 категориям */
+        get: operations["search_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Timeline событий заявки */
+        get: operations["applications_events_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/applications/": {
@@ -739,7 +856,7 @@ export interface paths {
             cookie?: never;
         };
         /** Timeline событий заявки */
-        get: operations["applications_events_list"];
+        get: operations["applications_events_list_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -921,6 +1038,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/notifications/inbox/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Inbox уведомлений текущего юзера (T-7-011)
+         * @description GET /api/v1/notifications/inbox/?limit=20
+         *
+         *     Возвращает последние N уведомлений для `request.user` со статусом `sent` или
+         *     `pending`. Сортировка по `-created_at`. Юзер видит только свои.
+         */
+        get: operations["notifications_inbox_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/health/live": {
         parameters: {
             query?: never;
@@ -1071,6 +1211,18 @@ export interface components {
              */
             last_update_date_time?: string | null;
         };
+        ApplicationSearchItem: {
+            id: number;
+            display_name: string | null;
+            display_slug: string | null;
+            city_slug: string | null;
+            panel_name: string | null;
+            cell_position: string | null;
+            status_name: string | null;
+            initial_comment: string | null;
+            /** Format: double */
+            score: number;
+        };
         ApplicationStatus: {
             readonly id: number;
             /** Название */
@@ -1149,6 +1301,38 @@ export interface components {
             readonly color: components["schemas"]["Color"];
             readonly icon: components["schemas"]["Smile"];
         };
+        Connectors: {
+            readonly id: number;
+            /** Имя */
+            name: string;
+            /** Количество */
+            count?: number;
+            /** Описание */
+            description?: string | null;
+            /** Порог низкого остатка */
+            low_stock_threshold?: number;
+            readonly is_low_stock: boolean;
+            /**
+             * Фото
+             * Format: uri
+             */
+            photo?: string | null;
+        };
+        ConnectorsRequest: {
+            /** Имя */
+            name: string;
+            /** Количество */
+            count?: number;
+            /** Описание */
+            description?: string | null;
+            /** Порог низкого остатка */
+            low_stock_threshold?: number;
+            /**
+             * Фото
+             * Format: binary
+             */
+            photo?: string | null;
+        };
         Department: {
             readonly id: number;
             /** Название отдела */
@@ -1189,6 +1373,14 @@ export interface components {
              */
             time_updated?: string | null;
         };
+        DepartureSearchItem: {
+            id: number;
+            description: string | null;
+            executor_name: string | null;
+            status_name: string | null;
+            /** Format: double */
+            score: number;
+        };
         DepartureStatus: {
             readonly id: number;
             /** Код */
@@ -1228,11 +1420,28 @@ export interface components {
             rows?: number;
             /** Кол-во столбцов */
             cols?: number;
+            readonly aggregated_condition: components["schemas"]["Condition"] | null;
         };
         DisplayMini: {
             id: number;
             slug: string | null;
             description: string | null;
+            readonly city: components["schemas"]["DisplayMiniCity"];
+        };
+        /** @description Минимальный city DTO внутри display для deep-link и dashboard. */
+        DisplayMiniCity: {
+            slug: string | null;
+            name: string;
+        };
+        DisplaySearchItem: {
+            id: number;
+            name: string;
+            description: string | null;
+            slug: string | null;
+            city_name: string;
+            city_slug: string | null;
+            /** Format: double */
+            score: number;
         };
         /**
          * @description * `panel_move` - Панель: перемещение
@@ -1271,6 +1480,14 @@ export interface components {
             first_name: string;
             last_name: string;
         };
+        GlobalSearchResponse: {
+            displays: components["schemas"]["DisplaySearchItem"][];
+            panels: components["schemas"]["PanelSearchItem"][];
+            applications: components["schemas"]["ApplicationSearchItem"][];
+            departures: components["schemas"]["DepartureSearchItem"][];
+            users: components["schemas"]["UserSearchItem"][];
+            storage: components["schemas"]["StorageSearchItem"][];
+        };
         Hubs: {
             readonly id: number;
             /** Имя */
@@ -1279,6 +1496,29 @@ export interface components {
             count?: number;
             /** Описание */
             description?: string | null;
+            /** Порог низкого остатка */
+            low_stock_threshold?: number;
+            readonly is_low_stock: boolean;
+            /**
+             * Фото
+             * Format: uri
+             */
+            photo?: string | null;
+        };
+        HubsRequest: {
+            /** Имя */
+            name: string;
+            /** Количество */
+            count?: number;
+            /** Описание */
+            description?: string | null;
+            /** Порог низкого остатка */
+            low_stock_threshold?: number;
+            /**
+             * Фото
+             * Format: binary
+             */
+            photo?: string | null;
         };
         Lamels: {
             readonly id: number;
@@ -1288,6 +1528,29 @@ export interface components {
             count?: number;
             /** Описание */
             description?: string | null;
+            /** Порог низкого остатка */
+            low_stock_threshold?: number;
+            readonly is_low_stock: boolean;
+            /**
+             * Фото
+             * Format: uri
+             */
+            photo?: string | null;
+        };
+        LamelsRequest: {
+            /** Имя */
+            name: string;
+            /** Количество */
+            count?: number;
+            /** Описание */
+            description?: string | null;
+            /** Порог низкого остатка */
+            low_stock_threshold?: number;
+            /**
+             * Фото
+             * Format: binary
+             */
+            photo?: string | null;
         };
         LoginRequestRequest: {
             username: string;
@@ -1309,6 +1572,22 @@ export interface components {
         MoveToCellRequest: {
             cell_id: number;
             comment?: string;
+        };
+        /**
+         * @description T-7-011: компактный item для колокольчика в хедере.
+         *
+         *     Только нужные поля — id, текст, дата создания, контекст-target (kind+id для deeplink).
+         */
+        NotificationInboxItem: {
+            readonly id: number;
+            rendered_text?: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            status?: components["schemas"]["StatusEnum"];
+            delivered_via?: string;
+            readonly target_kind: string | null;
+            readonly target_id: string | null;
+            readonly deep_link_path: string | null;
         };
         PaginatedActivityLogList: {
             results?: components["schemas"]["ActivityLog"][];
@@ -1364,6 +1643,12 @@ export interface components {
             prev_cursor?: string | null;
             has_more?: boolean;
         };
+        PaginatedConnectorsList: {
+            results?: components["schemas"]["Connectors"][];
+            next_cursor?: string | null;
+            prev_cursor?: string | null;
+            has_more?: boolean;
+        };
         PaginatedDepartmentList: {
             results?: components["schemas"]["Department"][];
             next_cursor?: string | null;
@@ -1412,6 +1697,12 @@ export interface components {
             prev_cursor?: string | null;
             has_more?: boolean;
         };
+        PaginatedPowerBlocksList: {
+            results?: components["schemas"]["PowerBlocks"][];
+            next_cursor?: string | null;
+            prev_cursor?: string | null;
+            has_more?: boolean;
+        };
         PaginatedSmileList: {
             results?: components["schemas"]["Smile"][];
             next_cursor?: string | null;
@@ -1435,6 +1726,19 @@ export interface components {
             readonly display_id: number;
             readonly cell_id: number;
             readonly application_status_name: string;
+            readonly active_application_id: number;
+        };
+        /**
+         * @description T-7-035: создание панели через UI ZIP.
+         *
+         *     Создаётся новая панель в указанном `display` со стартовым `condition` (по name).
+         *     Поле `comment` опционально. Сразу попадает в department='zip' (склад).
+         */
+        PanelCreateRequest: {
+            name: string;
+            display_id: number;
+            condition_name?: string;
+            comment?: string;
         };
         PanelMini: {
             id: number;
@@ -1447,10 +1751,37 @@ export interface components {
             readonly application_status_name: string;
             comment: string | null;
         };
+        PanelSearchItem: {
+            id: number;
+            name: string;
+            display_name: string | null;
+            display_slug: string | null;
+            city_slug: string | null;
+            condition_name: string | null;
+            department_name: string | null;
+            active_application_id: number | null;
+            /** Format: double */
+            score: number;
+        };
         PatchedColorRequest: {
             /** Цвет */
             name?: string;
             hex?: string;
+        };
+        PatchedConnectorsRequest: {
+            /** Имя */
+            name?: string;
+            /** Количество */
+            count?: number;
+            /** Описание */
+            description?: string | null;
+            /** Порог низкого остатка */
+            low_stock_threshold?: number;
+            /**
+             * Фото
+             * Format: binary
+             */
+            photo?: string | null;
         };
         PatchedDeparturePatchRequest: {
             description?: string;
@@ -1465,6 +1796,13 @@ export interface components {
             count?: number;
             /** Описание */
             description?: string | null;
+            /** Порог низкого остатка */
+            low_stock_threshold?: number;
+            /**
+             * Фото
+             * Format: binary
+             */
+            photo?: string | null;
         };
         PatchedLamelsRequest: {
             /** Имя */
@@ -1473,6 +1811,13 @@ export interface components {
             count?: number;
             /** Описание */
             description?: string | null;
+            /** Порог низкого остатка */
+            low_stock_threshold?: number;
+            /**
+             * Фото
+             * Format: binary
+             */
+            photo?: string | null;
         };
         PatchedMeRequest: {
             /** Format: email */
@@ -1484,6 +1829,21 @@ export interface components {
             comment?: string;
             condition_id?: number;
         };
+        PatchedPowerBlocksRequest: {
+            /** Имя */
+            name?: string;
+            /** Количество */
+            count?: number;
+            /** Описание */
+            description?: string | null;
+            /** Порог низкого остатка */
+            low_stock_threshold?: number;
+            /**
+             * Фото
+             * Format: binary
+             */
+            photo?: string | null;
+        };
         PatchedWiresRequest: {
             /** Имя */
             name?: string;
@@ -1491,11 +1851,55 @@ export interface components {
             count?: number;
             /** Описание */
             description?: string | null;
+            /** Порог низкого остатка */
+            low_stock_threshold?: number;
+            /**
+             * Фото
+             * Format: binary
+             */
+            photo?: string | null;
         };
         PhotoUploadRequest: {
             /** Format: binary */
             file: string;
             description?: string;
+        };
+        PowerBlocks: {
+            readonly id: number;
+            /** Имя */
+            name: string;
+            /** Количество */
+            count?: number;
+            /** Описание */
+            description?: string | null;
+            /** Порог низкого остатка */
+            low_stock_threshold?: number;
+            readonly is_low_stock: boolean;
+            /**
+             * Фото
+             * Format: uri
+             */
+            photo?: string | null;
+        };
+        PowerBlocksRequest: {
+            /** Имя */
+            name: string;
+            /** Количество */
+            count?: number;
+            /** Описание */
+            description?: string | null;
+            /** Порог низкого остатка */
+            low_stock_threshold?: number;
+            /**
+             * Фото
+             * Format: binary
+             */
+            photo?: string | null;
+        };
+        RemovePanelRequest: {
+            new_condition?: string;
+            comment?: string;
+            application_id?: number | null;
         };
         Smile: {
             readonly id: number;
@@ -1513,12 +1917,37 @@ export interface components {
          * @enum {string}
          */
         StageEnum: "monitoring_create" | "control_apply" | "control_send" | "service_apply" | "service_complete" | "service_unable" | "archive_done" | "archive_unable";
+        /**
+         * @description * `pending` - В очереди
+         *     * `sent` - Отправлено
+         *     * `failed` - Ошибка
+         *     * `skipped` - Пропущено
+         * @enum {string}
+         */
+        StatusEnum: "pending" | "sent" | "failed" | "skipped";
+        StorageSearchItem: {
+            id: number;
+            kind: string;
+            name: string;
+            description: string | null;
+            count: number;
+            /** Format: double */
+            score: number;
+        };
         TransitionRequest: {
             target_state: string;
             comment?: string;
             executor_id?: number | null;
             /** Format: binary */
             file?: string | null;
+        };
+        UserSearchItem: {
+            id: number;
+            username: string;
+            full_name: string;
+            permission: string;
+            /** Format: double */
+            score: number;
         };
         Wires: {
             readonly id: number;
@@ -1528,6 +1957,29 @@ export interface components {
             count?: number;
             /** Описание */
             description?: string | null;
+            /** Порог низкого остатка */
+            low_stock_threshold?: number;
+            readonly is_low_stock: boolean;
+            /**
+             * Фото
+             * Format: uri
+             */
+            photo?: string | null;
+        };
+        WiresRequest: {
+            /** Имя */
+            name: string;
+            /** Количество */
+            count?: number;
+            /** Описание */
+            description?: string | null;
+            /** Порог низкого остатка */
+            low_stock_threshold?: number;
+            /**
+             * Фото
+             * Format: binary
+             */
+            photo?: string | null;
         };
     };
     responses: never;
@@ -1658,7 +2110,7 @@ export interface operations {
             };
         };
     };
-    me_change_password_create: {
+    mechange_password_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -2280,6 +2732,31 @@ export interface operations {
             };
         };
     };
+    panels_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PanelCreateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PanelCreateRequest"];
+                "multipart/form-data": components["schemas"]["PanelCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Panel"];
+                };
+            };
+        };
+    };
     panels_retrieve: {
         parameters: {
             query?: never;
@@ -2298,6 +2775,26 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Panel"];
                 };
+            };
+        };
+    };
+    panels_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -2424,6 +2921,33 @@ export interface operations {
             };
         };
     };
+    panels_remove_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RemovePanelRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["RemovePanelRequest"];
+                "multipart/form-data": components["schemas"]["RemovePanelRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Panel"];
+                };
+            };
+        };
+    };
     cells_list: {
         parameters: {
             query?: {
@@ -2502,7 +3026,6 @@ export interface operations {
             query?: {
                 /** @description The pagination cursor value. */
                 cursor?: string;
-                display?: string;
                 /** @description Number of results to return per page. */
                 limit?: number;
             };
@@ -2518,6 +3041,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaginatedWiresList"];
+                };
+            };
+        };
+    };
+    storage_wires_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WiresRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["WiresRequest"];
+                "multipart/form-data": components["schemas"]["WiresRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Wires"];
                 };
             };
         };
@@ -2598,7 +3146,6 @@ export interface operations {
             query?: {
                 /** @description The pagination cursor value. */
                 cursor?: string;
-                display?: string;
                 /** @description Number of results to return per page. */
                 limit?: number;
             };
@@ -2614,6 +3161,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaginatedHubsList"];
+                };
+            };
+        };
+    };
+    storage_hubs_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HubsRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["HubsRequest"];
+                "multipart/form-data": components["schemas"]["HubsRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Hubs"];
                 };
             };
         };
@@ -2694,7 +3266,6 @@ export interface operations {
             query?: {
                 /** @description The pagination cursor value. */
                 cursor?: string;
-                display?: string;
                 /** @description Number of results to return per page. */
                 limit?: number;
             };
@@ -2710,6 +3281,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaginatedLamelsList"];
+                };
+            };
+        };
+    };
+    storage_lamels_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LamelsRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["LamelsRequest"];
+                "multipart/form-data": components["schemas"]["LamelsRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Lamels"];
                 };
             };
         };
@@ -2781,6 +3377,296 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Lamels"];
+                };
+            };
+        };
+    };
+    storage_power_blocks_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Number of results to return per page. */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedPowerBlocksList"];
+                };
+            };
+        };
+    };
+    storage_power_blocks_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PowerBlocksRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PowerBlocksRequest"];
+                "multipart/form-data": components["schemas"]["PowerBlocksRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PowerBlocks"];
+                };
+            };
+        };
+    };
+    storage_power_blocks_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this Блок питания. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PowerBlocks"];
+                };
+            };
+        };
+    };
+    storage_power_blocks_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this Блок питания. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    storage_power_blocks_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this Блок питания. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedPowerBlocksRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedPowerBlocksRequest"];
+                "multipart/form-data": components["schemas"]["PatchedPowerBlocksRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PowerBlocks"];
+                };
+            };
+        };
+    };
+    storage_connectors_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Number of results to return per page. */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedConnectorsList"];
+                };
+            };
+        };
+    };
+    storage_connectors_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConnectorsRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ConnectorsRequest"];
+                "multipart/form-data": components["schemas"]["ConnectorsRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Connectors"];
+                };
+            };
+        };
+    };
+    storage_connectors_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this Коннектор. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Connectors"];
+                };
+            };
+        };
+    };
+    storage_connectors_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this Коннектор. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    storage_connectors_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this Коннектор. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedConnectorsRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedConnectorsRequest"];
+                "multipart/form-data": components["schemas"]["PatchedConnectorsRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Connectors"];
+                };
+            };
+        };
+    };
+    search_retrieve: {
+        parameters: {
+            query: {
+                /** @description Лимит на категорию, максимум 20 */
+                limit?: number;
+                /** @description Поисковый запрос, минимум 2 символа */
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GlobalSearchResponse"];
+                };
+            };
+        };
+    };
+    applications_events_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Number of results to return per page. */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedApplicationEventList"];
                 };
             };
         };
@@ -2879,7 +3765,7 @@ export interface operations {
             };
         };
     };
-    applications_events_list: {
+    applications_events_list_2: {
         parameters: {
             query?: {
                 /** @description The pagination cursor value. */
@@ -3222,6 +4108,27 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    notifications_inbox_list: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationInboxItem"][];
+                };
             };
         };
     };

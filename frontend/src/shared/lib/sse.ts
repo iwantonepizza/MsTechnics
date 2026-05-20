@@ -7,6 +7,13 @@ import { useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { create } from 'zustand'
 
+import { playNotificationSound } from './notificationSound'
+
+// События, на которые играем звук уведомления (T-7-012).
+// Сейчас — только новая заявка (A8 от владельца: «контролёр когда мониторщик создал»).
+// Расширять список тут, не размазывать по бизнес-коду.
+const SOUND_EVENTS: ReadonlySet<string> = new Set(['application.create'])
+
 type SSEStatus = 'connecting' | 'connected' | 'reconnecting' | 'disconnected'
 
 interface SSEStore {
@@ -62,14 +69,16 @@ function connectSSE(token: string, setStatus: (s: SSEStatus) => void, invalidate
       const eventType = payload?.event_type ?? 'unknown'
       const keys = EVENT_QUERY_MAP[eventType]
       if (keys) invalidate(keys)
+      if (SOUND_EVENTS.has(eventType)) playNotificationSound()
     } catch { /* ignore malformed */ }
   }
 
   // Named events from backend
   Object.keys(EVENT_QUERY_MAP).forEach(eventType => {
-    es.addEventListener(eventType, (e) => {
+    es.addEventListener(eventType, () => {
       const keys = EVENT_QUERY_MAP[eventType]
       if (keys) invalidate(keys)
+      if (SOUND_EVENTS.has(eventType)) playNotificationSound()
     })
   })
 

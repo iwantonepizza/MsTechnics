@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, mixins
 
+from apps.core.users.permissions import is_admin
 from apps.workflow.applications.models import Application
 from apps.workflow.applications.services import application_service
 from shared.exceptions import DomainError
@@ -43,7 +44,7 @@ class ApplicationViewSet(
             box = params.get("box", "received")
             qs = apply_box_filter(qs, box)
         user = self.request.user
-        if user.permission not in ("admin", "all") and user.allowed_city.exists():
+        if not is_admin(user) and user.allowed_city.exists():
             qs = qs.filter(display__city__in=user.allowed_city.all())
         ordering = params.get("ordering", "-last_update_date_time,-id")
         return qs.order_by(*ordering.split(","))
@@ -114,10 +115,10 @@ class ApplicationViewSet(
 
         # 3. Whitelist: только создатель ИЛИ admin/all
         creator = getattr(app, "user_monitoring", None)
-        is_admin = request.user.permission in ("admin", "all")
+        admin_access = is_admin(request.user)
         is_creator = bool(creator and creator == request.user.username)
 
-        if not (is_creator or is_admin):
+        if not (is_creator or admin_access):
             raise DomainError(
                 "Удалить может только создатель заявки",
                 code="forbidden",

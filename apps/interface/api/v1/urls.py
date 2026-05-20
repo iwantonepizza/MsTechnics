@@ -14,6 +14,7 @@ urlpatterns = [
     path("", include("apps.interface.api.v1.panels.urls")),
     path("", include("apps.interface.api.v1.cells.urls")),
     path("", include("apps.interface.api.v1.storage.urls")),
+    path("", include("apps.interface.api.v1.search.urls")),
 
     # 3.3 Workflow
     path("", include("apps.interface.api.v1.applications.urls")),
@@ -22,6 +23,7 @@ urlpatterns = [
     # 3.4 Лог и реалтайм
     path("", include("apps.interface.api.v1.activity.urls")),
     path("", include("apps.interface.api.v1.events.urls")),
+    path("", include("apps.interface.api.v1.notifications.urls")),
 
     # 3.5 Health
     path("", include("apps.interface.api.v1.health.urls")),

@@ -74,9 +74,12 @@ function canAccess(permission: string, dept: Dept | 'zip') {
   return permission === 'admin' || permission === 'all' || permission === dept
 }
 
-function getAppPath(app: ApplicationListItem, dept: Dept) {
-  const citySlug = app.display.slug ?? ''
-  return citySlug ? `/${dept}/${citySlug}?app_id=${app.id}` : `/${dept}`
+export function getAppPath(app: ApplicationListItem, dept: Dept) {
+  const citySlug = app.display.city?.slug ?? ''
+  const displaySlug = app.display.slug ?? ''
+  return citySlug && displaySlug
+    ? `/${dept}/${citySlug}/${displaySlug}?app_id=${app.id}`
+    : `/${dept}`
 }
 
 function ColumnShell({

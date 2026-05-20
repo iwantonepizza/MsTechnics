@@ -8,14 +8,21 @@ import { z } from 'zod'
 import { apiClient } from '@/shared/api/client'
 import { Button } from '@/shared/ui/Button'
 import { Modal } from '@/shared/ui/Modal'
-import { useChangeCondition, useChangeDepartment, useMoveToCell, usePanels } from '@/entities/panel/hooks'
+import {
+  useChangeCondition,
+  useChangeDepartment,
+  useMoveToCell,
+  usePanels,
+  useRemovePanel,
+} from '@/entities/panel/hooks'
 import type { Cell, Condition, Department, Panel } from '@/shared/api/types'
 
-type PanelLike = Pick<Panel, 'id' | 'name' | 'condition' | 'application_status_name'> & {
+export type PanelLike = Pick<Panel, 'id' | 'name' | 'condition' | 'application_status_name'> & {
   comment?: string | null
   department_name?: string | null
   display_id?: number | null
   cell_id?: string | number | null
+  active_application_id?: number | null
 }
 
 const FIELD_STYLE: React.CSSProperties = {
@@ -63,6 +70,7 @@ function ActionModal({
   open,
   onClose,
   title,
+  description,
   children,
   submitLabel,
   loading,
@@ -72,6 +80,7 @@ function ActionModal({
   open: boolean
   onClose: () => void
   title: string
+  description?: string
   children: React.ReactNode
   submitLabel: string
   loading?: boolean
@@ -79,7 +88,7 @@ function ActionModal({
   onSubmit: () => void
 }) {
   return (
-    <Modal open={open} onClose={onClose} title={title}>
+    <Modal open={open} onClose={onClose} title={title} description={description}>
       <Modal.Body>{children}</Modal.Body>
       <Modal.Footer>
         <Button variant="ghost" size="sm" onClick={onClose}>Отмена</Button>
@@ -277,6 +286,151 @@ export function MoveToCellModal({
         <div>
           <Label>Комментарий</Label>
           <textarea {...register('comment')} rows={3} style={{ ...FIELD_STYLE, resize: 'none' }} />
+        </div>
+      </div>
+    </ActionModal>
+  )
+}
+
+function buildRemovalSchema(applicationContext: boolean) {
+  return z.object({
+    comment: z.string().optional(),
+    new_condition: applicationContext
+      ? z.string().min(1, 'Укажите состояние при снятии в рамках заявки')
+      : z.string().optional(),
+    keep_condition: z.boolean().optional(),
+  })
+}
+
+export function PanelRemovalModal({
+  open,
+  onClose,
+  panel,
+  applicationId,
+  onRemoved,
+}: {
+  open: boolean
+  onClose: () => void
+  panel: PanelLike
+  applicationId?: number
+  onRemoved?: () => void
+}) {
+  const applicationContext = applicationId != null
+  const subtitle = applicationContext ? `Р—Р°РєСЂС‹С‚РёРµ Р·Р°СЏРІРєРё #${applicationId}` : `РЎРЅСЏС‚РёРµ РїР°РЅРµР»Рё ${panel.name}`
+  const conditions = useConditions()
+  const mutation = useRemovePanel()
+  const schema = buildRemovalSchema(applicationContext)
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<
+    z.infer<typeof schema>
+  >({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      comment: '',
+      new_condition: applicationContext ? '' : (panel.condition?.name ?? ''),
+      keep_condition: !applicationContext,
+    },
+  })
+
+  const keepCondition = watch('keep_condition') ?? false
+
+  const submit = handleSubmit(async data => {
+    try {
+      const shouldKeepCondition = !applicationContext && keepCondition
+      const nextCondition = shouldKeepCondition ? undefined : data.new_condition || undefined
+
+      await mutation.mutateAsync({
+        id: panel.id,
+        new_condition: nextCondition,
+        comment: data.comment,
+        application_id: applicationId,
+      })
+      toast.success('Панель снята')
+      onRemoved?.()
+      onClose()
+    } catch (error: any) {
+      toast.error(error?.response?.data?.detail ?? 'Не удалось снять панель')
+    }
+  })
+
+  return (
+    <ActionModal
+      open={open}
+      onClose={onClose}
+      description={subtitle}
+      title="Снять панель"
+      submitLabel="Снять"
+      loading={mutation.isPending}
+      onSubmit={submit}
+    >
+      <div className="space-y-3">
+        <div
+          className="rounded-md border p-3 text-xs"
+          style={{ borderColor: 'var(--border-subtle)', background: 'var(--bg-1)', color: 'var(--fg-dim)' }}
+        >
+          {applicationContext ? `Закрытие заявки #${applicationId}` : `Снятие панели ${panel.name}`}
+        </div>
+
+        {!applicationContext && panel.active_application_id && (
+          <div
+            className="rounded-md border p-3 text-xs"
+            style={{ borderColor: 'var(--warn)', background: 'var(--warn-faint)', color: 'var(--warn)' }}
+          >
+            Снятие без закрытия активной заявки № {panel.active_application_id}
+          </div>
+        )}
+
+        <div>
+          <Label>Комментарий</Label>
+          <textarea {...register('comment')} rows={3} style={{ ...FIELD_STYLE, resize: 'none' }} />
+        </div>
+
+        {!applicationContext && (
+          <label className="flex items-center gap-2 text-xs cursor-pointer" style={{ color: 'var(--fg-dim)' }}>
+            <input
+              type="checkbox"
+              {...register('keep_condition')}
+              onChange={event => {
+                const checked = event.target.checked
+                setValue('keep_condition', checked, { shouldDirty: true })
+                if (checked) {
+                  setValue('new_condition', panel.condition?.name ?? '', { shouldDirty: true })
+                }
+              }}
+            />
+            <span>Оставить как есть</span>
+          </label>
+        )}
+
+        <div>
+          <Label>
+            {applicationContext ? (
+              <>Новое состояние панели <span style={{ color: 'var(--err)' }}>*</span></>
+            ) : (
+              'Изменить состояние (по желанию)'
+            )}
+          </Label>
+          <select
+            {...register('new_condition')}
+            disabled={!applicationContext && keepCondition}
+            style={{
+              ...FIELD_STYLE,
+              opacity: !applicationContext && keepCondition ? 0.6 : 1,
+            }}
+          >
+            <option value="">
+              {applicationContext ? 'Выберите состояние' : 'Не менять'}
+            </option>
+            {(conditions.data ?? []).map(condition => (
+              <option key={condition.id} value={condition.name}>
+                {condition.icon?.unicode_symbol ?? ''} {condition.description ?? condition.name}
+              </option>
+            ))}
+          </select>
+          {errors.new_condition && (
+            <p className="mt-1 text-2xs" style={{ color: 'var(--err)' }}>
+              {errors.new_condition.message}
+            </p>
+          )}
         </div>
       </div>
     </ActionModal>

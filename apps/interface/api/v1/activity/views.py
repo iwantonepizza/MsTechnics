@@ -1,8 +1,10 @@
-from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from apps.activity.models import ActivityLog
+from apps.core.users.permissions import is_admin
+
 from .serializers import ActivityLogSerializer
 
 
@@ -24,6 +26,7 @@ class ActivityLogViewSet(ReadOnlyModelViewSet):
         if display_slug := params.get("display"):
             from django.contrib.contenttypes.models import ContentType
             from django.db.models import Q
+
             from apps.directory.displays.models import Display
             from apps.directory.panels.models import Panel
             from apps.workflow.applications.models import Application
@@ -42,7 +45,7 @@ class ActivityLogViewSet(ReadOnlyModelViewSet):
             )
             return qs
         user = self.request.user
-        if user.permission not in ("admin", "all"):
+        if not is_admin(user):
             return qs.none()  # без display фильтра — только admin
         return qs
 

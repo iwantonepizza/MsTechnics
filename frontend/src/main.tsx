@@ -1,5 +1,6 @@
-import './app/styles/tokens.css'   // FIRST: design tokens (CSS vars + density)
-import './app/styles/globals.css'  // Tailwind directives
+import './app/styles/tokens.css'
+import './app/styles/fonts.css'
+import './app/styles/globals.css'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { App } from '@/app/App'

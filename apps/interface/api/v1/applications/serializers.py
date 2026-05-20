@@ -1,14 +1,22 @@
-from rest_framework import serializers
 from drf_spectacular.utils import OpenApiTypes, extend_schema_field
+from rest_framework import serializers
 
+from apps.interface.api.v1.refs.serializers import ApplicationStatusSerializer
 from apps.workflow.applications.models import Application, ApplicationEvent
-from apps.interface.api.v1.refs.serializers import ApplicationStatusSerializer, CitySerializer
+
+
+class DisplayMiniCitySerializer(serializers.Serializer):
+    """Минимальный city DTO внутри display для deep-link и dashboard."""
+
+    slug = serializers.CharField(allow_null=True)
+    name = serializers.CharField()
 
 
 class DisplayMiniSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     slug = serializers.CharField(allow_null=True)
     description = serializers.CharField(allow_null=True)
+    city = DisplayMiniCitySerializer(read_only=True)
 
 
 class PanelMiniSerializer(serializers.Serializer):
@@ -48,8 +56,16 @@ class ApplicationDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Application
-        fields = ["id", "status", "display", "panel", "cell", "executor",
-                  "initial_comment", "last_update_date_time"]
+        fields = [
+            "id",
+            "status",
+            "display",
+            "panel",
+            "cell",
+            "executor",
+            "initial_comment",
+            "last_update_date_time",
+        ]
 
     @extend_schema_field(OpenApiTypes.STR)
     def get_initial_comment(self, obj) -> str:
@@ -61,20 +77,21 @@ class ApplicationDetailSerializer(serializers.ModelSerializer):
 
 class ApplicationCreateSerializer(serializers.Serializer):
     display_id = serializers.IntegerField(required=True)
-    panel_id   = serializers.IntegerField(required=True)
-    cell_id    = serializers.IntegerField(required=True)
-    comment    = serializers.CharField(required=True, max_length=2000)
-    file       = serializers.FileField(required=False, allow_null=True)
+    panel_id = serializers.IntegerField(required=True)
+    cell_id = serializers.IntegerField(required=True)
+    comment = serializers.CharField(required=True, max_length=2000)
+    file = serializers.FileField(required=False, allow_null=True)
 
 
 class TransitionSerializer(serializers.Serializer):
     target_state = serializers.CharField(required=True)
-    comment      = serializers.CharField(required=False, allow_blank=True, max_length=2000)
-    executor_id  = serializers.IntegerField(required=False, allow_null=True)
-    file         = serializers.FileField(required=False, allow_null=True)
+    comment = serializers.CharField(required=False, allow_blank=True, max_length=2000)
+    executor_id = serializers.IntegerField(required=False, allow_null=True)
+    file = serializers.FileField(required=False, allow_null=True)
 
     def validate_target_state(self, value):
         from apps.workflow.applications.state_machine import application_fsm
+
         all_targets = {t.to_status for t in application_fsm.all_transitions()}
         if value not in all_targets:
             raise serializers.ValidationError(f"Неизвестный target_state: {value}")
@@ -82,16 +99,24 @@ class TransitionSerializer(serializers.Serializer):
 
 
 class ApplicationEventSerializer(serializers.ModelSerializer):
-    user      = serializers.SerializerMethodField()
+    user = serializers.SerializerMethodField()
     timestamp = serializers.DateTimeField(source="occurred_at")
-    file_url  = serializers.SerializerMethodField()
+    file_url = serializers.SerializerMethodField()
     state_from = serializers.SerializerMethodField()
-    state_to   = serializers.SerializerMethodField()
+    state_to = serializers.SerializerMethodField()
 
     class Meta:
         model = ApplicationEvent
-        fields = ["id", "stage", "user", "timestamp", "comment",
-                  "file_url", "state_from", "state_to"]
+        fields = [
+            "id",
+            "stage",
+            "user",
+            "timestamp",
+            "comment",
+            "file_url",
+            "state_from",
+            "state_to",
+        ]
 
     @extend_schema_field(OpenApiTypes.STR)
     def get_user(self, obj) -> str:
@@ -103,8 +128,7 @@ class ApplicationEventSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(OpenApiTypes.STR)
     def get_state_from(self, obj) -> str:
-        payload = getattr(obj, "_state_from", None) or ""
-        return payload
+        return getattr(obj, "_state_from", None) or ""
 
     @extend_schema_field(OpenApiTypes.STR)
     def get_state_to(self, obj) -> str:

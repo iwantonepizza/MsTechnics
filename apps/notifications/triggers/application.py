@@ -3,6 +3,7 @@ from __future__ import annotations
 from django.db.models import Q
 
 from apps.core.users.models import MsUser
+from apps.core.users.permissions import role_membership_q
 from apps.notifications.triggers.utils import create_and_dispatch_notification
 
 
@@ -55,9 +56,9 @@ def notify_application_completed(application) -> None:
 
 
 def _department_recipients(permission: str, city):
-    users = MsUser.objects.filter(permission__in=[permission, "admin", "all"])
+    users = MsUser.objects.filter(role_membership_q(permission, "admin"))
     if city:
-        users = users.filter(Q(permission__in=["admin", "all"]) | Q(allowed_city=city))
+        users = users.filter(role_membership_q("admin") | Q(allowed_city=city))
     return users.distinct()
 
 

@@ -1,4 +1,3 @@
-import './styles/tokens.css'
 import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClientProvider } from '@tanstack/react-query'
@@ -15,11 +14,14 @@ import { MainMenuPage } from '@/pages/menu/MainMenuPage'
 import { DepartmentListPage } from '@/pages/department/DepartmentListPage'
 import { DisplayViewPage } from '@/pages/display-view/DisplayViewPage'
 import { DeparturesPage } from '@/pages/departures/DeparturesPage'
+import { ProfilePage } from '@/pages/profile/ProfilePage'
 import { ZipPage } from '@/pages/zip/ZipPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { useKeyboard } from '@/shared/lib/useKeyboard'
 import { ShortcutsHelp } from '@/shared/ui/ShortcutsHelp'
 import { Spinner } from '@/shared/ui/Spinner'
+import { GlobalSearch } from '@/features/search/GlobalSearch'
+import { ThemeProvider, useTheme } from '@/shared/lib/theme'
 
 // Инициализируем SSE при монтировании приложения
 function SSEInit() {
@@ -49,8 +51,9 @@ function RequireAuth({ children, roles }: { children: React.ReactNode; roles?: s
   return <>{children}</>
 }
 
-export function App() {
+function AppShell() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  const { resolvedTheme } = useTheme()
 
   useEffect(() => {
     const isTouch = window.matchMedia('(pointer: coarse)').matches
@@ -65,6 +68,7 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <SSEInit />
+        <GlobalSearch />
         <Routes>
           {/* Публичные */}
           <Route path="/login" element={<LoginPage />} />
@@ -95,6 +99,7 @@ export function App() {
             <Route path="/zip" element={<ZipPage />} />
             <Route path="/zip/:displaySlug" element={<ZipPage />} />
             <Route path="/departures" element={<RequireAuth roles={['service', 'control']}><DeparturesPage /></RequireAuth>} />
+            <Route path="/lk" element={<ProfilePage />} />
           </Route>
 
           <Route path="*" element={<NotFoundPage />} />
@@ -103,11 +108,34 @@ export function App() {
 
       <Toaster
         position="bottom-right"
-        theme="dark"
-        richColors
+        theme={resolvedTheme}
+        toastOptions={{
+          style: {
+            background: 'var(--bg-1)',
+            color: 'var(--fg)',
+            border: '1px solid var(--border-subtle)',
+            fontFamily: 'var(--font-sans)',
+            fontSize: '13px',
+            boxShadow: 'var(--shadow-popover)',
+          },
+          classNames: {
+            success: 'sonner-success',
+            error: 'sonner-error',
+            warning: 'sonner-warning',
+            info: 'sonner-info',
+          },
+        }}
       />
       <ShortcutsHelp open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
       {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>
+  )
+}
+
+export function App() {
+  return (
+    <ThemeProvider>
+      <AppShell />
+    </ThemeProvider>
   )
 }

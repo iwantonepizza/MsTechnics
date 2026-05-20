@@ -1,20 +1,59 @@
+import { Inbox } from 'lucide-react'
+
 import { cn } from '@/shared/lib/utils'
 
 interface EmptyStateProps {
-  icon?: string
+  icon?: React.ReactNode
   title: string
   description?: string
   action?: React.ReactNode
   className?: string
 }
 
-export function EmptyState({ icon = '📭', title, description, action, className }: EmptyStateProps) {
+export function EmptyState({
+  icon,
+  title,
+  description,
+  action,
+  className,
+}: EmptyStateProps) {
+  const iconEl =
+    icon === undefined ? (
+      <Inbox size={24} />
+    ) : typeof icon === 'string' ? (
+      <span className="text-3xl leading-none">{icon}</span>
+    ) : (
+      icon
+    )
+
   return (
-    <div className={cn('flex flex-col items-center justify-center py-12 text-center', className)}>
-      <span className="text-4xl mb-3">{icon}</span>
-      <p className="text-sm font-medium mb-1" style={{ color: 'var(--fg-dim)' }}>{title}</p>
-      {description && <p className="text-xs mb-4" style={{ color: 'var(--fg-mute)' }}>{description}</p>}
-      {action && action}
+    <div
+      className={cn(
+        'flex flex-col items-center justify-center gap-2 py-12 text-center',
+        className,
+      )}
+    >
+      <span
+        className="mb-1 inline-flex items-center justify-center"
+        style={{ color: 'var(--fg-mute)' }}
+      >
+        {iconEl}
+      </span>
+      <p
+        className="text-sm font-medium"
+        style={{ color: 'var(--fg-dim)' }}
+      >
+        {title}
+      </p>
+      {description && (
+        <p
+          className="max-w-xs text-xs"
+          style={{ color: 'var(--fg-mute)' }}
+        >
+          {description}
+        </p>
+      )}
+      {action && <div className="mt-3">{action}</div>}
     </div>
   )
 }

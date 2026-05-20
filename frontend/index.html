@@ -1,14 +1,61 @@
 <!DOCTYPE html>
-<html lang="ru" class="dark">
+<html lang="ru">
 <head>
   <meta charset="UTF-8" />
+
+  <!-- Favicon / PWA icons -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MS Technics</title>
+  <link rel="alternate icon" href="/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#fafcff" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#040f1d" media="(prefers-color-scheme: dark)" />
+
+  <title>Суперсимметрия — система управления экранами</title>
+  <meta
+    name="description"
+    content="Суперсимметрия — внутренняя система управления LED-экранами, заявками, сервисом и ЗИП."
+  />
+
+  <!-- Шрифты:
+       - Inter удалён (round 4, followup #7 `drop-inter`): он в списке «не использовать» брендгайда §3.
+       - TT Travels (брендовый акцидентный) — preload Regular + Bold, остальные веса в fonts.css.
+       - JetBrains Mono — только тонкий стек, через Google Fonts. -->
+  <link
+    rel="preload"
+    href="/fonts/tt-travels/TTTravels-Regular.woff2"
+    as="font"
+    type="font/woff2"
+    crossorigin
+  />
+  <link
+    rel="preload"
+    href="/fonts/tt-travels/TTTravels-Bold.woff2"
+    as="font"
+    type="font/woff2"
+    crossorigin
+  />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet"
+  />
 </head>
-<body class="bg-surface-1 text-text-primary antialiased">
+<!--
+  Round 4 / followup #5 `html-dark-class`:
+    Класс `dark` на <html> больше не хардкодим. Тема рулится атрибутом
+    `data-theme` через ThemeProvider — Tailwind `darkMode: 'class'`
+    оставлен в config'е на будущее, но не активируется по умолчанию.
+  Дополнительный класс `no-theme-transition` (followup #24) добавлен
+  чтобы первая отрисовка не имела фейкового FOUC-transition'а; класс
+  снимается через 50ms в ThemeProvider.
+-->
+<body class="no-theme-transition antialiased">
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
 </body>

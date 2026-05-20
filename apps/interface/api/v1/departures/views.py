@@ -8,6 +8,7 @@ from rest_framework.viewsets import GenericViewSet, mixins
 
 from apps.workflow.departures.models import Departure, DepartureStatus, Executor
 from apps.activity.services import activity_logger
+from apps.core.users.permissions import is_admin
 from shared.exceptions import DomainError
 from shared.permissions import HasDepartmentAccess
 from shared.throttling import TransitionRateThrottle
@@ -48,13 +49,13 @@ class DepartureViewSet(
         if st := params.get("status"):
             qs = qs.filter(status__name=st)
         user = self.request.user
-        if user.permission not in ("admin", "all") and user.allowed_city.exists():
+        if not is_admin(user) and user.allowed_city.exists():
             qs = qs.filter(display__city__in=user.allowed_city.all()).distinct()
         return qs
 
     def get_permissions(self):
         if self.action in ("create", "partial_update", "complete", "archive", "destroy"):
-            return [HasDepartmentAccess.for_("control", "service", "admin", "all")()]
+            return [HasDepartmentAccess.for_("control", "service", "admin")()]
         return [IsAuthenticated()]
 
     @extend_schema(tags=["departures"], summary="Список выездов",

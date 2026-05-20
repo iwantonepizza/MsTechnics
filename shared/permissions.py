@@ -6,6 +6,8 @@ shared/permissions.py — T-3-003: единые DRF permissions.
 """
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 
+from apps.core.users.permissions import has_role, is_admin
+
 DEPARTMENT_ALL   = "all"
 DEPARTMENT_ADMIN = "admin"
 DEPARTMENT_MON   = "monitoring"
@@ -33,10 +35,7 @@ class HasDepartmentAccess(BasePermission):
     def has_permission(self, request, view) -> bool:
         if not (request.user and request.user.is_authenticated):
             return False
-        perm = getattr(request.user, "permission", None)
-        if perm in (DEPARTMENT_ALL, DEPARTMENT_ADMIN):
-            return True
-        return perm in self.required_departments
+        return has_role(request.user, *self.required_departments)
 
 
 class HasCityAccess(BasePermission):
@@ -49,7 +48,7 @@ class HasCityAccess(BasePermission):
         user = request.user
         if not user.is_authenticated:
             return False
-        if user.permission in (DEPARTMENT_ALL, DEPARTMENT_ADMIN):
+        if is_admin(user):
             return True
         city_id = self._city_id(obj)
         if city_id is None:
@@ -70,23 +69,17 @@ class HasCityAccess(BasePermission):
 
 
 class IsAdmin(BasePermission):
-    """Только admin/all."""
+    """Только admin."""
     def has_permission(self, request, view) -> bool:
-        return (
-            request.user.is_authenticated
-            and request.user.permission in (DEPARTMENT_ALL, DEPARTMENT_ADMIN)
-        )
+        return request.user.is_authenticated and is_admin(request.user)
 
 
 class CanCreateApplication(BasePermission):
-    """monitoring, control, all, admin могут создавать заявки."""
-    ALLOWED = (DEPARTMENT_MON, DEPARTMENT_CTRL, DEPARTMENT_ALL, DEPARTMENT_ADMIN)
+    """monitoring, control, admin могут создавать заявки."""
+    ALLOWED = (DEPARTMENT_MON, DEPARTMENT_CTRL, DEPARTMENT_ADMIN)
 
     def has_permission(self, request, view) -> bool:
-        return (
-            request.user.is_authenticated
-            and request.user.permission in self.ALLOWED
-        )
+        return request.user.is_authenticated and has_role(request.user, *self.ALLOWED)
 
 
 class CanTransitionApplication(BasePermission):
@@ -96,7 +89,7 @@ class CanTransitionApplication(BasePermission):
         user = request.user
         if not user.is_authenticated:
             return False
-        if user.permission in (DEPARTMENT_ALL, DEPARTMENT_ADMIN):
+        if is_admin(user):
             return True
         target = request.data.get("target_state", "")
         if not target:
@@ -104,6 +97,6 @@ class CanTransitionApplication(BasePermission):
         try:
             from apps.workflow.applications.state_machine import application_fsm
             transition = application_fsm.get_transition(obj.status.name, target)
-            return user.permission in transition.allowed_roles
+            return has_role(user, *transition.allowed_roles)
         except Exception:
             return False

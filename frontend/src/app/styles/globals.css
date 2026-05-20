@@ -1,22 +1,127 @@
+/* Round 4 / followup #4 `globals-css`:
+   - удалены мёртвые @apply старой темы, не определённые в текущем
+     tailwind.config.js.
+   - body теперь явно использует CSS-vars из tokens.css — без Tailwind apply.
+   - кастомный scrollbar переписан на актуальные bg-3 / bg-0.
+   Round 4 / followup #21 `input-utility-class`:
+   - добавлена утилита `.input` для текстовых полей и select'ов.
+   Round 4 / followup #24 `theme-transition`:
+   - добавлена короткая transition на body для smooth theme switch.
+   - класс `no-theme-transition` на старте гарантирует, что первая отрисовка
+     не имеет fake-transition. Класс снимается в ThemeProvider через 50ms.
+*/
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  * { box-sizing: border-box; }
-  html, body {
-    margin: 0;
-    min-height: 100vh;
-    -webkit-font-smoothing: antialiased;
-    font-feature-settings: 'cv11', 'ss03', 'ss01', 'tnum';
+  * {
+    box-sizing: border-box;
   }
-  /* Default scrollbar using tokens */
-  ::-webkit-scrollbar { width: 10px; height: 10px; }
+
+  html,
+  body {
+    margin: 0;
+    background: var(--bg-0);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    line-height: 1.45;
+    font-feature-settings: 'cv11', 'ss03', 'ss01', 'tnum';
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 160ms ease, color 160ms ease;
+  }
+
+  .no-theme-transition,
+  .no-theme-transition *,
+  .no-theme-transition *::before,
+  .no-theme-transition *::after {
+    transition: none !important;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--bg-0);
+  }
+
   ::-webkit-scrollbar-thumb {
     background: var(--bg-3);
     border-radius: 6px;
     border: 2px solid var(--bg-0);
   }
-  ::-webkit-scrollbar-thumb:hover { background: var(--bg-4); }
-  ::-webkit-scrollbar-track { background: transparent; }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--bg-4);
+  }
+
+  [data-sonner-toast].sonner-success [data-icon] {
+    color: var(--ok);
+  }
+
+  [data-sonner-toast].sonner-error [data-icon] {
+    color: var(--err);
+  }
+
+  [data-sonner-toast].sonner-warning [data-icon] {
+    color: var(--warn);
+  }
+
+  [data-sonner-toast].sonner-info [data-icon] {
+    color: var(--info);
+  }
+}
+
+@layer components {
+  .input {
+    display: inline-flex;
+    align-items: center;
+    height: var(--h-input);
+    padding: 0 10px;
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    transition: border-color 100ms ease, box-shadow 100ms ease;
+    outline: none;
+    width: auto;
+  }
+
+  .input::placeholder {
+    color: var(--fg-mute);
+  }
+
+  .input:focus-visible {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-faint);
+    outline: none;
+  }
+
+  .input:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  textarea.input {
+    height: auto;
+    padding: 8px 10px;
+    line-height: 1.4;
+    resize: vertical;
+  }
+
+  select.input {
+    padding-right: 28px;
+  }
+
+  .panel-mono {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+  }
 }

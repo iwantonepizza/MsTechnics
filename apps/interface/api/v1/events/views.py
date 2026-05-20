@@ -1,12 +1,15 @@
 """T-3-041: SSE stream view."""
 import time
+
+import structlog
 from django.conf import settings
 from django.http import StreamingHttpResponse
-from drf_spectacular.utils import extend_schema, OpenApiResponse
+from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
-import structlog
+
+from shared.metrics import sse_connections_active
 
 logger = structlog.get_logger(__name__)
 HEARTBEAT_INTERVAL = 15
@@ -41,6 +44,7 @@ class SSEStreamView(APIView):
         stream_name = f"sse:user:{user_id}"
         last_id = request.META.get("HTTP_LAST_EVENT_ID", "$")
         last_heartbeat = time.time()
+        sse_connections_active.inc()
         try:
             import redis
             r = redis.from_url(settings.REDIS_URL, decode_responses=True)
@@ -58,9 +62,11 @@ class SSEStreamView(APIView):
             logger.info("sse_disconnected", user_id=user_id)
         except Exception as e:
             logger.error("sse_error", user_id=user_id, error=str(e))
+        finally:
+            sse_connections_active.dec()
 
 
-def _format_sse(event_type: str, data: str, event_id: str = None) -> str:
+def _format_sse(event_type: str, data: str, event_id: str | None = None) -> str:
     lines = []
     if event_id:
         lines.append(f"id: {event_id}")

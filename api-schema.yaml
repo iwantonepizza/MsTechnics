@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: MsTechnics API
   version: 1.0.0
-  description: REST API для системы управления LED-экранами MS Technics.
+  description: REST API for MS Technics.
 paths:
   /api/v1/auth/login/:
     post:
@@ -110,9 +110,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Me'
           description: ''
-  /api/v1/me/change-password:
+  /api/v1/mechange-password:
     post:
-      operationId: me_change_password_create
+      operationId: mechange_password_create
       summary: Сменить пароль
       tags:
       - me
@@ -185,32 +185,6 @@ paths:
                 $ref: '#/components/schemas/City'
           description: ''
   /api/v1/colors/:
-    post:
-      operationId: colors_create
-      summary: Создать цвет
-      tags:
-      - refs
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ColorRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/ColorRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ColorRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Color'
-          description: ''
     get:
       operationId: colors_list
       summary: Список цветов
@@ -238,24 +212,33 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedColorList'
           description: ''
-  /api/v1/colors/{id}/:
-    delete:
-      operationId: colors_destroy
-      summary: Удалить цвет
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Цвет.
-        required: true
+    post:
+      operationId: colors_create
+      summary: Создать цвет
       tags:
       - refs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ColorRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ColorRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ColorRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
-        '204':
-          description: No response body
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Color'
+          description: ''
+  /api/v1/colors/{id}/:
     get:
       operationId: colors_retrieve
       summary: Цвет
@@ -277,6 +260,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/Color'
           description: ''
+    delete:
+      operationId: colors_destroy
+      summary: Удалить цвет
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Цвет.
+        required: true
+      tags:
+      - refs
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
     patch:
       operationId: colors_partial_update
       summary: Обновить цвет
@@ -788,6 +788,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedPanelList'
           description: ''
+    post:
+      operationId: panels_create
+      summary: Создать новую панель (T-7-035, Z7)
+      tags:
+      - panels
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PanelCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PanelCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PanelCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Panel'
+          description: ''
   /api/v1/panels/{id}/:
     get:
       operationId: panels_retrieve
@@ -809,6 +835,22 @@ paths:
               schema:
                 $ref: '#/components/schemas/Panel'
           description: ''
+    delete:
+      operationId: panels_destroy
+      summary: Удалить панель (T-7-036, admin-only, Z8)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - panels
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
     patch:
       operationId: panels_partial_update
       summary: Обновить панель
@@ -948,6 +990,38 @@ paths:
               schema:
                 $ref: '#/components/schemas/Panel'
           description: ''
+  /api/v1/panels/{id}/remove/:
+    post:
+      operationId: panels_remove_create
+      summary: Снять панель с ячейки
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - panels
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemovePanelRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RemovePanelRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RemovePanelRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Panel'
+          description: ''
   /api/v1/cells/:
     get:
       operationId: cells_list
@@ -1044,10 +1118,6 @@ paths:
         description: The pagination cursor value.
         schema:
           type: string
-      - in: query
-        name: display
-        schema:
-          type: string
       - name: limit
         required: false
         in: query
@@ -1065,23 +1135,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedWiresList'
           description: ''
-  /api/v1/storage/wires/{id}/:
-    delete:
-      operationId: storage_wires_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Провод.
-        required: true
+    post:
+      operationId: storage_wires_create
       tags:
       - storage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WiresRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/WiresRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WiresRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
-        '204':
-          description: No response body
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wires'
+          description: ''
+  /api/v1/storage/wires/{id}/:
     get:
       operationId: storage_wires_retrieve
       parameters:
@@ -1102,6 +1181,22 @@ paths:
               schema:
                 $ref: '#/components/schemas/Wires'
           description: ''
+    delete:
+      operationId: storage_wires_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Провод.
+        required: true
+      tags:
+      - storage
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
     patch:
       operationId: storage_wires_partial_update
       parameters:
@@ -1143,10 +1238,6 @@ paths:
         description: The pagination cursor value.
         schema:
           type: string
-      - in: query
-        name: display
-        schema:
-          type: string
       - name: limit
         required: false
         in: query
@@ -1164,23 +1255,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedHubsList'
           description: ''
-  /api/v1/storage/hubs/{id}/:
-    delete:
-      operationId: storage_hubs_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Хаб.
-        required: true
+    post:
+      operationId: storage_hubs_create
       tags:
       - storage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HubsRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/HubsRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/HubsRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
-        '204':
-          description: No response body
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Hubs'
+          description: ''
+  /api/v1/storage/hubs/{id}/:
     get:
       operationId: storage_hubs_retrieve
       parameters:
@@ -1201,6 +1301,22 @@ paths:
               schema:
                 $ref: '#/components/schemas/Hubs'
           description: ''
+    delete:
+      operationId: storage_hubs_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Хаб.
+        required: true
+      tags:
+      - storage
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
     patch:
       operationId: storage_hubs_partial_update
       parameters:
@@ -1242,10 +1358,6 @@ paths:
         description: The pagination cursor value.
         schema:
           type: string
-      - in: query
-        name: display
-        schema:
-          type: string
       - name: limit
         required: false
         in: query
@@ -1263,23 +1375,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedLamelsList'
           description: ''
-  /api/v1/storage/lamels/{id}/:
-    delete:
-      operationId: storage_lamels_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Ламель.
-        required: true
+    post:
+      operationId: storage_lamels_create
       tags:
       - storage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LamelsRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LamelsRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LamelsRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
-        '204':
-          description: No response body
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lamels'
+          description: ''
+  /api/v1/storage/lamels/{id}/:
     get:
       operationId: storage_lamels_retrieve
       parameters:
@@ -1300,6 +1421,22 @@ paths:
               schema:
                 $ref: '#/components/schemas/Lamels'
           description: ''
+    delete:
+      operationId: storage_lamels_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Ламель.
+        required: true
+      tags:
+      - storage
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
     patch:
       operationId: storage_lamels_partial_update
       parameters:
@@ -1331,23 +1468,48 @@ paths:
               schema:
                 $ref: '#/components/schemas/Lamels'
           description: ''
-  /api/v1/applications/:
-    post:
-      operationId: applications_create
-      summary: Создать заявку
+  /api/v1/storage/power-blocks/:
+    get:
+      operationId: storage_power_blocks_list
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       tags:
-      - applications
+      - storage
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPowerBlocksList'
+          description: ''
+    post:
+      operationId: storage_power_blocks_create
+      tags:
+      - storage
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ApplicationCreateRequest'
+              $ref: '#/components/schemas/PowerBlocksRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/ApplicationCreateRequest'
+              $ref: '#/components/schemas/PowerBlocksRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ApplicationCreateRequest'
+              $ref: '#/components/schemas/PowerBlocksRequest'
         required: true
       security:
       - jwtAuth: []
@@ -1356,8 +1518,257 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApplicationCreate'
+                $ref: '#/components/schemas/PowerBlocks'
           description: ''
+  /api/v1/storage/power-blocks/{id}/:
+    get:
+      operationId: storage_power_blocks_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Блок питания.
+        required: true
+      tags:
+      - storage
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PowerBlocks'
+          description: ''
+    delete:
+      operationId: storage_power_blocks_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Блок питания.
+        required: true
+      tags:
+      - storage
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+    patch:
+      operationId: storage_power_blocks_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Блок питания.
+        required: true
+      tags:
+      - storage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPowerBlocksRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPowerBlocksRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPowerBlocksRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PowerBlocks'
+          description: ''
+  /api/v1/storage/connectors/:
+    get:
+      operationId: storage_connectors_list
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - storage
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedConnectorsList'
+          description: ''
+    post:
+      operationId: storage_connectors_create
+      tags:
+      - storage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectorsRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ConnectorsRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ConnectorsRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connectors'
+          description: ''
+  /api/v1/storage/connectors/{id}/:
+    get:
+      operationId: storage_connectors_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Коннектор.
+        required: true
+      tags:
+      - storage
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connectors'
+          description: ''
+    delete:
+      operationId: storage_connectors_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Коннектор.
+        required: true
+      tags:
+      - storage
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+    patch:
+      operationId: storage_connectors_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Коннектор.
+        required: true
+      tags:
+      - storage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedConnectorsRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedConnectorsRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedConnectorsRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connectors'
+          description: ''
+  /api/v1/search/:
+    get:
+      operationId: search_retrieve
+      summary: Глобальный поиск по 6 категориям
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Лимит на категорию, максимум 20
+      - in: query
+        name: q
+        schema:
+          type: string
+        description: Поисковый запрос, минимум 2 символа
+        required: true
+      tags:
+      - search
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalSearchResponse'
+          description: ''
+  /api/v1/applications/{id}/events:
+    get:
+      operationId: applications_events_list
+      summary: Timeline событий заявки
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - applications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedApplicationEventList'
+          description: ''
+  /api/v1/applications/:
     get:
       operationId: applications_list
       summary: Список заявок
@@ -1401,26 +1812,33 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedApplicationListItemList'
           description: ''
-  /api/v1/applications/{id}/:
-    delete:
-      operationId: applications_destroy
-      description: |-
-        T-3-fix-002 / B3: Whitelist-подход — разрешено только is_creator OR is_admin.
-        Если creator is None (старая заявка) — не-admin НЕ проходит.
-      summary: Удалить заявку
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-        required: true
+    post:
+      operationId: applications_create
+      summary: Создать заявку
       tags:
       - applications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ApplicationCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ApplicationCreateRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
-        '204':
-          description: No response body
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationCreate'
+          description: ''
+  /api/v1/applications/{id}/:
     get:
       operationId: applications_retrieve
       summary: Детали заявки
@@ -1441,9 +1859,28 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApplicationDetail'
           description: ''
+    delete:
+      operationId: applications_destroy
+      description: |-
+        T-3-fix-002 / B3: Whitelist-подход — разрешено только is_creator OR is_admin.
+        Если creator is None (старая заявка) — не-admin НЕ проходит.
+      summary: Удалить заявку
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/applications/{id}/events/:
     get:
-      operationId: applications_events_list
+      operationId: applications_events_list_2
       summary: Timeline событий заявки
       parameters:
       - name: cursor
@@ -1512,32 +1949,6 @@ paths:
         '403':
           description: No response body
   /api/v1/departures/:
-    post:
-      operationId: departures_create
-      summary: Создать выезд
-      tags:
-      - departures
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DepartureCreateRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/DepartureCreateRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/DepartureCreateRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DepartureList'
-          description: ''
     get:
       operationId: departures_list
       summary: Список выездов
@@ -1569,23 +1980,33 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedDepartureListList'
           description: ''
-  /api/v1/departures/{id}/:
-    delete:
-      operationId: departures_destroy
-      summary: Удалить выезд
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-        required: true
+    post:
+      operationId: departures_create
+      summary: Создать выезд
       tags:
       - departures
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepartureCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DepartureCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DepartureCreateRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
-        '204':
-          description: No response body
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepartureList'
+          description: ''
+  /api/v1/departures/{id}/:
     get:
       operationId: departures_retrieve
       summary: Детали выезда
@@ -1606,6 +2027,22 @@ paths:
               schema:
                 $ref: '#/components/schemas/DepartureList'
           description: ''
+    delete:
+      operationId: departures_destroy
+      summary: Удалить выезд
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - departures
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
     patch:
       operationId: departures_partial_update
       summary: Обновить выезд
@@ -1816,6 +2253,33 @@ paths:
       responses:
         '200':
           description: text/event-stream
+  /api/v1/notifications/inbox/:
+    get:
+      operationId: notifications_inbox_list
+      description: |-
+        GET /api/v1/notifications/inbox/?limit=20
+
+        Возвращает последние N уведомлений для `request.user` со статусом `sent` или
+        `pending`. Сортировка по `-created_at`. Юзер видит только свои.
+      summary: Inbox уведомлений текущего юзера (T-7-011)
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NotificationInboxItem'
+          description: ''
   /api/v1/health/live:
     get:
       operationId: health_live_retrieve
@@ -2095,6 +2559,45 @@ components:
       - id
       - panel
       - status
+    ApplicationSearchItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        display_name:
+          type: string
+          nullable: true
+        display_slug:
+          type: string
+          nullable: true
+        city_slug:
+          type: string
+          nullable: true
+        panel_name:
+          type: string
+          nullable: true
+        cell_position:
+          type: string
+          nullable: true
+        status_name:
+          type: string
+          nullable: true
+        initial_comment:
+          type: string
+          nullable: true
+        score:
+          type: number
+          format: double
+      required:
+      - cell_position
+      - city_slug
+      - display_name
+      - display_slug
+      - id
+      - initial_comment
+      - panel_name
+      - score
+      - status_name
     ApplicationStatus:
       type: object
       properties:
@@ -2324,6 +2827,73 @@ components:
       - icon
       - id
       - name
+    Connectors:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Имя
+          maxLength: 20
+        count:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Количество
+        description:
+          type: string
+          nullable: true
+          title: Описание
+          maxLength: 100
+        low_stock_threshold:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Порог низкого остатка
+        is_low_stock:
+          type: boolean
+          readOnly: true
+        photo:
+          type: string
+          format: uri
+          nullable: true
+          title: Фото
+      required:
+      - id
+      - is_low_stock
+      - name
+    ConnectorsRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Имя
+          maxLength: 20
+        count:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Количество
+        description:
+          type: string
+          nullable: true
+          title: Описание
+          maxLength: 100
+        low_stock_threshold:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Порог низкого остатка
+        photo:
+          type: string
+          format: binary
+          nullable: true
+          title: Фото
+      required:
+      - name
     Department:
       type: object
       properties:
@@ -2404,6 +2974,29 @@ components:
       - executor
       - id
       - status
+    DepartureSearchItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        description:
+          type: string
+          nullable: true
+        executor_name:
+          type: string
+          nullable: true
+        status_name:
+          type: string
+          nullable: true
+        score:
+          type: number
+          format: double
+      required:
+      - description
+      - executor_name
+      - id
+      - score
+      - status_name
     DepartureStatus:
       type: object
       properties:
@@ -2510,7 +3103,13 @@ components:
           maximum: 2147483647
           minimum: 0
           title: Кол-во столбцов
+        aggregated_condition:
+          allOf:
+          - $ref: '#/components/schemas/Condition'
+          nullable: true
+          readOnly: true
       required:
+      - aggregated_condition
       - city
       - id
       - name
@@ -2525,9 +3124,55 @@ components:
         description:
           type: string
           nullable: true
+        city:
+          allOf:
+          - $ref: '#/components/schemas/DisplayMiniCity'
+          readOnly: true
       required:
+      - city
       - description
       - id
+      - slug
+    DisplayMiniCity:
+      type: object
+      description: Минимальный city DTO внутри display для deep-link и dashboard.
+      properties:
+        slug:
+          type: string
+          nullable: true
+        name:
+          type: string
+      required:
+      - name
+      - slug
+    DisplaySearchItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        slug:
+          type: string
+          nullable: true
+        city_name:
+          type: string
+        city_slug:
+          type: string
+          nullable: true
+        score:
+          type: number
+          format: double
+      required:
+      - city_name
+      - city_slug
+      - description
+      - id
+      - name
+      - score
       - slug
     EventTypeEnum:
       enum:
@@ -2607,6 +3252,40 @@ components:
       - first_name
       - id
       - last_name
+    GlobalSearchResponse:
+      type: object
+      properties:
+        displays:
+          type: array
+          items:
+            $ref: '#/components/schemas/DisplaySearchItem'
+        panels:
+          type: array
+          items:
+            $ref: '#/components/schemas/PanelSearchItem'
+        applications:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicationSearchItem'
+        departures:
+          type: array
+          items:
+            $ref: '#/components/schemas/DepartureSearchItem'
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserSearchItem'
+        storage:
+          type: array
+          items:
+            $ref: '#/components/schemas/StorageSearchItem'
+      required:
+      - applications
+      - departures
+      - displays
+      - panels
+      - storage
+      - users
     Hubs:
       type: object
       properties:
@@ -2627,8 +3306,52 @@ components:
           nullable: true
           title: Описание
           maxLength: 100
+        low_stock_threshold:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Порог низкого остатка
+        is_low_stock:
+          type: boolean
+          readOnly: true
+        photo:
+          type: string
+          format: uri
+          nullable: true
+          title: Фото
       required:
       - id
+      - is_low_stock
+      - name
+    HubsRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Имя
+          maxLength: 20
+        count:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Количество
+        description:
+          type: string
+          nullable: true
+          title: Описание
+          maxLength: 100
+        low_stock_threshold:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Порог низкого остатка
+        photo:
+          type: string
+          format: binary
+          nullable: true
+          title: Фото
+      required:
       - name
     Lamels:
       type: object
@@ -2650,8 +3373,52 @@ components:
           nullable: true
           title: Описание
           maxLength: 100
+        low_stock_threshold:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Порог низкого остатка
+        is_low_stock:
+          type: boolean
+          readOnly: true
+        photo:
+          type: string
+          format: uri
+          nullable: true
+          title: Фото
       required:
       - id
+      - is_low_stock
+      - name
+    LamelsRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Имя
+          maxLength: 20
+        count:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Количество
+        description:
+          type: string
+          nullable: true
+          title: Описание
+          maxLength: 100
+        low_stock_threshold:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Порог низкого остатка
+        photo:
+          type: string
+          format: binary
+          nullable: true
+          title: Фото
+      required:
       - name
     LoginRequestRequest:
       type: object
@@ -2715,6 +3482,45 @@ components:
           type: string
       required:
       - cell_id
+    NotificationInboxItem:
+      type: object
+      description: |-
+        T-7-011: компактный item для колокольчика в хедере.
+
+        Только нужные поля — id, текст, дата создания, контекст-target (kind+id для deeplink).
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        rendered_text:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        delivered_via:
+          type: string
+          maxLength: 16
+        target_kind:
+          type: string
+          nullable: true
+          readOnly: true
+        target_id:
+          type: string
+          nullable: true
+          readOnly: true
+        deep_link_path:
+          type: string
+          nullable: true
+          readOnly: true
+      required:
+      - created_at
+      - deep_link_path
+      - id
+      - target_id
+      - target_kind
     PaginatedActivityLogList:
       type: object
       properties:
@@ -2850,6 +3656,21 @@ components:
           nullable: true
         has_more:
           type: boolean
+    PaginatedConnectorsList:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Connectors'
+        next_cursor:
+          type: string
+          nullable: true
+        prev_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
     PaginatedDepartmentList:
       type: object
       properties:
@@ -2970,6 +3791,21 @@ components:
           nullable: true
         has_more:
           type: boolean
+    PaginatedPowerBlocksList:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PowerBlocks'
+        next_cursor:
+          type: string
+          nullable: true
+        prev_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
     PaginatedSmileList:
       type: object
       properties:
@@ -3031,13 +3867,41 @@ components:
         application_status_name:
           type: string
           readOnly: true
+        active_application_id:
+          type: integer
+          readOnly: true
       required:
+      - active_application_id
       - application_status_name
       - cell_id
       - condition
       - department_name
       - display_id
       - id
+      - name
+    PanelCreateRequest:
+      type: object
+      description: |-
+        T-7-035: создание панели через UI ZIP.
+
+        Создаётся новая панель в указанном `display` со стартовым `condition` (по name).
+        Поле `comment` опционально. Сразу попадает в department='zip' (склад).
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 15
+        display_id:
+          type: integer
+        condition_name:
+          type: string
+          minLength: 1
+          maxLength: 15
+        comment:
+          type: string
+          maxLength: 500
+      required:
+      - display_id
       - name
     PanelMini:
       type: object
@@ -3072,6 +3936,44 @@ components:
       - condition
       - id
       - name
+    PanelSearchItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        display_name:
+          type: string
+          nullable: true
+        display_slug:
+          type: string
+          nullable: true
+        city_slug:
+          type: string
+          nullable: true
+        condition_name:
+          type: string
+          nullable: true
+        department_name:
+          type: string
+          nullable: true
+        active_application_id:
+          type: integer
+          nullable: true
+        score:
+          type: number
+          format: double
+      required:
+      - active_application_id
+      - city_slug
+      - condition_name
+      - department_name
+      - display_name
+      - display_slug
+      - id
+      - name
+      - score
     PatchedColorRequest:
       type: object
       properties:
@@ -3083,6 +3985,34 @@ components:
         hex:
           type: string
           minLength: 1
+    PatchedConnectorsRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Имя
+          maxLength: 20
+        count:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Количество
+        description:
+          type: string
+          nullable: true
+          title: Описание
+          maxLength: 100
+        low_stock_threshold:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Порог низкого остатка
+        photo:
+          type: string
+          format: binary
+          nullable: true
+          title: Фото
     PatchedDeparturePatchRequest:
       type: object
       properties:
@@ -3115,6 +4045,16 @@ components:
           nullable: true
           title: Описание
           maxLength: 100
+        low_stock_threshold:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Порог низкого остатка
+        photo:
+          type: string
+          format: binary
+          nullable: true
+          title: Фото
     PatchedLamelsRequest:
       type: object
       properties:
@@ -3133,6 +4073,16 @@ components:
           nullable: true
           title: Описание
           maxLength: 100
+        low_stock_threshold:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Порог низкого остатка
+        photo:
+          type: string
+          format: binary
+          nullable: true
+          title: Фото
     PatchedMeRequest:
       type: object
       properties:
@@ -3153,6 +4103,34 @@ components:
           maxLength: 500
         condition_id:
           type: integer
+    PatchedPowerBlocksRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Имя
+          maxLength: 20
+        count:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Количество
+        description:
+          type: string
+          nullable: true
+          title: Описание
+          maxLength: 100
+        low_stock_threshold:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Порог низкого остатка
+        photo:
+          type: string
+          format: binary
+          nullable: true
+          title: Фото
     PatchedWiresRequest:
       type: object
       properties:
@@ -3171,6 +4149,16 @@ components:
           nullable: true
           title: Описание
           maxLength: 100
+        low_stock_threshold:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Порог низкого остатка
+        photo:
+          type: string
+          format: binary
+          nullable: true
+          title: Фото
     PhotoUploadRequest:
       type: object
       properties:
@@ -3182,6 +4170,85 @@ components:
           maxLength: 200
       required:
       - file
+    PowerBlocks:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Имя
+          maxLength: 20
+        count:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Количество
+        description:
+          type: string
+          nullable: true
+          title: Описание
+          maxLength: 100
+        low_stock_threshold:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Порог низкого остатка
+        is_low_stock:
+          type: boolean
+          readOnly: true
+        photo:
+          type: string
+          format: uri
+          nullable: true
+          title: Фото
+      required:
+      - id
+      - is_low_stock
+      - name
+    PowerBlocksRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Имя
+          maxLength: 20
+        count:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Количество
+        description:
+          type: string
+          nullable: true
+          title: Описание
+          maxLength: 100
+        low_stock_threshold:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Порог низкого остатка
+        photo:
+          type: string
+          format: binary
+          nullable: true
+          title: Фото
+      required:
+      - name
+    RemovePanelRequest:
+      type: object
+      properties:
+        new_condition:
+          type: string
+          minLength: 1
+        comment:
+          type: string
+          maxLength: 500
+        application_id:
+          type: integer
+          nullable: true
     Smile:
       type: object
       properties:
@@ -3213,6 +4280,42 @@ components:
         * `service_unable` - Ремонт невозможен
         * `archive_done` - Архивирована (выполнена)
         * `archive_unable` - Архивирована (невозможно)
+    StatusEnum:
+      enum:
+      - pending
+      - sent
+      - failed
+      - skipped
+      type: string
+      description: |-
+        * `pending` - В очереди
+        * `sent` - Отправлено
+        * `failed` - Ошибка
+        * `skipped` - Пропущено
+    StorageSearchItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        kind:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        count:
+          type: integer
+        score:
+          type: number
+          format: double
+      required:
+      - count
+      - description
+      - id
+      - kind
+      - name
+      - score
     TransitionRequest:
       type: object
       properties:
@@ -3231,6 +4334,26 @@ components:
           nullable: true
       required:
       - target_state
+    UserSearchItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        full_name:
+          type: string
+        permission:
+          type: string
+        score:
+          type: number
+          format: double
+      required:
+      - full_name
+      - id
+      - permission
+      - score
+      - username
     Wires:
       type: object
       properties:
@@ -3251,8 +4374,52 @@ components:
           nullable: true
           title: Описание
           maxLength: 100
+        low_stock_threshold:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Порог низкого остатка
+        is_low_stock:
+          type: boolean
+          readOnly: true
+        photo:
+          type: string
+          format: uri
+          nullable: true
+          title: Фото
       required:
       - id
+      - is_low_stock
+      - name
+    WiresRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Имя
+          maxLength: 20
+        count:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Количество
+        description:
+          type: string
+          nullable: true
+          title: Описание
+          maxLength: 100
+        low_stock_threshold:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Порог низкого остатка
+        photo:
+          type: string
+          format: binary
+          nullable: true
+          title: Фото
+      required:
       - name
   securitySchemes:
     jwtAuth:
@@ -3261,26 +4428,28 @@ components:
       bearerFormat: JWT
 tags:
 - name: auth
-  description: Аутентификация
+  description: Authentication
 - name: me
-  description: Текущий пользователь
+  description: Current user
 - name: refs
-  description: Справочники
+  description: Reference data
 - name: displays
-  description: Экраны
+  description: Displays
 - name: panels
-  description: Панели
+  description: Panels
 - name: cells
-  description: Ячейки
+  description: Cells
 - name: storage
-  description: ЗИП-расходники
+  description: Storage
+- name: search
+  description: Global search
 - name: applications
-  description: Заявки
+  description: Applications
 - name: departures
-  description: Выезды
+  description: Departures
 - name: activity
-  description: Журнал активности
+  description: Activity log
 - name: events
-  description: Real-time события (SSE)
+  description: Server-sent events
 - name: health
   description: Health checks

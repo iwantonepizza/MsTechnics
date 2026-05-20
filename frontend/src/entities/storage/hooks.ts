@@ -1,13 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api/client'
+import type { StorageItem } from '@/shared/api/types'
 
-export function useStorage(kind: 'lamels' | 'hubs' | 'wires', displaySlug?: string | null) {
-  return useQuery({
+export type StorageKind = 'lamels' | 'hubs' | 'wires' | 'power-blocks' | 'connectors'
+
+export function useStorage(kind: StorageKind, displaySlug?: string | null) {
+  return useQuery<StorageItem[]>({
     queryKey: ['storage', kind, displaySlug],
     queryFn: async () => {
-      const params: Record<string, string> = {}
-      if (displaySlug) params.display = displaySlug
-      const res = await apiClient.get<{ results: any[] }>(`/storage/${kind}/`, { params })
+      const res = await apiClient.get<{ results: StorageItem[] }>(`/storage/${kind}/`)
       return res.data.results ?? res.data
     },
     staleTime: 60_000,

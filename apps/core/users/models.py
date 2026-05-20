@@ -9,6 +9,19 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 
+class Role(models.Model):
+    name = models.CharField(max_length=32, unique=True)
+    description = models.CharField(max_length=128, blank=True)
+
+    class Meta:
+        db_table = "role"
+        verbose_name = "Роль"
+        verbose_name_plural = "Роли"
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class MsUser(AbstractUser):
     TYPE_PERMISSION = [
         ("monitoring", "Мониторинг"),
@@ -30,6 +43,17 @@ class MsUser(AbstractUser):
         "core_references.Cities",
         blank=True,
         verbose_name="Разрешённые города",
+    )
+    roles = models.ManyToManyField(
+        Role,
+        related_name="users",
+        blank=True,
+        verbose_name="Роли",
+    )
+    extra_permissions = models.JSONField(
+        default=list,
+        blank=True,
+        verbose_name="Дополнительные права",
     )
     telegram_id = models.CharField(
         max_length=20,  # расширили с 10 до 20 — telegram_id бывает длиннее

@@ -102,7 +102,7 @@ class Departure(models.Model):
         blank=True,
         default="",
         verbose_name="Статус (legacy, удалить после backfill)",
-        db_column="status_legacy",
+        db_column="status",
     )
 
     class Meta:

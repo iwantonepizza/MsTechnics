@@ -24,12 +24,20 @@ export type DisplayDetail = Omit<Schemas['DisplayDetail'], 'slug' | 'rows' | 'co
 export type Cell = Schemas['Cell']
 export type Panel = Schemas['Panel']
 export type PanelOnCell = Schemas['Panel']
+export type StorageItem = Schemas['Wires']
 export type ApplicationListItem = Omit<Schemas['ApplicationListItem'], 'last_update_date_time'> & {
   last_update_date_time: string | null
 }
 export type ApplicationDetail = Omit<Schemas['ApplicationDetail'], 'last_update_date_time'> & {
   last_update_date_time: string | null
 }
+export type DisplaySearchItem = Schemas['DisplaySearchItem']
+export type PanelSearchItem = Schemas['PanelSearchItem']
+export type ApplicationSearchItem = Schemas['ApplicationSearchItem']
+export type DepartureSearchItem = Schemas['DepartureSearchItem']
+export type UserSearchItem = Schemas['UserSearchItem']
+export type StorageSearchItem = Schemas['StorageSearchItem']
+export type GlobalSearchResponse = Schemas['GlobalSearchResponse']
 export type ApplicationEvent = Schemas['ApplicationEvent']
 export type DepartureListItem = Schemas['DepartureList']
 export type Departure = Schemas['DepartureList']

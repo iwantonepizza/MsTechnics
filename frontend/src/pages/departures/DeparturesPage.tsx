@@ -1,25 +1,36 @@
-import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, CheckCircle, Archive, Trash2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Archive, Car, CheckCircle } from 'lucide-react'
 import { toast } from 'sonner'
-import { Button } from '@/shared/ui/Button'
-import { Badge } from '@/shared/ui/Badge'
-import { Spinner } from '@/shared/ui/Spinner'
-import { EmptyState } from '@/shared/ui/EmptyState'
-import { cn, formatDate, getErrorMessage } from '@/shared/lib/utils'
+
 import { apiClient } from '@/shared/api/client'
 import type { DepartureListItem, PaginatedResponse } from '@/shared/api/types'
+import { Badge } from '@/shared/ui/Badge'
+import { Button } from '@/shared/ui/Button'
+import { EmptyState } from '@/shared/ui/EmptyState'
+import { Spinner } from '@/shared/ui/Spinner'
+import { formatDate, getErrorMessage } from '@/shared/lib/utils'
 
-const STATUS_COLORS: Record<string, string> = {
-  created:   '#fbbf24',
-  completed: '#22c55e',
-  archived:  '#71717a',
-  deleted:   '#ef4444',
+const STATUS_VARIANTS: Record<string, 'warn' | 'ok' | 'neutral' | 'err'> = {
+  created: 'warn',
+  completed: 'ok',
+  archived: 'neutral',
+  deleted: 'err',
 }
+
+const TABS = [
+  { value: '', label: 'Все' },
+  { value: 'created', label: 'Создан' },
+  { value: 'completed', label: 'Выполнен' },
+  { value: 'archived', label: 'Архив' },
+]
 
 export function DeparturesPage() {
   const qc = useQueryClient()
+  const [searchParams] = useSearchParams()
   const [status, setStatus] = useState<string>('')
+  const selectedDepartureId = Number(searchParams.get('departure_id') ?? '')
 
   const { data, isLoading } = useQuery({
     queryKey: ['departures', status],
@@ -33,114 +44,152 @@ export function DeparturesPage() {
 
   const complete = useMutation({
     mutationFn: (id: number) => apiClient.post(`/departures/${id}/complete/`, {}),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['departures'] }); toast.success('Выезд завершён') },
-    onError: (e) => toast.error(getErrorMessage(e)),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['departures'] })
+      toast.success('Выезд завершён')
+    },
+    onError: error => toast.error(getErrorMessage(error)),
   })
 
   const archive = useMutation({
     mutationFn: (id: number) => apiClient.post(`/departures/${id}/archive/`, {}),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['departures'] }); toast.success('Выезд архивирован') },
-    onError: (e) => toast.error(getErrorMessage(e)),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['departures'] })
+      toast.success('Выезд архивирован')
+    },
+    onError: error => toast.error(getErrorMessage(error)),
   })
 
   const departures = data?.results ?? []
 
+  useEffect(() => {
+    if (!Number.isInteger(selectedDepartureId) || selectedDepartureId <= 0) return
+
+    window.setTimeout(() => {
+      document.getElementById(`departure-${selectedDepartureId}`)?.scrollIntoView({
+        block: 'center',
+        behavior: 'smooth',
+      })
+    }, 0)
+  }, [selectedDepartureId, departures.length])
+
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold">Выезды</h1>
-          <p className="text-sm text-text-muted mt-0.5">Управление выездными бригадами</p>
+          <h1 className="text-lg font-semibold" style={{ color: 'var(--fg)' }}>
+            Выезды
+          </h1>
+          <p className="mt-0.5 text-sm" style={{ color: 'var(--fg-mute)' }}>
+            Управление выездными бригадами
+          </p>
         </div>
       </div>
 
-      {/* Фильтр */}
-      <div className="flex gap-1.5 mb-4">
-        {[
-          { value: '', label: 'Все' },
-          { value: 'created', label: 'Создан' },
-          { value: 'completed', label: 'Выполнен' },
-          { value: 'archived', label: 'Архив' },
-        ].map(({ value, label }) => (
-          <button
-            key={value}
-            onClick={() => setStatus(value)}
-            className={cn(
-              'px-3 py-1 rounded-lg text-xs font-medium transition-colors',
-              status === value
-                ? 'bg-surface-3 text-text-primary'
-                : 'text-text-muted hover:text-text-primary hover:bg-surface-2',
-            )}
-          >
-            {label}
-          </button>
-        ))}
+      <div
+        role="tablist"
+        aria-label="Фильтр выездов"
+        className="mb-4 inline-flex rounded-md p-0.5"
+        style={{ background: 'var(--bg-1)', border: '1px solid var(--border-subtle)' }}
+      >
+        {TABS.map(tab => {
+          const active = status === tab.value
+          return (
+            <button
+              key={tab.value}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => setStatus(tab.value)}
+              className="h-7 rounded-sm px-3 text-xs font-medium transition-colors"
+              style={{
+                background: active ? 'var(--bg-0)' : 'transparent',
+                color: active ? 'var(--fg)' : 'var(--fg-mute)',
+                boxShadow: active ? '0 1px 2px rgba(0,0,0,0.06)' : undefined,
+              }}
+            >
+              {tab.label}
+            </button>
+          )
+        })}
       </div>
 
-      {/* List */}
       {isLoading ? (
-        <div className="flex justify-center py-12"><Spinner /></div>
+        <div className="flex justify-center py-12">
+          <Spinner />
+        </div>
       ) : departures.length === 0 ? (
-        <EmptyState icon="🚗" title="Выездов нет" />
+        <EmptyState icon={<Car size={24} />} title="Выездов нет" />
       ) : (
         <div className="space-y-2">
-          {departures.map(dep => (
-            <div
-              key={dep.id}
-              className="flex items-center gap-4 px-4 py-3 bg-surface-2 border border-surface-3 rounded-xl"
-            >
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm font-medium truncate">
-                    {dep.description ?? `Выезд #${dep.id}`}
-                  </span>
-                  {dep.status && (
-                    <Badge
-                      label={dep.status.description}
-                      bgHex={STATUS_COLORS[dep.status.name] ?? '#888'}
-                    />
-                  )}
+          {departures.map(dep => {
+            const selected = dep.id === selectedDepartureId
+            return (
+              <div
+                key={dep.id}
+                id={`departure-${dep.id}`}
+                className="flex items-center gap-4 rounded-xl border px-4 py-3 transition-colors"
+                style={{
+                  background: selected ? 'var(--accent-faint)' : 'var(--bg-1)',
+                  borderColor: selected ? 'var(--accent-edge)' : 'var(--border-subtle)',
+                }}
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="mb-1 flex items-center gap-2">
+                    <span
+                      className="truncate text-sm font-medium"
+                      style={{ color: 'var(--fg)' }}
+                    >
+                      {dep.description ?? `Выезд #${dep.id}`}
+                    </span>
+                    {dep.status && (
+                      <Badge
+                        label={dep.status.description}
+                        variant={STATUS_VARIANTS[dep.status.name] ?? 'neutral'}
+                      />
+                    )}
+                  </div>
+                  <div
+                    className="flex flex-wrap items-center gap-3 text-xs"
+                    style={{ color: 'var(--fg-mute)' }}
+                  >
+                    {dep.executor && (
+                      <span>
+                        {dep.executor.first_name} {dep.executor.last_name}
+                      </span>
+                    )}
+                    {dep.time_start && <span>Начало: {formatDate(dep.time_start)}</span>}
+                    {dep.time_updated && <span>Обновлено: {formatDate(dep.time_updated)}</span>}
+                  </div>
                 </div>
-                <div className="flex items-center gap-3 text-xs text-text-muted">
-                  {dep.executor && (
-                    <span>{dep.executor.first_name} {dep.executor.last_name}</span>
-                  )}
-                  {dep.time_start && (
-                    <span>Начало: {formatDate(dep.time_start)}</span>
-                  )}
-                  {dep.time_updated && (
-                    <span>Обновлено: {formatDate(dep.time_updated)}</span>
-                  )}
-                </div>
-              </div>
 
-              {/* Действия */}
-              <div className="flex items-center gap-1.5 flex-shrink-0">
-                {dep.status?.name === 'created' && (
-                  <Button
-                    size="sm"
-                    variant="primary"
-                    loading={complete.isPending}
-                    onClick={() => complete.mutate(dep.id)}
-                  >
-                    <CheckCircle size={12} />
-                    Завершить
-                  </Button>
-                )}
-                {dep.status?.name === 'completed' && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    loading={archive.isPending}
-                    onClick={() => archive.mutate(dep.id)}
-                  >
-                    <Archive size={12} />
-                    Архив
-                  </Button>
-                )}
+                <div className="flex flex-shrink-0 items-center gap-1.5">
+                  {dep.status?.name === 'created' && (
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      icon={<CheckCircle size={12} />}
+                      loading={complete.isPending}
+                      onClick={() => complete.mutate(dep.id)}
+                    >
+                      Завершить
+                    </Button>
+                  )}
+                  {dep.status?.name === 'completed' && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      icon={<Archive size={12} />}
+                      loading={archive.isPending}
+                      onClick={() => archive.mutate(dep.id)}
+                    >
+                      Архив
+                    </Button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>

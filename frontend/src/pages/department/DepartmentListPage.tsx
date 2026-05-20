@@ -1,15 +1,29 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { AlertTriangle, ArrowRight, Clock, MapPin, Monitor } from 'lucide-react'
+import {
+  Activity,
+  AlertTriangle,
+  ArrowRight,
+  ArrowUpDown,
+  Building2,
+  ClipboardList,
+  Clock,
+  Inbox,
+  MapPin,
+  Monitor,
+  Package,
+  Search,
+  SearchX,
+} from 'lucide-react'
 
 import { ApplicationCard } from '@/entities/application/ApplicationCard'
 import { useApplications } from '@/entities/application/hooks'
 import { useCities, useDisplays } from '@/entities/display/hooks'
+import type { City, DisplayListItem } from '@/shared/api/types'
+import { useDeferredLoading } from '@/shared/lib/useDeferredLoading'
 import { EmptyState } from '@/shared/ui/EmptyState'
 import { Skeleton, SkeletonList } from '@/shared/ui/Skeleton'
-import { useDeferredLoading } from '@/shared/lib/useDeferredLoading'
 import { useCrumb } from '@/widgets/navigation/CrumbContext'
-import type { City, DisplayListItem } from '@/shared/api/types'
 
 type Dept = 'monitoring' | 'control' | 'service'
 
@@ -31,6 +45,36 @@ const DEPT_CONFIG: Record<Dept, { title: string; railTitle: string; boxForRail: 
   },
 }
 
+type SortOption = 'name-asc' | 'name-desc' | 'size-desc' | 'size-asc'
+
+const SORT_LABELS: Record<SortOption, string> = {
+  'name-asc': 'По названию (А-Я)',
+  'name-desc': 'По названию (Я-А)',
+  'size-desc': 'По размеру (большие выше)',
+  'size-asc': 'По размеру (малые выше)',
+}
+
+const SORT_STORAGE_KEY = 'department.displaySort'
+const CITY_THRESHOLD_FOR_FILTER = 3
+
+function readPersistedSort(): SortOption {
+  try {
+    const raw = sessionStorage.getItem(SORT_STORAGE_KEY)
+    if (raw && raw in SORT_LABELS) return raw as SortOption
+  } catch {
+    // Ignore private-mode/sessionStorage issues.
+  }
+  return 'name-asc'
+}
+
+function persistSort(value: SortOption): void {
+  try {
+    sessionStorage.setItem(SORT_STORAGE_KEY, value)
+  } catch {
+    // Ignore private-mode/sessionStorage issues.
+  }
+}
+
 function cityKey(city: City) {
   return city.slug ?? city.name
 }
@@ -38,9 +82,7 @@ function cityKey(city: City) {
 function groupDisplays(displays: DisplayListItem[], cities: City[]) {
   const byCity = new Map<string, { city: City; displays: DisplayListItem[] }>()
 
-  cities.forEach(city => {
-    byCity.set(cityKey(city), { city, displays: [] })
-  })
+  cities.forEach(city => byCity.set(cityKey(city), { city, displays: [] }))
 
   displays.forEach(display => {
     const key = cityKey(display.city)
@@ -63,13 +105,22 @@ function SideRail({ department, activeCity }: { department: Dept; activeCity: st
 
   return (
     <aside className="flex min-h-0 flex-col bg-bg-1">
-      <div className="h-11 shrink-0 px-4 py-3" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+      <div
+        className="h-11 shrink-0 px-4 py-3"
+        style={{ borderBottom: '1px solid var(--border-subtle)' }}
+      >
         <div className="flex items-center justify-between gap-2">
-          <span className="text-2xs font-mono uppercase tracking-wider" style={{ color: 'var(--fg-mute)' }}>
+          <span
+            className="text-2xs font-mono uppercase tracking-wider"
+            style={{ color: 'var(--fg-mute)' }}
+          >
             {config.railTitle}
           </span>
           {activeCity && (
-            <span className="truncate text-2xs font-mono" style={{ color: 'var(--fg-faint)' }}>
+            <span
+              className="truncate text-2xs font-mono"
+              style={{ color: 'var(--fg-faint)' }}
+            >
               {activeCity}
             </span>
           )}
@@ -81,12 +132,14 @@ function SideRail({ department, activeCity }: { department: Dept; activeCity: st
           <div className="flex h-40 flex-col items-center justify-center gap-2 text-xs" style={{ color: 'var(--err)' }}>
             <AlertTriangle size={18} />
             <span>Не удалось загрузить</span>
-            <button className="btn btn-secondary sm" onClick={() => refetch()}>Повторить</button>
+            <button className="btn btn-secondary sm" onClick={() => refetch()}>
+              Повторить
+            </button>
           </div>
         ) : showSkeleton ? (
           <SkeletonList rows={6} height="var(--h-row)" />
         ) : items.length === 0 ? (
-          <EmptyState icon="📭" title="Пусто" className="py-10" />
+          <EmptyState icon={<Inbox size={20} />} title="Пусто" className="py-10" />
         ) : (
           items.map(app => <ApplicationCard key={app.id} application={app} compact />)
         )}
@@ -95,35 +148,81 @@ function SideRail({ department, activeCity }: { department: Dept; activeCity: st
   )
 }
 
-function DisplayRow({ display, department }: { display: DisplayListItem; department: Dept }) {
+function DisplayRow({
+  display,
+  department,
+}: {
+  display: DisplayListItem
+  department: Dept
+}) {
   return (
-    <Link
-      to={`/${department}/${display.city.slug}/${display.slug}`}
-      className="grid grid-cols-[1fr_auto] items-center gap-3 rounded-md border px-3 py-2.5 transition-colors hover:bg-bg-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+    <div
+      className="rounded-md border transition-colors hover:bg-bg-3 focus-within:outline focus-within:outline-2 focus-within:outline-offset-2"
       style={{
-        background: 'var(--bg-2)',
+        background: 'var(--bg-1)',
         borderColor: 'var(--border-subtle)',
         outlineColor: 'var(--accent)',
       }}
     >
-      <div className="min-w-0">
-        <div className="flex items-center gap-2">
-          <Monitor size={13} style={{ color: 'var(--fg-mute)' }} />
-          <span className="truncate text-sm font-medium" style={{ color: 'var(--fg)' }}>
-            {display.description ?? display.name}
-          </span>
+      <Link
+        to={`/${department}/${display.city.slug}/${display.slug}`}
+        className="grid grid-cols-[1fr_auto] items-center gap-3 px-3 py-2.5 focus:outline-none"
+        data-testid={`display-card-${display.slug}`}
+      >
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <Monitor size={13} style={{ color: 'var(--fg-mute)' }} />
+            <span
+              className="truncate text-sm font-medium"
+              style={{ color: 'var(--fg)' }}
+            >
+              {display.description ?? display.name}
+            </span>
+          </div>
+          <div
+            className="mt-1 flex items-center gap-2 text-2xs font-mono"
+            style={{ color: 'var(--fg-faint)' }}
+          >
+            <span>
+              {display.rows}x{display.cols}
+            </span>
+            <span style={{ color: 'var(--border)' }}>·</span>
+            <span>{display.name}</span>
+          </div>
         </div>
-        <div className="mt-1 flex items-center gap-2 text-2xs font-mono" style={{ color: 'var(--fg-faint)' }}>
-          <span>{display.rows}x{display.cols}</span>
-          <span style={{ color: 'var(--border)' }}>·</span>
-          <span>{display.name}</span>
-        </div>
-      </div>
-      <div className="flex items-center gap-2">
-        <span title="Статус экрана" className="text-sm">●</span>
         <ArrowRight size={13} style={{ color: 'var(--fg-faint)' }} />
+      </Link>
+
+      <div
+        className="flex items-center gap-3 px-3 pb-2 pt-1 text-2xs"
+        style={{ color: 'var(--fg-faint)', borderTop: '1px solid var(--border-subtle)' }}
+      >
+        <Link
+          to={`/zip/${display.slug}`}
+          className="inline-flex items-center gap-1 hover:text-fg-dim"
+          title="ЗИП экрана"
+          data-testid={`quicklink-zip-${display.slug}`}
+        >
+          <Package size={11} /> ЗИП
+        </Link>
+        <Link
+          to={`/control/${display.city.slug}/${display.slug}`}
+          className="inline-flex items-center gap-1 hover:text-fg-dim"
+          title="Все заявки по экрану"
+          data-testid={`quicklink-applications-${display.slug}`}
+        >
+          <ClipboardList size={11} /> Заявки
+        </Link>
+        <Link
+          to={`/${department}/${display.city.slug}/${display.slug}?tab=history`}
+          className="inline-flex items-center gap-1 hover:text-fg-dim"
+          title="Журнал событий по экрану"
+          data-testid={`quicklink-history-${display.slug}`}
+        >
+          <Activity size={11} /> История
+        </Link>
       </div>
-    </Link>
+    </div>
   )
 }
 
@@ -143,7 +242,10 @@ function CityBlock({
   return (
     <section
       className="border-b"
-      style={{ borderColor: 'var(--border-subtle)', background: active ? 'var(--bg-1)' : 'transparent' }}
+      style={{
+        borderColor: 'var(--border-subtle)',
+        background: active ? 'var(--bg-1)' : 'transparent',
+      }}
       onMouseEnter={onActivate}
       onFocus={onActivate}
     >
@@ -154,21 +256,22 @@ function CityBlock({
       >
         <div className="flex min-w-0 items-center gap-2">
           <MapPin size={13} style={{ color: 'var(--fg-faint)' }} />
-          <span className="truncate text-sm font-semibold" style={{ color: 'var(--fg)' }}>
+          <span
+            className="truncate text-sm font-semibold"
+            style={{ color: 'var(--fg)' }}
+          >
             {city.name}
           </span>
           <span className="text-xs" style={{ color: 'var(--fg-mute)' }}>
             {displays.length} экранов
           </span>
         </div>
-        {active && (
-          <span className="text-2xs font-mono uppercase tracking-wider" style={{ color: 'var(--accent)' }}>
-            activity
-          </span>
-        )}
       </button>
 
-      <div className="grid gap-2 px-6 pb-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))' }}>
+      <div
+        className="grid gap-2 px-6 pb-4"
+        style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))' }}
+      >
         {displays.map(display => (
           <DisplayRow key={display.id} display={display} department={department} />
         ))}
@@ -181,66 +284,188 @@ export function DepartmentListPage({ department }: { department: Dept }) {
   const { citySlug } = useParams<{ citySlug?: string }>()
   const { setCrumb } = useCrumb()
   const { data: cities = [], isLoading: citiesLoading, error: citiesError } = useCities()
-  const { data: displays = [], isLoading: displaysLoading, error: displaysError, refetch } = useDisplays()
+  const {
+    data: displays = [],
+    isLoading: displaysLoading,
+    error: displaysError,
+    refetch,
+  } = useDisplays()
+
   const [activeCity, setActiveCity] = useState<string | null>(citySlug ?? null)
+  const [sortBy, setSortBy] = useState<SortOption>(readPersistedSort)
+  const [cityQuery, setCityQuery] = useState('')
 
   const config = DEPT_CONFIG[department]
   const showSkeleton = useDeferredLoading(citiesLoading || displaysLoading)
   const error = citiesError || displaysError
 
+  const handleSortChange = (value: SortOption) => {
+    setSortBy(value)
+    persistSort(value)
+  }
+
   const groups = useMemo(() => {
-    const filteredDisplays = displays.filter(display => !citySlug || display.city.slug === citySlug)
-    return groupDisplays(filteredDisplays, cities)
-  }, [cities, citySlug, displays])
+    const filteredByRoute = displays.filter(display => !citySlug || display.city.slug === citySlug)
+    const grouped = groupDisplays(filteredByRoute, cities)
+
+    const query = cityQuery.trim().toLowerCase()
+    const filteredByCity = query
+      ? grouped.filter(group => group.city.name.toLowerCase().includes(query))
+      : grouped
+
+    const compareDisplays = (a: DisplayListItem, b: DisplayListItem) => {
+      switch (sortBy) {
+        case 'name-asc':
+          return (a.description ?? a.name).localeCompare(b.description ?? b.name, 'ru')
+        case 'name-desc':
+          return (b.description ?? b.name).localeCompare(a.description ?? a.name, 'ru')
+        case 'size-desc':
+          return b.rows * b.cols - a.rows * a.cols
+        case 'size-asc':
+          return a.rows * a.cols - b.rows * b.cols
+      }
+    }
+
+    return filteredByCity.map(group => ({
+      ...group,
+      displays: [...group.displays].sort(compareDisplays),
+    }))
+  }, [cities, cityQuery, citySlug, displays, sortBy])
+
+  const totalCities = new Set(displays.map(display => display.city.slug ?? display.city.name)).size
+  const showCityFilter = totalCities >= CITY_THRESHOLD_FOR_FILTER
 
   useEffect(() => {
     setCrumb(
       <span className="flex items-center gap-2 text-xs" style={{ color: 'var(--fg-mute)' }}>
         <span>{config.title}</span>
-        {citySlug && <span className="font-mono" style={{ color: 'var(--fg-faint)' }}>/{citySlug}</span>}
-      </span>
+        {citySlug && (
+          <span className="font-mono" style={{ color: 'var(--fg-faint)' }}>
+            /{citySlug}
+          </span>
+        )}
+      </span>,
     )
     return () => setCrumb(null)
   }, [citySlug, config.title, setCrumb])
 
   useEffect(() => {
-    if (!activeCity && groups[0]) setActiveCity(cityKey(groups[0].city))
+    if (!activeCity && groups[0]) {
+      setActiveCity(cityKey(groups[0].city))
+    }
   }, [activeCity, groups])
 
   return (
-    <div className="grid h-full min-h-0 grid-cols-[1fr_320px]" style={{ background: 'var(--border-subtle)' }}>
+    <div
+      className="grid h-full min-h-0 grid-cols-1 md:grid-cols-[1fr_320px]"
+      style={{ background: 'var(--border-subtle)' }}
+    >
       <main className="min-h-0 overflow-y-auto bg-bg-0">
-        <div className="sticky top-0 z-10 flex h-13 items-center justify-between bg-bg-0 px-6" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+        <div
+          className="sticky top-0 z-10 flex flex-wrap items-end justify-between gap-3 bg-bg-0 px-6 py-3"
+          style={{ borderBottom: '1px solid var(--border-subtle)' }}
+        >
           <div>
-            <h1 className="text-md font-semibold" style={{ color: 'var(--fg)' }}>{config.title}</h1>
-            <div className="mt-0.5 flex items-center gap-2 text-2xs" style={{ color: 'var(--fg-faint)' }}>
+            <h1 className="text-md font-semibold" style={{ color: 'var(--fg)' }}>
+              {config.title}
+            </h1>
+            <div
+              className="mt-0.5 flex items-center gap-2 text-2xs"
+              style={{ color: 'var(--fg-faint)' }}
+            >
               <Clock size={11} />
-              <span>{groups.length} городов · {groups.reduce((sum, group) => sum + group.displays.length, 0)} экранов</span>
+              <span>
+                {groups.length} городов · {groups.reduce((sum, group) => sum + group.displays.length, 0)} экранов
+              </span>
             </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {showCityFilter && (
+              <label className="relative flex items-center" data-testid="city-filter">
+                <Search
+                  size={12}
+                  className="pointer-events-none absolute left-2"
+                  style={{ color: 'var(--fg-mute)' }}
+                />
+                <input
+                  type="search"
+                  placeholder="Город..."
+                  value={cityQuery}
+                  onChange={event => setCityQuery(event.target.value)}
+                  className="input pl-7"
+                  style={{ width: 160 }}
+                />
+              </label>
+            )}
+
+            <label
+              className="flex items-center gap-1.5 text-xs"
+              style={{ color: 'var(--fg-mute)' }}
+              data-testid="sort-select"
+            >
+              <ArrowUpDown size={11} />
+              <select
+                value={sortBy}
+                onChange={event => handleSortChange(event.target.value as SortOption)}
+                className="input"
+              >
+                {(Object.entries(SORT_LABELS) as [SortOption, string][]).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
         </div>
 
         {error ? (
-          <div className="flex h-80 flex-col items-center justify-center gap-3 text-xs" style={{ color: 'var(--err)' }}>
+          <div
+            className="flex h-80 flex-col items-center justify-center gap-3 text-xs"
+            style={{ color: 'var(--err)' }}
+          >
             <AlertTriangle size={22} />
             <span>Не удалось загрузить список экранов</span>
-            <button className="btn btn-secondary sm" onClick={() => refetch()}>Повторить</button>
+            <button className="btn btn-secondary sm" onClick={() => refetch()}>
+              Повторить
+            </button>
           </div>
         ) : showSkeleton ? (
           <div className="space-y-4 p-6">
             {Array.from({ length: 3 }).map((_, index) => (
               <div key={index}>
-                <Skeleton style={{ height: '18px', width: '160px', marginBottom: '12px' }} />
-                <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))' }}>
+                <Skeleton
+                  style={{ height: 'var(--skel-h-row)', width: '160px', marginBottom: '12px' }}
+                />
+                <div
+                  className="grid gap-2"
+                  style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))' }}
+                >
                   {Array.from({ length: 4 }).map((__, itemIndex) => (
-                    <Skeleton key={itemIndex} style={{ height: '64px', borderRadius: 'var(--r-md)' }} />
+                    <Skeleton
+                      key={itemIndex}
+                      style={{ height: 'var(--skel-h-card)', borderRadius: 'var(--r-md)' }}
+                    />
                   ))}
                 </div>
               </div>
             ))}
           </div>
         ) : groups.length === 0 ? (
-          <EmptyState icon="🏙️" title="Нет доступных экранов" description="Попросите администратора добавить города" />
+          cityQuery ? (
+            <EmptyState
+              icon={<SearchX size={24} />}
+              title="Городов не найдено"
+              description={`По запросу «${cityQuery}» ничего не нашлось`}
+            />
+          ) : (
+            <EmptyState
+              icon={<Building2 size={24} />}
+              title="Нет доступных экранов"
+              description="Попросите администратора добавить города"
+            />
+          )
         ) : (
           groups.map(group => (
             <CityBlock
@@ -255,7 +480,9 @@ export function DepartmentListPage({ department }: { department: Dept }) {
         )}
       </main>
 
-      <SideRail department={department} activeCity={activeCity} />
+      <div className="hidden min-h-0 md:block">
+        <SideRail department={department} activeCity={activeCity} />
+      </div>
     </div>
   )
 }

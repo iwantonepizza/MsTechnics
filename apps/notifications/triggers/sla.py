@@ -6,6 +6,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from apps.core.users.models import MsUser
+from apps.core.users.permissions import role_membership_q
 from apps.notifications.models import Notification
 from apps.notifications.triggers.utils import create_and_dispatch_notification
 from apps.workflow.applications.models import Application
@@ -24,9 +25,9 @@ def notify_overdue_applications(*, threshold_hours: int = 4) -> int:
         if _already_sent_today(application):
             continue
         city = getattr(application.display, "city", None)
-        recipients = MsUser.objects.filter(permission__in=["control", "admin", "all"])
+        recipients = MsUser.objects.filter(role_membership_q("control", "admin"))
         if city:
-            recipients = recipients.filter(Q(permission__in=["admin", "all"]) | Q(allowed_city=city))
+            recipients = recipients.filter(role_membership_q("admin") | Q(allowed_city=city))
 
         hours_overdue = int((timezone.now() - application.last_update_date_time).total_seconds() // 3600)
         context = {

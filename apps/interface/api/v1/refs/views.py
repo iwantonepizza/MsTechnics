@@ -1,16 +1,22 @@
 """T-3-011/012: ViewSets справочников."""
-from drf_spectacular.utils import extend_schema_view, extend_schema
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
-from apps.core.references.models import Color, Cities, Smile, Condition
-from apps.core.references.models import Department
+from apps.core.references.models import Cities, Color, Condition, Department, Smile
+from apps.core.users.permissions import is_admin
 from apps.workflow.applications.models import ApplicationStatus
 from apps.workflow.departures.models import DepartureStatus
 from shared.permissions import IsAdmin
+
 from .serializers import (
-    CitySerializer, ColorSerializer, ConditionSerializer,
-    SmileSerializer, DepartmentSerializer, ApplicationStatusSerializer, DepartureStatusSerializer,
+    ApplicationStatusSerializer,
+    CitySerializer,
+    ColorSerializer,
+    ConditionSerializer,
+    DepartmentSerializer,
+    DepartureStatusSerializer,
+    SmileSerializer,
 )
 
 
@@ -24,7 +30,7 @@ class CityViewSet(ReadOnlyModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.permission in ("admin", "all"):
+        if is_admin(user):
             return Cities.objects.all().order_by("name")
         return user.allowed_city.all().order_by("name")
 

@@ -61,12 +61,11 @@ class Command(BaseCommand):
 
 def _monitoring_recipients(alarm: AlarmEvent):
     from apps.core.users.models import MsUser
+    from apps.core.users.permissions import role_membership_q
 
     return (
-        MsUser.objects.filter(
-            permission__in=("monitoring", "admin", "all"),
-            allowed_city=alarm.display.city,
-        )
+        MsUser.objects.filter(role_membership_q("monitoring", "admin"))
+        .filter(allowed_city=alarm.display.city)
         .distinct()
         .order_by("id")
     )

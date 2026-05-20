@@ -1,9 +1,9 @@
-from rest_framework import serializers
 from drf_spectacular.utils import OpenApiTypes, extend_schema_field
+from rest_framework import serializers
 
-from apps.directory.displays.models import Display, Cell
+from apps.directory.displays.models import Cell, Display
 from apps.directory.panels.models import Panel
-from apps.interface.api.v1.refs.serializers import ColorSerializer, ConditionSerializer, CitySerializer
+from apps.interface.api.v1.refs.serializers import CitySerializer, ConditionSerializer
 
 
 class PanelOnCellSerializer(serializers.Serializer):
@@ -30,10 +30,43 @@ class CellSerializer(serializers.ModelSerializer):
 
 class DisplayListSerializer(serializers.ModelSerializer):
     city = CitySerializer(read_only=True)
+    aggregated_condition = serializers.SerializerMethodField()
 
     class Meta:
         model = Display
-        fields = ["id", "name", "description", "slug", "city", "rows", "cols"]
+        fields = [
+            "id",
+            "name",
+            "description",
+            "slug",
+            "city",
+            "rows",
+            "cols",
+            "aggregated_condition",
+        ]
+
+    @extend_schema_field(ConditionSerializer(allow_null=True))
+    def get_aggregated_condition(self, display):
+        prefetched_cells = getattr(display, "_prefetched_objects_cache", {}).get("cell_set")
+        if prefetched_cells is not None:
+            worst_condition = None
+            worst_condition_id = -1
+            for cell in prefetched_cells:
+                panel = getattr(cell, "panel", None)
+                condition = getattr(panel, "condition", None)
+                if condition is None:
+                    continue
+                if condition.id > worst_condition_id:
+                    worst_condition = condition
+                    worst_condition_id = condition.id
+            if worst_condition is None:
+                return None
+            return ConditionSerializer(worst_condition).data
+
+        condition = display.current_condition
+        if condition is None:
+            return None
+        return ConditionSerializer(condition).data
 
 
 class DisplayDetailSerializer(serializers.ModelSerializer):
@@ -44,8 +77,18 @@ class DisplayDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Display
-        fields = ["id", "name", "description", "slug", "city", "rows", "cols",
-                  "file_url", "project_photo_url", "cells"]
+        fields = [
+            "id",
+            "name",
+            "description",
+            "slug",
+            "city",
+            "rows",
+            "cols",
+            "file_url",
+            "project_photo_url",
+            "cells",
+        ]
 
     @extend_schema_field(CellSerializer(many=True))
     def get_cells(self, display):
@@ -57,10 +100,8 @@ class DisplayDetailSerializer(serializers.ModelSerializer):
         # annotate panels
         panel_ids = [c.panel_id for c in cells if c.panel_id]
         try:
-            from apps.directory.panels.managers import PanelQuerySet
             annotated = {
-                p.id: p for p in
-                Panel.objects.filter(id__in=panel_ids).with_application_status()
+                p.id: p for p in Panel.objects.filter(id__in=panel_ids).with_application_status()
             }
             for c in cells:
                 if c.panel_id and c.panel_id in annotated:

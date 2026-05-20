@@ -3,6 +3,7 @@ from __future__ import annotations
 from django.utils import timezone
 
 from apps.core.users.models import MsUser
+from apps.core.users.permissions import role_membership_q
 from apps.notifications.models import Notification
 from apps.notifications.triggers.utils import create_and_dispatch_notification
 
@@ -15,7 +16,7 @@ def notify_overdue_daily_tasks() -> int:
 
     sent = 0
     tasks = DailyTask.objects.filter(status="undone", lost_notification_sent=True)
-    recipients = MsUser.objects.filter(permission__in=["admin", "all", "control"]).distinct()
+    recipients = MsUser.objects.filter(role_membership_q("admin", "control")).distinct()
     for task in tasks:
         if _already_sent_today(task):
             continue

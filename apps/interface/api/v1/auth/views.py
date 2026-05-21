@@ -6,6 +6,7 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework_simplejwt.exceptions import InvalidToken
 import structlog
@@ -27,6 +28,9 @@ def _cookie_kwargs():
 
 
 class LoginView(APIView):
+    # SPA auth should not inherit SessionAuthentication, otherwise
+    # a leftover Django session cookie triggers CSRF enforcement here.
+    authentication_classes = []
     permission_classes = [AllowAny]
     throttle_classes = [LoginRateThrottle]
 
@@ -66,6 +70,7 @@ class RefreshView(APIView):
     - Создаём новый refresh + access для того же юзера
     - Отдаём access в JSON, новый refresh в cookie
     """
+    authentication_classes = []
     permission_classes = [AllowAny]
 
     @extend_schema(
@@ -115,6 +120,9 @@ class RefreshView(APIView):
 
 
 class LogoutView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [AllowAny]
+
     @extend_schema(
         tags=["auth"], summary="Выход",
         request=None,

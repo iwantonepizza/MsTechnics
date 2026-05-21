@@ -13,7 +13,7 @@ __pycache__/
 .claude/
 
 # Local env and secrets
-.env
+4Config/.env
 .env.*
 !.env.example
 Config/.env

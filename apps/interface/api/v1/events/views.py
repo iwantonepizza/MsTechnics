@@ -1,4 +1,5 @@
 """T-3-041: SSE stream view."""
+import json
 import time
 
 import structlog
@@ -6,6 +7,7 @@ from django.conf import settings
 from django.http import StreamingHttpResponse
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.renderers import BaseRenderer, JSONRenderer
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
@@ -16,9 +18,26 @@ HEARTBEAT_INTERVAL = 15
 BLOCK_MS = 5000
 
 
+class SSERenderer(BaseRenderer):
+    media_type = "text/event-stream"
+    format = "event-stream"
+    charset = None
+    render_style = "binary"
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        if data is None:
+            return b""
+        if isinstance(data, bytes):
+            return data
+        if isinstance(data, str):
+            return data.encode("utf-8")
+        return json.dumps(data, ensure_ascii=False).encode("utf-8")
+
+
 class SSEStreamView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
+    renderer_classes = [SSERenderer, JSONRenderer]
 
     def get_authenticators(self):
         # Поддержка ?token= для browser EventSource

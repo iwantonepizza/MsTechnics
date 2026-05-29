@@ -1,5 +1,6 @@
 """T-3-010: тесты auth endpoints."""
 import pytest
+from django.test import override_settings
 from rest_framework.test import APIClient
 
 pytestmark = pytest.mark.django_db
@@ -21,6 +22,24 @@ def test_login_valid_credentials(client, db):
     assert response.status_code == 200
     assert "access" in response.data
     assert "mstech_refresh" in response.cookies
+
+
+@override_settings(AUTH_COOKIE_SECURE=False)
+def test_login_can_disable_secure_refresh_cookie(client, db):
+    from tests.factories import MsUserFactory
+
+    user = MsUserFactory(username="cookie_override")
+    user.set_password("correct_password")
+    user.save()
+
+    response = client.post(
+        "/api/v1/auth/login/",
+        {"username": "cookie_override", "password": "correct_password"},
+        format="json",
+    )
+
+    assert response.status_code == 200
+    assert response.cookies["mstech_refresh"]["secure"] == ""
 
 
 def test_login_wrong_password_returns_401(client, db):
@@ -74,3 +93,9 @@ def test_metrics_endpoint_no_auth(client):
     assert response.status_code == 200
     assert "text/plain" in response["Content-Type"]
     assert "django_http" in response.content.decode("utf-8")
+
+
+def test_sse_accept_header_returns_auth_error_instead_of_406(client):
+    response = client.get("/api/v1/events/stream", HTTP_ACCEPT="text/event-stream")
+
+    assert response.status_code == 401

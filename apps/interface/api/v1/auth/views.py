@@ -22,7 +22,7 @@ def _cookie_kwargs():
     lifetime = settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"].total_seconds()
     return dict(
         key=REFRESH_COOKIE, httponly=True,
-        secure=not settings.DEBUG, samesite="Lax",
+        secure=settings.AUTH_COOKIE_SECURE, samesite="Lax",
         max_age=int(lifetime), path="/api/v1/auth",
     )
 

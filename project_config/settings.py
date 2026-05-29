@@ -13,6 +13,7 @@ env = environ.Env(
     DEBUG=(bool, False),
     SECRET_KEY=(str, None),
     ALLOWED_HOSTS=(list, ["127.0.0.1", "localhost"]),
+    AUTH_COOKIE_SECURE=(bool, True),
     REDIS_HOST=(str, "redis"),
     REDIS_PORT=(int, 6379),
     CORS_ALLOWED_ORIGINS=(
@@ -47,6 +48,7 @@ for dotenv_path in (BASE_DIR / ".env", BASE_DIR / "Config" / ".env"):
 SECRET_KEY = env("SECRET_KEY", default="dev-insecure-key-change-in-production")
 DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["127.0.0.1", "localhost"])
+AUTH_COOKIE_SECURE = env.bool("AUTH_COOKIE_SECURE", default=not DEBUG)
 
 GOOGLE_CREDENTIALS_FILE = env(
     "GOOGLE_CLIENT_SECRET_PATH",

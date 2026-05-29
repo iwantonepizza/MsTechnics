@@ -63,6 +63,13 @@
 - В `Config/.env` на проде выставлено `AUTH_COOKIE_SECURE=False`, потому что текущая площадка работает по `HTTP`.
 - Контейнер `mstechnics-web-1` перезапущен с обновлёнными Python-файлами.
 
+Follow-up того же дня:
+
+- при разборе повторного `500` на `POST /api/v1/auth/login/` выяснилось, что контейнер `mstechnics-db-1` находился в состоянии `Created`, а не `Up`
+- из-за этого backend падал в `django.db.utils.OperationalError: [Errno -3] Temporary failure in name resolution` при любой попытке обратиться к PostgreSQL по хосту `db`
+- контейнер `db` был поднят вручную, после чего `web` был пересоздан через `docker compose up -d web`
+- после восстановления БД login endpoint вернулся к штатному поведению: `401 invalid_credentials` на неверный пароль вместо `500`
+
 Полная пересборка через `docker compose build web` на сервере упиралась в `BuildKit DeadlineExceeded`, поэтому для аварийного восстановления применён прямой hotfix контейнера после `git pull`.
 
 ---

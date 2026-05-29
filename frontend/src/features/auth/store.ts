@@ -2,6 +2,8 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { MeUser } from '@/shared/api/types'
 
+import { isAccessTokenExpired } from './token'
+
 interface AuthState {
   accessToken: string | null
   user: MeUser | null
@@ -31,6 +33,19 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'mstech-auth',
       partialize: (state) => ({ accessToken: state.accessToken }),
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<AuthState> | undefined
+        const token = persisted?.accessToken
+
+        if (typeof token === 'string' && isAccessTokenExpired(token)) {
+          return currentState
+        }
+
+        return {
+          ...currentState,
+          ...persisted,
+        }
+      },
     }
   )
 )

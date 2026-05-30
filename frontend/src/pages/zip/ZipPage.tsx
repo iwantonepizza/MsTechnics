@@ -15,16 +15,27 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useChangeDepartment, usePanels } from '@/entities/panel/hooks'
-import { useStorage } from '@/entities/storage/hooks'
+import { useStorage, useUpdateStorageItem, type StorageKind } from '@/entities/storage/hooks'
 import { useActivityLog } from '@/entities/activity/hooks'
 import { useDisplays } from '@/entities/display/hooks'
 import { PanelCreateButton } from '@/features/panels/PanelCreateButton'
 import { PanelDeleteButton } from '@/features/panels/PanelDeleteButton'
 import { Skeleton, SkeletonList } from '@/shared/ui/Skeleton'
 import { EmptyState } from '@/shared/ui/EmptyState'
+import { Modal } from '@/shared/ui/Modal'
+import { Button } from '@/shared/ui/Button'
 import { useDeferredLoading } from '@/shared/lib/useDeferredLoading'
 import { cn, formatRelative } from '@/shared/lib/utils'
 import type { Panel, StorageItem } from '@/shared/api/types'
+
+// T-8-062: типы истории в правом блоке ЗИП. event_types покрывают оба стиля именования.
+const HISTORY_TYPES: Array<{ key: string; label: string; eventTypes: string }> = [
+  { key: 'move', label: 'Перемещения', eventTypes: 'panel_move,panel.removed,panel.created,display_panel_replace' },
+  { key: 'condition', label: 'Состояния', eventTypes: 'panel.condition_changed,panel_condition_change' },
+  { key: 'breakdown', label: 'Поломки', eventTypes: 'panel_breakdown' },
+  { key: 'service', label: 'Сервис', eventTypes: 'application_transition,application.transitioned,panel_service' },
+  { key: 'application', label: 'Заявки', eventTypes: 'application_create,application_transition,application_delete,application.created,application.transitioned,application.deleted' },
+]
 
 // T-7-033: целевые отделы для DnD. 'monitor' исключён — установка в ячейку
 // идёт через replace_panel_in_cell, не через смену department.
@@ -223,7 +234,102 @@ function PanelColumn({
   )
 }
 
+function ConsumableModal({
+  kind,
+  item,
+  onClose,
+}: {
+  kind: StorageKind
+  item: StorageItem
+  onClose: () => void
+}) {
+  const update = useUpdateStorageItem(kind)
+  const [count, setCount] = useState<number>(item.count ?? 0)
+  const [photo, setPhoto] = useState<File | null>(null)
+  const itemAny = item as StorageItem & { photo?: string | null }
+
+  const save = async () => {
+    try {
+      await update.mutateAsync({
+        id: item.id,
+        count: count !== item.count ? count : undefined,
+        photo: photo ?? undefined,
+      })
+      toast.success('Сохранено')
+      onClose()
+    } catch (err: unknown) {
+      const data = (err as { response?: { status?: number } })?.response
+      toast.error(data?.status === 403 ? 'Нет прав на изменение склада' : 'Не удалось сохранить')
+    }
+  }
+
+  return (
+    <Modal open onClose={onClose} title={item.name} size="sm">
+      <Modal.Body className="space-y-4">
+        <div>
+          <p className="mb-1 text-2xs" style={{ color: 'var(--fg-mute)' }}>Количество</p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="icon-btn"
+              onClick={() => setCount(c => Math.max(0, c - 1))}
+              style={{ border: '1px solid var(--border-subtle)', borderRadius: 'var(--r-sm)', width: 28, height: 28 }}
+            >
+              −
+            </button>
+            <input
+              type="number"
+              value={count}
+              min={0}
+              onChange={e => setCount(Math.max(0, Number(e.target.value) || 0))}
+              data-testid="consumable-count-input"
+              className="w-20 text-center text-sm"
+              style={{
+                background: 'var(--bg-1)', border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--r-sm)', color: 'var(--fg)', padding: '4px 6px',
+              }}
+            />
+            <button
+              type="button"
+              className="icon-btn"
+              onClick={() => setCount(c => c + 1)}
+              style={{ border: '1px solid var(--border-subtle)', borderRadius: 'var(--r-sm)', width: 28, height: 28 }}
+            >
+              +
+            </button>
+          </div>
+        </div>
+        <div>
+          <p className="mb-1 text-2xs" style={{ color: 'var(--fg-mute)' }}>Фото</p>
+          {itemAny.photo ? (
+            <img
+              src={itemAny.photo}
+              alt={item.name}
+              className="mb-2 max-h-40 rounded object-contain"
+              style={{ border: '1px solid var(--border-subtle)' }}
+            />
+          ) : (
+            <p className="mb-2 text-2xs" style={{ color: 'var(--fg-faint)' }}>Фото нет</p>
+          )}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={e => setPhoto(e.target.files?.[0] ?? null)}
+            className="text-2xs"
+            style={{ color: 'var(--fg-dim)' }}
+          />
+        </div>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="ghost" onClick={onClose}>Отмена</Button>
+        <Button onClick={save} disabled={update.isPending}>Сохранить</Button>
+      </Modal.Footer>
+    </Modal>
+  )
+}
+
 function StorageSection({ highlightedStorageId }: { highlightedStorageId: string | null }) {
+  const [editing, setEditing] = useState<{ kind: StorageKind; item: StorageItem } | null>(null)
   const lamels = useStorage('lamels')
   const hubs = useStorage('hubs')
   const wires = useStorage('wires')
@@ -298,8 +404,17 @@ function StorageSection({ highlightedStorageId }: { highlightedStorageId: string
                     key={item.id}
                     id={`storage-${sec.key}-${item.id}`}
                     data-testid={`storage-item-${item.name}`}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setEditing({ kind: sec.key as StorageKind, item })}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        setEditing({ kind: sec.key as StorageKind, item })
+                      }
+                    }}
                     className={cn(
-                      'storage-item-card rounded border px-2 py-2 text-xs',
+                      'storage-item-card cursor-pointer rounded border px-2 py-2 text-xs',
                       item.is_low_stock && 'storage-item-card--low',
                       highlightedStorageId === `storage-${sec.key}-${item.id}` && 'storage-item-card--low',
                     )}
@@ -335,6 +450,13 @@ function StorageSection({ highlightedStorageId }: { highlightedStorageId: string
           </div>
         ))}
       </div>
+      {editing && (
+        <ConsumableModal
+          kind={editing.kind}
+          item={editing.item}
+          onClose={() => setEditing(null)}
+        />
+      )}
     </div>
   )
 }
@@ -385,7 +507,16 @@ function HistoryRail({
   selectedPanel: Panel | null
   onPanelDeleted: () => void
 }) {
-  const { data = [], isLoading } = useActivityLog({ display: displaySlug ?? undefined, kind: 'panel.' })
+  // T-8-062: переключатель типа истории.
+  const [historyType, setHistoryType] = useState<string>('move')
+  const active = HISTORY_TYPES.find(t => t.key === historyType) ?? HISTORY_TYPES[0]
+
+  // Если выбрана панель — история по панели; иначе по экрану.
+  const { data = [], isLoading } = useActivityLog(
+    selectedPanel
+      ? { panel: selectedPanel.id, eventTypes: active.eventTypes }
+      : { display: displaySlug ?? undefined, eventTypes: active.eventTypes },
+  )
   const show = useDeferredLoading(isLoading)
 
   return (
@@ -395,7 +526,28 @@ function HistoryRail({
         style={{ borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-1)', color: 'var(--fg-dim)' }}
       >
         <Clock size={12} />
-        История перемещений
+        История {selectedPanel ? `· ${selectedPanel.name}` : ''}
+      </div>
+      {/* T-8-062: табы выбора типа истории */}
+      <div
+        className="flex flex-wrap gap-1 px-2 py-1.5 shrink-0"
+        style={{ borderBottom: '1px solid var(--border-subtle)' }}
+      >
+        {HISTORY_TYPES.map(t => (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => setHistoryType(t.key)}
+            className="rounded px-1.5 py-0.5 text-2xs transition-colors"
+            style={{
+              background: historyType === t.key ? 'var(--accent)' : 'var(--bg-2)',
+              color: historyType === t.key ? 'var(--accent-fg, #fff)' : 'var(--fg-dim)',
+              border: `1px solid ${historyType === t.key ? 'var(--accent-edge)' : 'var(--border-subtle)'}`,
+            }}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
       <PanelDetails panel={selectedPanel} onPanelDeleted={onPanelDeleted} />
       <div className="flex-1 overflow-y-auto p-2 space-y-1">
@@ -403,7 +555,7 @@ function HistoryRail({
           <SkeletonList rows={6} />
         ) : data.length === 0 ? (
           <p className="text-2xs text-center py-4" style={{ color: 'var(--fg-faint)' }}>
-            {displaySlug ? 'История пуста' : 'Выберите экран'}
+            {selectedPanel || displaySlug ? 'История пуста' : 'Выберите экран'}
           </p>
         ) : (
           data.map((entry: any) => (

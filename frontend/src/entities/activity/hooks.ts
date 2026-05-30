@@ -15,20 +15,44 @@ export interface ActivityLogEntry {
   payload: Record<string, unknown> | null
 }
 
-export function useActivityLog(filter: { display?: string; kind?: string } = {}) {
+export interface ActivityLogFilter {
+  display?: string
+  panel?: number | null
+  cell?: number | null
+  kind?: string
+  /** T-8-062: точный набор event_type через запятую */
+  eventTypes?: string
+  /** ISO-дата нижней границы (T-8-020) */
+  since?: string
+  /** T-8-020: общая лента (без таргета) — включается тумблером show_activity_feed */
+  feed?: boolean
+  limit?: number
+}
+
+export function useActivityLog(filter: ActivityLogFilter = {}) {
   return useQuery({
     queryKey: ['activity-log', filter],
     queryFn: async () => {
       const res = await apiClient.get<PaginatedResponse<ActivityLogEntry>>('/activity-log/', {
         params: {
           display: filter.display,
+          panel: filter.panel ?? undefined,
+          cell: filter.cell ?? undefined,
           kind: filter.kind,
-          limit: 30,
+          event_types: filter.eventTypes,
+          since: filter.since,
+          limit: filter.limit ?? 30,
         },
       })
       return res.data.results ?? []
     },
-    enabled: !!filter.display || !!filter.kind,
+    enabled:
+      !!filter.display ||
+      !!filter.kind ||
+      !!filter.eventTypes ||
+      filter.panel != null ||
+      filter.cell != null ||
+      !!filter.feed,
     staleTime: 30_000,
   })
 }

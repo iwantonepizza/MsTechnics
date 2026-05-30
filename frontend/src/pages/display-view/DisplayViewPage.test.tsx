@@ -178,6 +178,17 @@ vi.mock('@/features/panels/PanelActionModals', () => ({
   PanelRemovalModal: () => <div data-testid="panel-removal-modal" />,
 }))
 
+// T-8-003/004/035: новые виджеты используют useQuery — мокаем их в этом тесте роль-матрицы.
+vi.mock('@/widgets/display-notes/DisplayNotes', () => ({
+  DisplayNotes: () => <div data-testid="display-notes" />,
+}))
+vi.mock('@/widgets/daily-tasks/DailyTasksPanel', () => ({
+  DailyTasksPanel: () => <div data-testid="daily-tasks" />,
+}))
+vi.mock('@/widgets/cell-history/CellHistory', () => ({
+  CellHistory: () => <div data-testid="cell-history" />,
+}))
+
 vi.mock('sonner', () => ({
   toast: {
     success: vi.fn(),

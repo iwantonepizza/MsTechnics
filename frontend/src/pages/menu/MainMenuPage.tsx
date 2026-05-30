@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -18,6 +18,8 @@ import { apiClient } from '@/shared/api/client'
 import { useMe } from '@/features/auth/hooks'
 import { useDisplays } from '@/entities/display/hooks'
 import { useStorage } from '@/entities/storage/hooks'
+import { useActivityLog } from '@/entities/activity/hooks'
+import { Activity } from 'lucide-react'
 import { Badge } from '@/shared/ui/Badge'
 import { Skeleton, SkeletonList } from '@/shared/ui/Skeleton'
 import { useDeferredLoading } from '@/shared/lib/useDeferredLoading'
@@ -370,9 +372,83 @@ function ZipDeparturesColumn({ allowed }: { allowed: boolean }) {
   )
 }
 
+function monthsAgoIso(months: number): string {
+  const d = new Date()
+  d.setMonth(d.getMonth() - months)
+  return d.toISOString()
+}
+
+/** T-8-020: лента последних действий, видна только при включённом тумблере у пользователя. */
+function ActivityFeedBand() {
+  const [months, setMonths] = useState(1)
+  const since = monthsAgoIso(months)
+  const { data = [], isLoading } = useActivityLog({ feed: true, since, limit: 60 })
+  const show = useDeferredLoading(isLoading)
+
+  return (
+    <div
+      className="flex h-[170px] shrink-0 flex-col"
+      style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-0)' }}
+    >
+      <div
+        className="flex h-9 shrink-0 items-center justify-between px-3"
+        style={{ borderBottom: '1px solid var(--border-subtle)' }}
+      >
+        <div className="flex items-center gap-2 text-xs font-semibold" style={{ color: 'var(--fg)' }}>
+          <Activity size={13} style={{ color: 'var(--fg-dim)' }} />
+          Последние действия
+        </div>
+        <div className="flex gap-1">
+          {[1, 2].map(m => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMonths(m)}
+              className="rounded px-1.5 py-0.5 text-2xs transition-colors"
+              style={{
+                background: months === m ? 'var(--accent)' : 'var(--bg-2)',
+                color: months === m ? 'var(--accent-fg, #fff)' : 'var(--fg-dim)',
+                border: `1px solid ${months === m ? 'var(--accent-edge)' : 'var(--border-subtle)'}`,
+              }}
+            >
+              {m} мес
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="flex-1 overflow-y-auto p-2">
+        {show ? (
+          <SkeletonList rows={4} height="28px" />
+        ) : data.length === 0 ? (
+          <div className="flex h-full items-center justify-center text-xs" style={{ color: 'var(--fg-faint)' }}>
+            Действий за период нет
+          </div>
+        ) : (
+          <div className="space-y-1">
+            {data.map((entry: { id: number; description: string | null; actor_name: string | null; occurred_at: string }) => (
+              <div
+                key={entry.id}
+                className="flex items-center justify-between gap-2 rounded px-2 py-1 text-xs"
+                style={{ background: 'var(--bg-1)' }}
+              >
+                <span className="truncate" style={{ color: 'var(--fg-dim)' }}>{entry.description}</span>
+                <span className="flex shrink-0 gap-2 text-2xs" style={{ color: 'var(--fg-faint)' }}>
+                  <span className="font-mono">{entry.actor_name}</span>
+                  <span>{formatRelative(entry.occurred_at)}</span>
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export function MainMenuPage() {
   const { setCrumb } = useCrumb()
   const { data: me } = useMe()
+  const showActivityFeed = Boolean((me as { show_activity_feed?: boolean } | undefined)?.show_activity_feed)
   const dashboard = useDashboard()
   const displays = useDisplays()
   const departures = useDeparturesToday()
@@ -419,6 +495,8 @@ export function MainMenuPage() {
         />
         <ZipDeparturesColumn allowed={canAccess(permission, 'zip')} />
       </div>
+
+      {showActivityFeed && <ActivityFeedBand />}
     </div>
   )
 }

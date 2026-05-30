@@ -50,6 +50,9 @@ import { useKeyboard } from '@/shared/lib/useKeyboard'
 import { ApplicationsPanel } from '@/widgets/applications-panel/ApplicationsPanel'
 import { useCrumb } from '@/widgets/navigation/CrumbContext'
 import { DisplayGrid } from '@/widgets/display-grid/DisplayGrid'
+import { DisplayNotes } from '@/widgets/display-notes/DisplayNotes'
+import { DailyTasksPanel } from '@/widgets/daily-tasks/DailyTasksPanel'
+import { CellHistory } from '@/widgets/cell-history/CellHistory'
 
 type Dept = 'monitoring' | 'control' | 'service'
 
@@ -445,6 +448,14 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
         {department === 'monitoring' && display.camera_link ? (
           <DisplayCameraCard cameraLink={display.camera_link} />
         ) : null}
+
+        {/* T-8-035: ежедневные задачи — мониторинг интерактив, контроль read-only */}
+        {(department === 'monitoring' || department === 'control') ? (
+          <DailyTasksPanel cityId={display.city?.id} readOnly={department === 'control'} />
+        ) : null}
+
+        {/* T-8-003: заметки об экране — во всех отделах */}
+        <DisplayNotes slug={display.slug ?? displaySlug ?? ''} />
       </div>
 
       <div
@@ -574,6 +585,12 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
                   ) : null}
                 </div>
               )}
+
+              {/* T-8-004: история панели / места */}
+              <CellHistory
+                cellId={selectedCell.id}
+                panelId={selectedCell.panel?.id ?? null}
+              />
             </div>
           </>
         ) : (

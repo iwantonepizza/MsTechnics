@@ -5,9 +5,10 @@ import { describe, expect, it, vi } from 'vitest'
 import type { Panel } from '@/shared/api/types'
 import { ZipPage } from './ZipPage'
 
+type UsePanelsFilter = { department?: string; display?: string | null; fetchAll?: boolean }
 type UsePanelsResult = { data: Panel[]; isLoading: boolean }
 
-const usePanelsMock = vi.fn<(filter?: { department?: string; display?: string | null }) => UsePanelsResult>(
+const usePanelsMock = vi.fn<(filter?: UsePanelsFilter) => UsePanelsResult>(
   () => ({ data: [], isLoading: false }),
 )
 const changeDeptMutation = { mutateAsync: vi.fn(), isPending: false }
@@ -81,6 +82,30 @@ describe('ZipPage', () => {
     const item = screen.getByTestId('storage-item-wire-low')
     expect(item).toHaveClass('storage-item-card--low')
     expect(screen.getByText('Меньше 3')).toBeInTheDocument()
+  })
+})
+
+describe('ZipPage', () => {
+  it('renders display filter with readable contrast styles', () => {
+    usePanelsMock.mockReturnValue({ data: [], isLoading: false })
+    renderZipPage()
+
+    const select = screen.getByTestId('zip-display-filter')
+    expect(select).toHaveStyle('background: var(--bg-1)')
+    expect(select).toHaveStyle('color: var(--fg)')
+    expect(select.getAttribute('style')).toContain('border: 1px solid var(--border-subtle)')
+  })
+
+  it('requests full panel lists when a concrete display is selected', () => {
+    usePanelsMock.mockReturnValue({ data: [], isLoading: false })
+    renderZipPage()
+
+    expect(usePanelsMock).toHaveBeenCalledWith(
+      expect.objectContaining({ department: 'zip', display: '1', fetchAll: true }),
+    )
+    expect(usePanelsMock).toHaveBeenCalledWith(
+      expect.objectContaining({ department: 'monitor', display: '1', fetchAll: true }),
+    )
   })
 })
 

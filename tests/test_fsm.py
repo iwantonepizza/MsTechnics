@@ -4,6 +4,7 @@ tests/test_fsm.py — regression-тесты FSM заявок.
 T-2-003: фиксируем текущее поведение до рефакторинга.
 Все переходы через ApplicationStateMachine (T-2-040).
 """
+
 import pytest
 from django.utils import timezone
 
@@ -11,6 +12,7 @@ pytestmark = pytest.mark.django_db
 
 
 # ─── Фикстуры ─────────────────────────────────────────────────────────────────
+
 
 @pytest.fixture
 def all_statuses(db):
@@ -39,9 +41,17 @@ def all_statuses(db):
 def base_objects(db, all_statuses):
     """Базовый экран, панель, ячейка и пользователь."""
     from tests.factories import (
-        CityFactory, ColorFactory, SmileFactory, ConditionFactory,
-        DepartmentFactory, DisplayFactory, PanelFactory, CellFactory, MsUserFactory,
+        CityFactory,
+        ColorFactory,
+        SmileFactory,
+        ConditionFactory,
+        DepartmentFactory,
+        DisplayFactory,
+        PanelFactory,
+        CellFactory,
+        MsUserFactory,
     )
+
     ColorFactory(name="white", hex_color="#ffffff")
     ColorFactory(name="black", hex_color="#000000")
     ColorFactory(name="blue", hex_color="#0000ff")
@@ -92,20 +102,25 @@ def app_in_status(base_objects):
             cell=ctx["cell"],
             status=ctx["statuses"][status_name],
         )
+
     return _make
 
 
 # ─── Тесты допустимых переходов ───────────────────────────────────────────────
 
-@pytest.mark.parametrize("from_status,to_status,actor_key", [
-    ("sent_to_control",   "apply_in_control", "control"),
-    ("apply_in_control",  "sent_to_service",  "control"),
-    ("sent_to_service",   "work_in_service",  "service"),
-    ("work_in_service",   "done",                          "service"),
-    ("work_in_service",   "unable",            "service"),
-    ("done",                          "archive_done",                  "control"),
-    ("unable",            "archive_unable",                "control"),
-])
+
+@pytest.mark.parametrize(
+    "from_status,to_status,actor_key",
+    [
+        ("sent_to_control", "apply_in_control", "control"),
+        ("apply_in_control", "sent_to_service", "control"),
+        ("sent_to_service", "work_in_service", "service"),
+        ("work_in_service", "done", "service"),
+        ("work_in_service", "unable", "service"),
+        ("done", "archive_done", "control"),
+        ("unable", "archive_unable", "control"),
+    ],
+)
 def test_valid_transition(app_in_status, base_objects, from_status, to_status, actor_key):
     """Все 7 допустимых переходов FSM должны выполняться без ошибок."""
     from apps.workflow.applications.state_machine import application_fsm
@@ -130,13 +145,17 @@ def test_valid_transition(app_in_status, base_objects, from_status, to_status, a
 
 # ─── Тесты недопустимых переходов ─────────────────────────────────────────────
 
-@pytest.mark.parametrize("from_status,invalid_target", [
-    ("sent_to_control",  "done"),
-    ("sent_to_control",  "archive_done"),
-    ("apply_in_control", "unable"),
-    ("done",                         "work_in_service"),
-    ("archive_done",                 "sent_to_control"),
-])
+
+@pytest.mark.parametrize(
+    "from_status,invalid_target",
+    [
+        ("sent_to_control", "done"),
+        ("sent_to_control", "archive_done"),
+        ("apply_in_control", "unable"),
+        ("done", "work_in_service"),
+        ("archive_done", "sent_to_control"),
+    ],
+)
 def test_invalid_transition_raises(app_in_status, base_objects, from_status, invalid_target):
     """Недопустимые переходы должны вызывать InvalidTransition."""
     from apps.workflow.applications.exceptions import InvalidTransition
@@ -171,6 +190,7 @@ def test_transition_wrong_role_raises(app_in_status, base_objects):
 
 # ─── Тесты ApplicationService ─────────────────────────────────────────────────
 
+
 def test_application_service_delete_from_sent_to_control(base_objects, app_in_status):
     """Удаление заявки из статуса sent_to_control — разрешено."""
     from apps.workflow.applications.models import Application
@@ -196,6 +216,7 @@ def test_application_service_delete_from_later_status_raises(base_objects, app_i
 
 
 # ─── Тесты PanelMover ─────────────────────────────────────────────────────────
+
 
 def test_panel_mover_moves_panel(base_objects):
     """PanelMover перемещает панель в другой отдел."""
@@ -223,6 +244,7 @@ def test_panel_mover_blocks_move_with_active_application(base_objects, app_in_st
 
 
 # ─── Тесты ActivityLog ────────────────────────────────────────────────────────
+
 
 def test_activity_logger_creates_entry(base_objects, app_in_status):
     """После FSM-перехода в ActivityLog появляется запись."""
@@ -258,6 +280,7 @@ def test_available_transitions_returns_correct_list(base_objects, app_in_status)
 
 # ─── T-2-027: DisplayService ──────────────────────────────────────────────────
 
+
 @pytest.mark.django_db
 def test_display_service_creates_with_layout(base_objects):
     """DisplayService.create_with_layout() создаёт display + cells + panels."""
@@ -272,7 +295,7 @@ def test_display_service_creates_with_layout(base_objects):
     from apps.directory.panels.models import Panel
 
     assert Display.objects.filter(name="test-svc-display").exists()
-    assert Cell.objects.filter(display=display).count() == 6   # 2×3
+    assert Cell.objects.filter(display=display).count() == 6  # 2×3
     assert Panel.objects.filter(display=display).count() == 6 + spec.extra_panels
 
 
@@ -303,6 +326,7 @@ def test_display_save_no_side_effects(base_objects):
 
 # ─── T-2-028: Panel.application_status property ───────────────────────────────
 
+
 @pytest.mark.django_db
 def test_panel_application_status_returns_active(base_objects, app_in_status):
     """Panel.application_status возвращает статус активной заявки."""
@@ -315,6 +339,7 @@ def test_panel_application_status_returns_active(base_objects, app_in_status):
 def test_panel_application_status_returns_default_when_no_app(base_objects):
     """Без активной заявки Panel.application_status возвращает 'default'."""
     from tests.factories import ApplicationStatusFactory
+
     ApplicationStatusFactory(name="default")
     panel = base_objects["panel"]
     assert panel.application_status.name == "default"
@@ -332,7 +357,88 @@ def test_panel_with_application_status_annotation(base_objects, app_in_status):
     assert panels[0]._active_application_status_name == "sent_to_service"
 
 
+@pytest.mark.django_db
+def test_transition_with_executor_does_not_create_fake_monitoring_event(base_objects):
+    """T-8-041: назначение исполнителя не должно создавать второй monitoring_create."""
+    from apps.workflow.applications.models import ApplicationEvent
+    from apps.workflow.applications.services import application_service
+    from tests.factories import ExecutorFactory, MsUserFactory
+
+    monitoring_user = MsUserFactory(username="monitor_user", permission="monitoring")
+    control_user = base_objects["control"]
+    panel = base_objects["panel"]
+
+    app = application_service.create(
+        panel=panel,
+        comment="Создание",
+        time_event=timezone.now(),
+        user=monitoring_user,
+    )
+    executor = ExecutorFactory()
+
+    application_service.transition(
+        application=app,
+        target_status="apply_in_control",
+        actor=control_user,
+        comment="Принял",
+    )
+    application_service.transition(
+        application=app,
+        target_status="sent_to_service",
+        actor=control_user,
+        comment="В сервис",
+    )
+    application_service.set_executor(
+        application=app,
+        executor=executor,
+        actor=control_user,
+        comment="В сервис",
+    )
+
+    events = list(
+        ApplicationEvent.objects.filter(application=app)
+        .order_by("occurred_at", "id")
+        .values_list("stage", "comment")
+    )
+
+    assert events == [
+        ("monitoring_create", "Создание"),
+        ("control_apply", "Принял"),
+        ("control_send", "В сервис"),
+    ]
+    assert panel.active_application == app
+    assert panel.application_status.name == "sent_to_service"
+
+
+@pytest.mark.django_db
+def test_panel_active_application_uses_id_as_tiebreaker(base_objects, all_statuses):
+    """T-8-041: при равных timestamps выбирается последняя активная заявка."""
+    from tests.factories import ApplicationFactory
+
+    panel = base_objects["panel"]
+    timestamp = timezone.now()
+
+    older = ApplicationFactory(
+        display=base_objects["display"],
+        panel=panel,
+        cell=base_objects["cell"],
+        status=all_statuses["sent_to_control"],
+        last_update_date_time=timestamp,
+    )
+    newer = ApplicationFactory(
+        display=base_objects["display"],
+        panel=panel,
+        cell=base_objects["cell"],
+        status=all_statuses["sent_to_service"],
+        last_update_date_time=timestamp,
+    )
+
+    assert panel.active_application == newer
+    assert newer.id > older.id
+
+
 # ─── T-2-030: DepartureStatus ─────────────────────────────────────────────────
+
 
 @pytest.mark.django_db
 def test_departure_status_properties(db):
@@ -343,7 +449,9 @@ def test_departure_status_properties(db):
     created_status = DepartureStatus.objects.create(
         name="created", description="Создан", order=0, is_terminal=False
     )
-    DepartureStatus.objects.create(name="archived", description="В архиве", order=2, is_terminal=True)
+    DepartureStatus.objects.create(
+        name="archived", description="В архиве", order=2, is_terminal=True
+    )
 
     dep = DepartureFactory(status=created_status)
     assert dep.is_created is True

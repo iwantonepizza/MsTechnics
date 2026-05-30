@@ -56,7 +56,7 @@ export function PanelDeleteButton({ panel, onDeleted }: PanelDeleteButtonProps) 
         description={
           error
             ? error
-            : 'Действие безвозвратное. История панели в журнале останется.'
+            : 'Действие безвозвратное. Панель, связанные архивные заявки и её история будут удалены.'
         }
         confirmText="Удалить"
         variant="danger"

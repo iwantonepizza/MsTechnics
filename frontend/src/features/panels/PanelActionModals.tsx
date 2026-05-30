@@ -109,10 +109,12 @@ export function ChangeConditionModal({
   open,
   onClose,
   panel,
+  allowedConditionNames,
 }: {
   open: boolean
   onClose: () => void
   panel: PanelLike
+  allowedConditionNames?: string[]
 }) {
   const conditions = useConditions()
   const mutation = useChangeCondition()
@@ -120,7 +122,15 @@ export function ChangeConditionModal({
     resolver: zodResolver(conditionSchema),
     defaultValues: { comment: '' },
   })
-  const options = (conditions.data ?? []).filter(condition => condition.id !== panel.condition?.id)
+  const options = (conditions.data ?? []).filter(condition => {
+    if (condition.id === panel.condition?.id) {
+      return false
+    }
+    if (allowedConditionNames && !allowedConditionNames.includes(condition.name)) {
+      return false
+    }
+    return true
+  })
 
   const submit = handleSubmit(async data => {
     try {

@@ -53,3 +53,9 @@ htmlcov/
 /mstechnics.egg-info/
 *.egg-info/
 /staticfiles/
+
+# Build/deploy bundles (T-8 push 2026-05-30)
+*.tar.gz
+# Runtime media uploads (test artifacts, user content)
+/media/application/
+/media/photos/display_photos/

@@ -1,14 +1,17 @@
 /**
- * T-4-013: DisplayViewPage v2 based on the current display layout.
- * 3-column layout: grid | panel detail | applications / alarms rail
+ * Display view: grid | detail | applications/alarms rail.
  */
-import { useState, useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import {
   Archive,
   Check,
   CheckCheck,
+  ChevronDown,
   ChevronRight,
+  ChevronUp,
+  ExternalLink,
   Plus,
   Send,
   Trash2,
@@ -18,11 +21,17 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { DisplayGrid } from '@/widgets/display-grid/DisplayGrid'
-import { ApplicationsPanel } from '@/widgets/applications-panel/ApplicationsPanel'
-import { TransitionModal } from '@/features/applications/TransitionModal'
-import { CreateApplicationModal } from '@/features/applications/CreateApplicationModal'
 import { ApplicationDetailSheet } from '@/entities/application/ApplicationDetailSheet'
+import {
+  useApplicationDetail,
+  useApplicationEvents,
+  useDeleteApplication,
+} from '@/entities/application/hooks'
+import { useDisplayAlarms, useDisplayDetail } from '@/entities/display/hooks'
+import { CreateApplicationModal } from '@/features/applications/CreateApplicationModal'
+import { TransitionModal } from '@/features/applications/TransitionModal'
+import type { TransitionKind } from '@/features/applications/transitionConfigs'
+import { useMe } from '@/features/auth/hooks'
 import {
   ChangeConditionModal,
   ChangeDepartmentModal,
@@ -30,18 +39,17 @@ import {
   PanelRemovalModal,
   type PanelLike,
 } from '@/features/panels/PanelActionModals'
+import type { AlarmEvent, Cell } from '@/shared/api/types'
 import { Badge } from '@/shared/ui/Badge'
 import { Button, type ButtonProps } from '@/shared/ui/Button'
+import { ConfirmDialog, useConfirmDialog } from '@/shared/ui/ConfirmDialog'
 import { Skeleton } from '@/shared/ui/Skeleton'
-import { useDisplayAlarms, useDisplayDetail } from '@/entities/display/hooks'
-import { useApplicationDetail, useApplicationEvents } from '@/entities/application/hooks'
-import { useMe } from '@/features/auth/hooks'
-import { useCrumb } from '@/widgets/navigation/CrumbContext'
-import { formatDate } from '@/shared/lib/utils'
 import { useDeferredLoading } from '@/shared/lib/useDeferredLoading'
+import { formatDate, getErrorMessage } from '@/shared/lib/utils'
 import { useKeyboard } from '@/shared/lib/useKeyboard'
-import type { AlarmEvent, Cell } from '@/shared/api/types'
-import type { TransitionKind } from '@/features/applications/transitionConfigs'
+import { ApplicationsPanel } from '@/widgets/applications-panel/ApplicationsPanel'
+import { useCrumb } from '@/widgets/navigation/CrumbContext'
+import { DisplayGrid } from '@/widgets/display-grid/DisplayGrid'
 
 type Dept = 'monitoring' | 'control' | 'service'
 
@@ -69,21 +77,7 @@ const ROLE_TRANSITIONS: Record<string, TransitionKind[]> = {
   ],
 }
 
-const TRANSITION_LABELS: Record<TransitionKind, { emoji: string; label: string }> = {
-  apply_in_control: { emoji: 'OK', label: 'Принять' },
-  sent_to_service: { emoji: '->', label: 'В сервис' },
-  work_in_service: { emoji: 'W', label: 'В работу' },
-  done: { emoji: 'OK', label: 'Выполнено' },
-  unable: { emoji: 'NO', label: 'Невозможно' },
-  archive_done: { emoji: 'A', label: 'Архив' },
-  archive_unable: { emoji: 'A', label: 'Архив' },
-  delete_application: { emoji: 'X', label: 'Удалить' },
-}
-
-const TRANSITION_LABELS_V2: Record<
-  TransitionKind,
-  { Icon: LucideIcon; label: string }
-> = {
+const ACTION_LABELS: Record<TransitionKind, { Icon: LucideIcon; label: string }> = {
   apply_in_control: { Icon: Check, label: 'Принять' },
   sent_to_service: { Icon: Send, label: 'В сервис' },
   work_in_service: { Icon: Wrench, label: 'В работу' },
@@ -94,18 +88,41 @@ const TRANSITION_LABELS_V2: Record<
   delete_application: { Icon: Trash2, label: 'Удалить' },
 }
 
-const INPUT_STYLE: React.CSSProperties = {
-  background: 'var(--bg-1)',
-  border: '1px solid var(--border-subtle)',
-  borderRadius: 'var(--r-sm)',
-  color: 'var(--fg-mute)',
-  fontSize: '11px',
-  padding: '4px 8px',
-  fontFamily: 'var(--font-mono)',
-}
+const ADMIN_ROLES = new Set(['admin', 'all'])
+const MONITORING_EDITABLE_CONDITIONS = new Set(['work', 'problem', 'error', 'broken'])
+const MONITORING_CREATEABLE_CONDITIONS = new Set(['problem', 'error', 'broken', 'unrecoverable'])
 
 interface DisplayViewPageProps {
   department: Dept
+}
+
+interface ApplicationSheetAction {
+  key: string
+  label: string
+  icon: ReactNode
+  variant: ButtonProps['variant']
+}
+
+function isAdminRole(role: string) {
+  return ADMIN_ROLES.has(role)
+}
+
+function canMonitoringChangeCondition(conditionName: string | null) {
+  return Boolean(conditionName && MONITORING_EDITABLE_CONDITIONS.has(conditionName))
+}
+
+function canMonitoringCreateApplication(conditionName: string | null) {
+  return Boolean(conditionName && MONITORING_CREATEABLE_CONDITIONS.has(conditionName))
+}
+
+function getTransitionVariant(transition: TransitionKind): ButtonProps['variant'] {
+  if (transition === 'unable' || transition === 'delete_application') {
+    return 'danger'
+  }
+  if (transition.includes('archive')) {
+    return 'ghost'
+  }
+  return 'primary'
 }
 
 export function DisplayViewPage({ department }: DisplayViewPageProps) {
@@ -128,6 +145,10 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
     applicationId?: number
   } | null>(null)
   const [railTab, setRailTab] = useState<'applications' | 'alarms'>('applications')
+  const [deleteCandidate, setDeleteCandidate] = useState<number | null>(null)
+
+  const deleteDialog = useConfirmDialog()
+  const deleteApplication = useDeleteApplication()
 
   const { data: selectedApp } = useApplicationDetail(selectedAppId)
   const { data: events = [] } = useApplicationEvents(selectedAppId)
@@ -148,7 +169,9 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
   }, [display, setCrumb])
 
   useEffect(() => {
-    if (!display) return
+    if (!display) {
+      return
+    }
 
     const applicationId = Number(searchParams.get('app_id') ?? '')
     if (Number.isInteger(applicationId) && applicationId > 0) {
@@ -158,10 +181,14 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
     }
 
     const panelId = Number(searchParams.get('panel_id') ?? '')
-    if (!Number.isInteger(panelId) || panelId <= 0) return
+    if (!Number.isInteger(panelId) || panelId <= 0) {
+      return
+    }
 
     const cell = display.cells.find(item => item.panel?.id === panelId)
-    if (!cell) return
+    if (!cell) {
+      return
+    }
 
     setSelectedCell(cell)
     setSelectedAppId(null)
@@ -178,20 +205,57 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
   }, [])
 
   const role = me?.permission ?? ''
-  const canCreate = role === 'monitoring' || role === 'admin' || role === 'all'
-  const canRemovePanel = role === 'service' || role === 'admin' || role === 'all'
+  const isAdmin = isAdminRole(role)
+  const isMonitoring = role === 'monitoring'
+  const isService = role === 'service'
 
-  const openCreateForCell = useCallback((cell: Cell, comment = '') => {
-    setSelectedCell(cell)
-    setSelectedAppId(null)
-    setCreateComment(comment)
-    setCreateOpen(true)
-  }, [])
+  const canCreateForCell = useCallback(
+    (cell: Cell | null) => {
+      const conditionName = cell?.panel?.condition.name ?? null
+      if (isAdmin) {
+        return Boolean(cell?.panel)
+      }
+      if (!isMonitoring) {
+        return false
+      }
+      return canMonitoringCreateApplication(conditionName)
+    },
+    [isAdmin, isMonitoring],
+  )
+
+  const openCreateForCell = useCallback(
+    (cell: Cell, comment = '') => {
+      if (!canCreateForCell(cell)) {
+        return
+      }
+      setSelectedCell(cell)
+      setSelectedAppId(null)
+      setCreateComment(comment)
+      setCreateOpen(true)
+    },
+    [canCreateForCell],
+  )
 
   const handlePanelRemoved = useCallback(() => {
     setSelectedCell(null)
     setPanelRemovalContext(null)
   }, [])
+
+  const handleDeleteApplication = useCallback(async () => {
+    if (deleteCandidate == null) {
+      return
+    }
+
+    try {
+      await deleteApplication.mutateAsync({ id: deleteCandidate })
+      toast.success('Заявка удалена')
+      setSelectedAppId(current => (current === deleteCandidate ? null : current))
+      setDeleteCandidate(null)
+    } catch (error) {
+      toast.error(getErrorMessage(error))
+      throw error
+    }
+  }, [deleteApplication, deleteCandidate])
 
   const handleAlarmCreate = useCallback(
     (alarm: AlarmEvent) => {
@@ -209,38 +273,62 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
     [display?.cells, openCreateForCell],
   )
 
-  const availableTransitions: TransitionKind[] = (() => {
-    if (!selectedApp) return []
+  const canCreateFromAlarm = useCallback(
+    (alarm: AlarmEvent) => {
+      const cell = display?.cells.find(item => item.id === alarm.cell_id) ?? null
+      return canCreateForCell(cell)
+    },
+    [canCreateForCell, display?.cells],
+  )
+
+  const availableTransitions = useMemo(() => {
+    if (!selectedApp) {
+      return []
+    }
     const roleTransitions = ROLE_TRANSITIONS[role] ?? []
     const nextPossible = (selectedApp.status.next_possible ?? []).map(item => item.target_state)
     return roleTransitions.filter(transition => nextPossible.includes(transition))
-  })()
+  }, [role, selectedApp])
 
   const selectedAppPanel = useMemo(
     () => display?.cells.find(item => item.panel?.id === selectedApp?.panel.id)?.panel ?? null,
     [display?.cells, selectedApp?.panel.id],
   )
 
-  const selectedAppActions: Array<{
-    key: string
-    label: string
-    icon: React.ReactNode
-    variant: ButtonProps['variant']
-  }> = availableTransitions.map(transition => {
-    const meta = TRANSITION_LABELS_V2[transition]
+  const selectedCellConditionName = selectedCell?.panel?.condition.name ?? null
+  const canChangeCondition = Boolean(
+    selectedCell?.panel &&
+      (isAdmin || isService || (isMonitoring && canMonitoringChangeCondition(selectedCellConditionName))),
+  )
+  const canChangeDepartment = Boolean(selectedCell?.panel && (isAdmin || isService))
+  const canRemoveSelectedPanel = Boolean(selectedCell?.panel && (isAdmin || isService))
+  const canInstallPanel = Boolean(selectedCell && !selectedCell.panel && (isAdmin || isService))
+  const canCreateSelectedCellApplication = canCreateForCell(selectedCell)
+  const canDeleteSelectedApplication =
+    selectedApp?.status.name === 'sent_to_control' && (isAdmin || isMonitoring)
+  const canRemovePanelFromApplication = Boolean(selectedAppPanel && (isAdmin || isService))
 
-    return {
-      key: transition,
-      label: meta.label,
-      icon: <meta.Icon size={12} />,
-      variant:
-        transition === 'unable' || transition === 'delete_application'
-          ? 'danger'
-          : transition.includes('archive')
-            ? 'ghost'
-            : 'primary',
-    }
-  })
+  const selectedAppActions: ApplicationSheetAction[] = [
+    ...(canDeleteSelectedApplication
+      ? [
+          {
+            key: 'delete_application',
+            label: ACTION_LABELS.delete_application.label,
+            icon: <ACTION_LABELS.delete_application.Icon size={12} />,
+            variant: 'danger' as const,
+          },
+        ]
+      : []),
+    ...availableTransitions.map(transition => {
+      const meta = ACTION_LABELS[transition]
+        return {
+          key: transition,
+          label: meta.label,
+          icon: <meta.Icon size={12} />,
+          variant: getTransitionVariant(transition),
+        }
+      }),
+  ]
 
   const shortcutMap = useMemo(
     () => ({
@@ -278,26 +366,32 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
         }
       },
       N: () => {
-        if ((department === 'monitoring' || department === 'control') && selectedCell?.panel) {
+        if (canCreateSelectedCellApplication && selectedCell?.panel) {
           openCreateForCell(selectedCell)
         }
       },
     }),
-    [department, selectedApp, selectedCell, openCreateForCell],
+    [canCreateSelectedCellApplication, department, openCreateForCell, selectedApp, selectedCell],
   )
 
   useKeyboard(shortcutMap, !transitionKind && !createOpen && !panelAction)
 
   if (showSkeleton) {
     return (
-      <div className="flex h-full" style={{ background: 'var(--bg-0)' }}>
+      <div className="flex h-full flex-col lg:flex-row" style={{ background: 'var(--bg-0)' }}>
         <div className="flex-1 p-4">
           <Skeleton style={{ height: '100%', borderRadius: 'var(--r-lg)' }} />
         </div>
-        <div style={{ width: '360px', borderLeft: '1px solid var(--border-subtle)' }}>
+        <div
+          className="border-t lg:w-[360px] lg:border-l lg:border-t-0"
+          style={{ borderColor: 'var(--border-subtle)' }}
+        >
           <Skeleton style={{ height: '100%' }} />
         </div>
-        <div style={{ width: '320px', borderLeft: '1px solid var(--border-subtle)' }}>
+        <div
+          className="border-t lg:w-[320px] lg:border-l lg:border-t-0"
+          style={{ borderColor: 'var(--border-subtle)' }}
+        >
           <Skeleton style={{ height: '100%' }} />
         </div>
       </div>
@@ -306,68 +400,60 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
 
   if (!display) {
     return (
-      <div
-        className="flex h-full items-center justify-center text-xs"
-        style={{ color: 'var(--fg-mute)' }}
-      >
+      <div className="flex h-full items-center justify-center text-xs" style={{ color: 'var(--fg-mute)' }}>
         Экран не найден
       </div>
     )
   }
 
   return (
-    <div className="display-view-page flex h-full" style={{ background: 'var(--bg-0)' }}>
+    <div
+      className="display-view-page flex h-full flex-col overflow-y-auto lg:flex-row lg:overflow-hidden"
+      style={{ background: 'var(--bg-0)' }}
+      data-testid="display-view-layout"
+    >
       <div
-        className="display-view-grid-column flex min-w-0 flex-1 flex-col"
-        style={{ borderRight: '1px solid var(--border-subtle)' }}
+        className="display-view-grid-column flex min-w-0 flex-col border-b lg:flex-1 lg:border-b-0 lg:border-r"
+        style={{ borderColor: 'var(--border-subtle)' }}
+        data-testid="display-view-grid-column"
       >
         <div
-          className="flex items-center justify-between px-4 shrink-0"
+          className="flex shrink-0 items-center justify-between gap-3 px-4"
           style={{ height: 'var(--h-header)', borderBottom: '1px solid var(--border-subtle)' }}
         >
-          <div>
+          <div className="min-w-0">
             <span
-              className="text-md font-semibold"
+              className="block truncate text-md font-semibold"
               style={{ color: 'var(--fg)', letterSpacing: '-0.01em' }}
             >
               {display.description ?? display.name}
             </span>
-            <span
-              className="ml-3 text-xs"
-              style={{ color: 'var(--fg-mute)', fontFamily: 'var(--font-mono)' }}
-            >
-              {display.rows}×{display.cols}
+            <span className="text-xs" style={{ color: 'var(--fg-mute)', fontFamily: 'var(--font-mono)' }}>
+              {display.rows}Г—{display.cols}
             </span>
           </div>
-          {canCreate && selectedCell?.panel && (
-            <Button
-              variant="primary"
-              size="sm"
-              icon={<Plus size={11} />}
-              onClick={() => openCreateForCell(selectedCell)}
-            >
-              Заявка
-            </Button>
-          )}
         </div>
 
-        <div className="flex-1 overflow-auto p-4">
+        <div className="flex-1 overflow-auto p-4 max-h-[70vh] lg:max-h-none">
           <DisplayGrid
             displaySlug={display.slug ?? displaySlug ?? ''}
             selectedCellId={selectedCell?.id ?? null}
             onCellSelect={handleCellClick}
           />
         </div>
+
+        {department === 'monitoring' && display.camera_link ? (
+          <DisplayCameraCard cameraLink={display.camera_link} />
+        ) : null}
       </div>
 
       <div
-        className="display-view-detail-column flex flex-col"
+        className="display-view-detail-column flex w-full shrink-0 flex-col border-t lg:w-[360px] lg:border-t-0 lg:border-r"
         style={{
-          width: '360px',
-          flexShrink: 0,
-          borderRight: '1px solid var(--border-subtle)',
+          borderColor: 'var(--border-subtle)',
           background: 'var(--bg-1)',
         }}
+        data-testid="display-view-detail-column"
       >
         {selectedApp ? (
           <ApplicationDetailSheet
@@ -375,8 +461,15 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
             events={events}
             cityName={display.city.name}
             actions={selectedAppActions}
-            canRemovePanel={canRemovePanel && Boolean(selectedAppPanel)}
-            onAction={transition => setTransitionKind(transition as TransitionKind)}
+            canRemovePanel={canRemovePanelFromApplication}
+            onAction={action => {
+              if (action === 'delete_application') {
+                setDeleteCandidate(selectedApp.id)
+                deleteDialog.ask()
+                return
+              }
+              setTransitionKind(action as TransitionKind)
+            }}
             onRemovePanel={() =>
               selectedAppPanel &&
               setPanelRemovalContext({
@@ -409,10 +502,7 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
                 <div className="space-y-3">
                   {[
                     ['Панель', selectedCell.panel.name],
-                    [
-                      'Состояние',
-                      selectedCell.panel.condition.description ?? selectedCell.panel.condition.name,
-                    ],
+                    ['Состояние', selectedCell.panel.condition.description ?? selectedCell.panel.condition.name],
                   ].map(([label, value]) => (
                     <div key={label} className="flex justify-between text-xs">
                       <span style={{ color: 'var(--fg-mute)' }}>{label}</span>
@@ -428,24 +518,28 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
                       </span>
                     </div>
                   ))}
-                  {selectedCell.panel.comment && (
+                  {selectedCell.panel.comment ? (
                     <div className="mt-2 text-xs" style={{ color: 'var(--fg-faint)' }}>
                       {selectedCell.panel.comment}
                     </div>
-                  )}
-                  <div className="grid grid-cols-2 gap-1.5 pt-1">
-                    <Button variant="ghost" size="sm" onClick={() => setPanelAction('condition')}>
-                      Состояние
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setPanelAction('department')}
-                    >
-                      Отдел
-                    </Button>
-                  </div>
-                  {canRemovePanel && (
+                  ) : null}
+
+                  {canChangeCondition || canChangeDepartment ? (
+                    <div className="grid grid-cols-2 gap-1.5 pt-1">
+                      {canChangeCondition ? (
+                        <Button variant="ghost" size="sm" onClick={() => setPanelAction('condition')}>
+                          Состояние
+                        </Button>
+                      ) : null}
+                      {canChangeDepartment ? (
+                        <Button variant="ghost" size="sm" onClick={() => setPanelAction('department')}>
+                          Отдел
+                        </Button>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {canRemoveSelectedPanel ? (
                     <Button
                       variant="danger"
                       size="sm"
@@ -454,8 +548,9 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
                     >
                       Снять панель
                     </Button>
-                  )}
-                  {canCreate && (
+                  ) : null}
+
+                  {canCreateSelectedCellApplication ? (
                     <Button
                       variant="primary"
                       size="sm"
@@ -465,16 +560,18 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
                     >
                       Создать заявку
                     </Button>
-                  )}
+                  ) : null}
                 </div>
               ) : (
                 <div className="space-y-3">
                   <p className="text-xs" style={{ color: 'var(--fg-mute)' }}>
                     Ячейка пустая
                   </p>
-                  <Button variant="primary" size="sm" onClick={() => setPanelAction('move')}>
-                    Поставить панель
-                  </Button>
+                  {canInstallPanel ? (
+                    <Button variant="primary" size="sm" onClick={() => setPanelAction('move')}>
+                      Поставить панель
+                    </Button>
+                  ) : null}
                 </div>
               )}
             </div>
@@ -489,8 +586,9 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
       </div>
 
       <div
-        className="display-view-rail-column flex flex-col"
-        style={{ width: '320px', flexShrink: 0, background: 'var(--bg-0)' }}
+        className="display-view-rail-column flex w-full shrink-0 flex-col border-t lg:w-[320px] lg:border-t-0"
+        style={{ borderColor: 'var(--border-subtle)', background: 'var(--bg-0)' }}
+        data-testid="display-view-rail-column"
       >
         <div
           className="flex items-center gap-1 p-2 shrink-0"
@@ -507,10 +605,7 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
               style={{
                 color: railTab === key ? 'var(--fg)' : 'var(--fg-mute)',
                 background: railTab === key ? 'var(--bg-2)' : 'transparent',
-                border:
-                  railTab === key
-                    ? '1px solid var(--border-subtle)'
-                    : '1px solid transparent',
+                border: railTab === key ? '1px solid var(--border-subtle)' : '1px solid transparent',
               }}
             >
               {label}
@@ -525,11 +620,11 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
             selectedId={selectedAppId}
           />
         ) : (
-          <AlarmRail alarms={alarms} canCreate={canCreate} onCreate={handleAlarmCreate} />
+          <AlarmRail alarms={alarms} canCreate={canCreateFromAlarm} onCreate={handleAlarmCreate} />
         )}
       </div>
 
-      {createOpen && selectedCell && display && (
+      {createOpen && selectedCell ? (
         <CreateApplicationModal
           open={createOpen}
           onClose={() => {
@@ -540,33 +635,41 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
           displayId={display.id}
           initialComment={createComment}
         />
-      )}
-      {transitionKind && selectedApp && (
+      ) : null}
+
+      {transitionKind && selectedApp ? (
         <TransitionModal
           open
           onClose={() => setTransitionKind(null)}
           application={selectedApp}
           targetState={transitionKind}
         />
-      )}
-      {panelAction === 'condition' && selectedCell?.panel && (
+      ) : null}
+
+      {panelAction === 'condition' && selectedCell?.panel ? (
         <ChangeConditionModal
           open
           onClose={() => setPanelAction(null)}
           panel={selectedCell.panel}
+          allowedConditionNames={
+            isMonitoring ? Array.from(MONITORING_EDITABLE_CONDITIONS) : undefined
+          }
         />
-      )}
-      {panelAction === 'department' && selectedCell?.panel && (
+      ) : null}
+
+      {panelAction === 'department' && selectedCell?.panel ? (
         <ChangeDepartmentModal
           open
           onClose={() => setPanelAction(null)}
           panel={selectedCell.panel}
         />
-      )}
-      {panelAction === 'move' && selectedCell && !selectedCell.panel && (
+      ) : null}
+
+      {panelAction === 'move' && selectedCell && !selectedCell.panel ? (
         <MoveToCellModal open onClose={() => setPanelAction(null)} cell={selectedCell} />
-      )}
-      {panelRemovalContext && (
+      ) : null}
+
+      {panelRemovalContext ? (
         <PanelRemovalModal
           open
           onClose={() => setPanelRemovalContext(null)}
@@ -574,8 +677,113 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
           applicationId={panelRemovalContext.applicationId}
           onRemoved={handlePanelRemoved}
         />
-      )}
+      ) : null}
+
+      <ConfirmDialog
+        open={deleteDialog.props.open}
+        onClose={() => {
+          setDeleteCandidate(null)
+          deleteDialog.close()
+        }}
+        onConfirm={handleDeleteApplication}
+        title="Удалить заявку?"
+        description={
+          deleteCandidate != null
+            ? `Заявка #${deleteCandidate} будет удалена без возможности восстановления.`
+            : 'Заявка будет удалена без возможности восстановления.'
+        }
+        confirmText="Удалить"
+        variant="danger"
+      />
     </div>
+  )
+}
+
+function DisplayCameraCard({
+  cameraLink,
+}: {
+  cameraLink: string
+}) {
+  const [expanded, setExpanded] = useState(true)
+  const [loadFailed, setLoadFailed] = useState(false)
+
+  useEffect(() => {
+    if (!expanded) {
+      setLoadFailed(false)
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setLoadFailed(true)
+    }, 5000)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [expanded, cameraLink])
+
+  return (
+    <section
+      className="shrink-0 border-t px-4 py-3"
+      style={{ borderColor: 'var(--border-subtle)', background: 'var(--bg-1)' }}
+      data-testid="display-camera-card"
+    >
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div>
+          <div className="text-xs font-medium" style={{ color: 'var(--fg)' }}>
+            Камера
+          </div>
+          <div className="text-2xs" style={{ color: 'var(--fg-faint)' }}>
+            Поток с площадки для мониторинга
+          </div>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          icon={expanded ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
+          onClick={() => setExpanded(value => !value)}
+        >
+          {expanded ? 'Свернуть' : 'Развернуть'}
+        </Button>
+      </div>
+
+      {expanded ? (
+        loadFailed ? (
+          <div
+            className="rounded-md border px-3 py-3"
+            style={{
+              borderColor: 'var(--border-subtle)',
+              background: 'var(--bg-0)',
+            }}
+          >
+            <p className="text-xs" style={{ color: 'var(--fg-dim)' }}>
+              Встроить поток не удалось. Камеру можно открыть отдельно.
+            </p>
+            <Button
+              variant="primary"
+              size="sm"
+              icon={<ExternalLink size={12} />}
+              className="mt-3"
+              onClick={() => window.open(cameraLink, '_blank', 'noopener,noreferrer')}
+            >
+              Открыть камеру
+            </Button>
+          </div>
+        ) : (
+          <div
+            className="overflow-hidden rounded-md border"
+            style={{ borderColor: 'var(--border-subtle)', background: 'var(--bg-0)' }}
+          >
+            <iframe
+              key={cameraLink}
+              src={cameraLink}
+              title="Камера экрана"
+              className="h-48 w-full border-0"
+              onLoad={() => setLoadFailed(false)}
+              onError={() => setLoadFailed(true)}
+            />
+          </div>
+        )
+      ) : null}
+    </section>
   )
 }
 
@@ -585,7 +793,7 @@ function AlarmRail({
   onCreate,
 }: {
   alarms: AlarmEvent[]
-  canCreate: boolean
+  canCreate: (alarm: AlarmEvent) => boolean
   onCreate: (alarm: AlarmEvent) => void
 }) {
   if (alarms.length === 0) {
@@ -603,6 +811,8 @@ function AlarmRail({
     <div className="flex-1 space-y-2 overflow-y-auto p-3">
       {alarms.map(alarm => {
         const isFaulty = alarm.type === 'faulty'
+        const canCreateForAlarm = isFaulty && canCreate(alarm)
+
         return (
           <div
             key={alarm.id}
@@ -610,17 +820,12 @@ function AlarmRail({
             style={{ background: 'var(--bg-1)', border: '1px solid var(--border-subtle)' }}
           >
             <div className="flex items-center justify-between gap-2">
-              <Badge
-                label={isFaulty ? 'Open' : 'Recovery'}
-                variant={isFaulty ? 'err' : 'ok'}
-              />
-              <span
-                className="text-2xs"
-                style={{ color: 'var(--fg-faint)', fontFamily: 'var(--font-mono)' }}
-              >
+              <Badge label={isFaulty ? 'Open' : 'Recovery'} variant={isFaulty ? 'err' : 'ok'} />
+              <span className="text-2xs" style={{ color: 'var(--fg-faint)', fontFamily: 'var(--font-mono)' }}>
                 {formatDate(alarm.occurred_at)}
               </span>
             </div>
+
             <div className="grid grid-cols-2 gap-y-1 text-xs">
               <span style={{ color: 'var(--fg-mute)' }}>Ячейка</span>
               <span style={{ color: 'var(--fg-dim)', fontFamily: 'var(--font-mono)' }}>
@@ -631,10 +836,12 @@ function AlarmRail({
                 {alarm.panel_name ?? '—'}
               </span>
             </div>
+
             <p className="line-clamp-2 text-2xs" style={{ color: 'var(--fg-faint)' }}>
               {alarm.raw_position}
             </p>
-            {isFaulty && canCreate && (
+
+            {canCreateForAlarm ? (
               <Button
                 variant="primary"
                 size="sm"
@@ -644,7 +851,7 @@ function AlarmRail({
               >
                 Создать заявку
               </Button>
-            )}
+            ) : null}
           </div>
         )
       })}

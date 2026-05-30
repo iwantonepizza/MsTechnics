@@ -1,4 +1,5 @@
 """apps/directory/panels/managers.py — менеджер панелей с аннотацией application_status."""
+
 from django.db import models
 
 
@@ -17,24 +18,22 @@ class PanelQuerySet(models.QuerySet):
         from django.db.models import OuterRef, Subquery
 
         # Импорт здесь — избегаем circular import
-        Application = apps_get_application()
+        application_model = apps_get_application()
 
         active_status_subquery = (
-            Application.objects
-            .filter(panel=OuterRef("pk"))
+            application_model.objects.filter(panel=OuterRef("pk"))
             .exclude(status__name__in=["archive_done", "archive_unable"])
-            .order_by("-last_update_date_time")
+            .order_by("-last_update_date_time", "-id")
             .values("status__name")[:1]
         )
 
-        return self.annotate(
-            _active_application_status_name=Subquery(active_status_subquery)
-        )
+        return self.annotate(_active_application_status_name=Subquery(active_status_subquery))
 
 
 def apps_get_application():
     """Lazy import чтобы избежать circular import между directory и workflow."""
     from django.apps import apps
+
     return apps.get_model("workflow_applications", "Application")
 
 

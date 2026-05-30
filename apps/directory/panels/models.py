@@ -1,17 +1,10 @@
-"""
-apps/directory/panels/models.py — Panel (ex-Panels).
+"""Panel domain model."""
 
-T-2-013: перенесено из zip/models.py, модель переименована Panels→Panel.
-Panels = Panel — alias для обратной совместимости старых импортов.
-db_table='panel' — оригинальное имя таблицы, данные сохранены.
-"""
 from django.db import models
-
-import structlog
 
 from apps.directory.panels.managers import PanelManager
 
-logger = structlog.get_logger(__name__)
+ARCHIVED_APPLICATION_STATUSES = ("archive_done", "archive_unable")
 
 
 class Panel(models.Model):
@@ -56,39 +49,38 @@ class Panel(models.Model):
     def __str__(self) -> str:
         return self.name
 
-
     @property
     def active_application(self):
-        """Активная (не архивная) заявка на эту панель, или None."""
-        # Lazy import — circular dependency с workflow
+        """Return the latest non-archived application for this panel."""
         from django.apps import apps
+
         Application = apps.get_model("workflow_applications", "Application")
         return (
-            Application.objects
-            .filter(panel=self)
-            .exclude(status__name__in=["archive_done", "archive_unable"])
-            .order_by("-last_update_date_time")
+            Application.objects.filter(panel=self)
+            .exclude(status__name__in=ARCHIVED_APPLICATION_STATUSES)
+            .select_related("status")
+            .order_by("-last_update_date_time", "-id")
             .first()
         )
 
     @property
     def application_status(self):
         """
-        ApplicationStatus активной заявки, или 'default' если заявок нет.
+        Return active application status or the synthetic ``default`` status.
 
-        T-2-028: вычисляемое свойство вместо денормализованного поля.
-        Для queryset — используй .with_application_status() (без N+1).
+        For queryset work, prefer ``Panel.objects.with_application_status()`` to avoid N+1.
         """
         app = self.active_application
         if app:
             return app.status
         from django.apps import apps
+
         ApplicationStatus = apps.get_model("workflow_applications", "ApplicationStatus")
         return ApplicationStatus.objects.filter(name="default").first()
 
     @property
     def has_active_application(self) -> bool:
-        """Есть ли незакрытая заявка на панель."""
+        """Return True when the panel still has a non-archived application."""
         return self.active_application is not None
 
     def get_full_title(self) -> str:
@@ -112,38 +104,9 @@ class Panel(models.Model):
         return "\n".join(parts)
 
     @property
-    def active_application(self):
-        """Активная (не архивная) заявка на этой панели, или None."""
-        # Используем apps.get_model чтобы избежать circular imports
-        from django.apps import apps
-        Application = apps.get_model("workflow_applications", "Application")
-        return (
-            Application.objects
-            .filter(panel=self)
-            .exclude(status__name__in=("archive_done", "archive_unable"))
-            .select_related("status")
-            .order_by("-last_update_date_time")
-            .first()
-        )
-
-    @property
     def active_application_status(self):
-        """
-        ApplicationStatus активной заявки, или 'default' если заявок нет.
-        T-2-028: заменяет денормализованное поле application_status.
-        """
-        app = self.active_application
-        if app:
-            return app.status
-        # Возвращаем фиктивный объект со статусом default
-        from django.apps import apps
-        ApplicationStatus = apps.get_model("workflow_applications", "ApplicationStatus")
-        return ApplicationStatus.objects.filter(name="default").first()
-
-    @property
-    def has_active_application(self) -> bool:
-        """Есть ли активная (не архивная) заявка на эту панель."""
-        return self.active_application is not None
+        """Backward-compatible alias for ``application_status``."""
+        return self.application_status
 
 
 # Compat alias — старые импорты `from zip.models import Panels` работают

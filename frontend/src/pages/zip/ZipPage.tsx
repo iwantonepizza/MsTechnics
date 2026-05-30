@@ -99,7 +99,11 @@ function PanelColumn({
   targetPanelId: number | null
   onPanelSelect: (panel: Panel) => void
 }) {
-  const { data = [], isLoading } = usePanels({ department: dept.key, display: displayId })
+  const { data = [], isLoading } = usePanels({
+    department: dept.key,
+    display: displayId,
+    fetchAll: Boolean(displayId),
+  })
   const show = useDeferredLoading(isLoading)
   const changeDept = useChangeDepartment()
   const [dragHover, setDragHover] = useState(false)
@@ -462,16 +466,21 @@ export function ZipPage() {
               setSelectedPanel(null)
               navigate(next ? `/zip/${next}` : '/zip')
             }}
+            data-testid="zip-display-filter"
             className="text-xs"
             style={{
-              background: 'var(--bg-2)', border: '1px solid var(--border)',
-              borderRadius: 'var(--r-sm)', color: 'var(--fg-dim)',
+              background: 'var(--bg-1)', border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--r-sm)', color: 'var(--fg)',
               padding: '3px 8px', height: 'var(--h-btn-sm)', cursor: 'pointer',
             }}
           >
-            <option value="">Все экраны</option>
+            <option value="" style={{ background: 'var(--bg-0)', color: 'var(--fg)' }}>
+              Все экраны
+            </option>
             {displays.map(d => (
-              <option key={d.id} value={d.slug}>{d.city.name} — {d.description ?? d.name}</option>
+              <option key={d.id} value={d.slug} style={{ background: 'var(--bg-0)', color: 'var(--fg)' }}>
+                {d.city.name} — {d.description ?? d.name}
+              </option>
             ))}
           </select>
         </div>

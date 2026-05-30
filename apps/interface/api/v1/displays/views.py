@@ -1,7 +1,8 @@
 from django.db.models import Prefetch
-from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
+from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema, extend_schema_view
 from rest_framework import status as http_status
 from rest_framework.decorators import action
+from rest_framework.exceptions import NotFound
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -31,6 +32,13 @@ from .serializers import (
 class DisplayViewSet(ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated, HasCityAccess]
     lookup_field = "slug"
+
+    def get_permissions(self):
+        if self.action == "photos" and self.request.method == "POST":
+            return [IsAuthenticated(), HasDepartmentAccess.for_("service", "admin")()]
+        if self.action in {"upload_photo", "delete_photo"}:
+            return [IsAuthenticated(), HasDepartmentAccess.for_("service", "admin")()]
+        return [permission() for permission in self.permission_classes]
 
     def get_queryset(self):
         qs = Display.objects.select_related("city")
@@ -86,21 +94,23 @@ class DisplayViewSet(ReadOnlyModelViewSet):
         return Response(AlarmEventSerializer(qs[:200], many=True).data)
 
     @extend_schema(tags=["displays"], summary="Фотографии экрана")
-    @action(detail=True, methods=["get"])
-    def photos(self, _request, slug=None):
+    @action(detail=True, methods=["get", "post"], parser_classes=[MultiPartParser, FormParser])
+    def photos(self, request, slug=None):
         del slug
         display = self.get_object()
-        photos = display.photos.all().order_by("-id") if hasattr(display, "photos") else []
-        return Response(
-            [
-                {
-                    "id": p.id,
-                    "url": p.image.url if p.image else None,
-                    "uploaded_at": getattr(p, "uploaded_at", None),
-                }
-                for p in photos
-            ]
-        )
+        if request.method == "GET":
+            photos = display.photos.all().order_by("-id") if hasattr(display, "photos") else []
+            return Response(
+                [
+                    {
+                        "id": photo.id,
+                        "url": photo.image.url if photo.image else None,
+                        "uploaded_at": getattr(photo, "uploaded_at", None),
+                    }
+                    for photo in photos
+                ]
+            )
+        return self._create_photo(request, display)
 
     @extend_schema(
         tags=["displays"],
@@ -117,11 +127,41 @@ class DisplayViewSet(ReadOnlyModelViewSet):
     def upload_photo(self, request, slug=None):
         del slug
         display = self.get_object()
+        return self._create_photo(request, display)
+
+    def _create_photo(self, request, display):
         s = PhotoUploadSerializer(data=request.data)
         s.is_valid(raise_exception=True)
         from apps.directory.displays.models import PhotoDisplay
 
         photo = PhotoDisplay.objects.create(display=display, image=s.validated_data["file"])
         return Response(
-            {"id": photo.id, "url": photo.image.url}, status=http_status.HTTP_201_CREATED
+            {
+                "id": photo.id,
+                "url": photo.image.url,
+                "uploaded_at": getattr(photo, "uploaded_at", None),
+            },
+            status=http_status.HTTP_201_CREATED,
         )
+
+    @extend_schema(
+        tags=["displays"],
+        summary="РЈРґР°Р»РёС‚СЊ С„РѕС‚Рѕ СЌРєСЂР°РЅР°",
+        parameters=[OpenApiParameter("photo_id", OpenApiTypes.INT, OpenApiParameter.PATH)],
+    )
+    @action(
+        detail=True,
+        methods=["delete"],
+        url_path=r"photos/(?P<photo_id>[^/.]+)",
+    )
+    def delete_photo(self, _request, slug=None, photo_id=None):
+        del slug
+        display = self.get_object()
+        from apps.directory.displays.models import PhotoDisplay
+
+        try:
+            photo = PhotoDisplay.objects.get(id=photo_id, display=display)
+        except PhotoDisplay.DoesNotExist as exc:
+            raise NotFound("Р¤РѕС‚Рѕ РЅРµ РЅР°Р№РґРµРЅРѕ.") from exc
+        photo.delete()
+        return Response(status=http_status.HTTP_204_NO_CONTENT)

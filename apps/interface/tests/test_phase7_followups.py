@@ -60,3 +60,25 @@ def test_display_list_includes_aggregated_condition() -> None:
     assert display_payload["aggregated_condition"] is not None
     assert display_payload["aggregated_condition"]["id"] == error.id
     assert display_payload["aggregated_condition"]["name"] == error.name
+
+
+def test_display_list_uses_condition_severity_not_condition_id() -> None:
+    city = CityFactory(name="Пермь", slug="perm")
+    display = DisplayFactory(name="PRM-1", slug="prm-1", city=city)
+    unrecoverable = ConditionFactory(name="unrecoverable", description="Неремонтопригодна")
+    work = ConditionFactory(name="work", description="Работает")
+    severe_panel = PanelFactory(name="PRM-PANEL-BROKEN", display=display, condition=unrecoverable)
+    healthy_panel = PanelFactory(name="PRM-PANEL-WORK", display=display, condition=work)
+    CellFactory(display=display, panel=severe_panel, row=1, col=1)
+    CellFactory(display=display, panel=healthy_panel, row=1, col=2)
+    user = MsUserFactory(permission="monitoring", allowed_cities=[city])
+    client = APIClient()
+    client.force_authenticate(user)
+
+    response = client.get("/api/v1/displays/", {"city": city.slug})
+
+    assert response.status_code == 200
+    display_payload = response.data["results"][0]
+    assert display_payload["aggregated_condition"] is not None
+    assert display_payload["aggregated_condition"]["id"] == unrecoverable.id
+    assert display_payload["aggregated_condition"]["name"] == unrecoverable.name

@@ -150,6 +150,81 @@ def test_destroy_writes_activity_log(db, base_refs, make_app):
 
 # ── B4: RefreshView rotation ─────────────────────────────────────────────────
 
+def test_create_blocked_for_control_role(db, base_refs):
+    """Control should not be able to create applications via API."""
+    from tests.factories import MsUserFactory, DisplayFactory, PanelFactory, CellFactory
+
+    user = MsUserFactory(username="control_creator", permission="control")
+    display = DisplayFactory(name="control-display")
+    panel = PanelFactory(name="P-CONTROL-CREATE", display=display)
+    cell = CellFactory(display=display, row=1, col=1, panel=panel)
+    user.allowed_city.add(display.city)
+
+    client = APIClient()
+    client.force_authenticate(user)
+
+    resp = client.post(
+        "/api/v1/applications/",
+        {
+            "display_id": display.id,
+            "panel_id": panel.id,
+            "cell_id": cell.id,
+            "comment": "not allowed",
+        },
+        format="json",
+    )
+
+    assert resp.status_code == 403
+
+
+def test_monitoring_can_create_on_unrecoverable_and_delete_own_fresh_application(db, base_refs):
+    """Monitoring can create on unrecoverable and delete own fresh app by username."""
+    from tests.factories import (
+        MsUserFactory,
+        DisplayFactory,
+        PanelFactory,
+        CellFactory,
+        ConditionFactory,
+    )
+    from apps.workflow.applications.models import Application
+
+    unrecoverable = ConditionFactory(name="unrecoverable", description="Неремонтопригодна")
+    user = MsUserFactory(
+        username="monitor_owner",
+        first_name="Иван",
+        last_name="Петров",
+        permission="monitoring",
+    )
+    display = DisplayFactory(name="unrecoverable-display")
+    panel = PanelFactory(name="P-UNREC-01", display=display, condition=unrecoverable)
+    cell = CellFactory(display=display, row=1, col=1, panel=panel)
+    user.allowed_city.add(display.city)
+
+    client = APIClient()
+    client.force_authenticate(user)
+
+    create_resp = client.post(
+        "/api/v1/applications/",
+        {
+            "display_id": display.id,
+            "panel_id": panel.id,
+            "cell_id": cell.id,
+            "comment": "panel is unrecoverable",
+        },
+        format="json",
+    )
+
+    assert create_resp.status_code == 201, create_resp.data
+    app_id = create_resp.data["id"]
+    assert create_resp.data["status"]["name"] == "sent_to_control"
+    assert Application.objects.get(id=app_id).user_monitoring == user.username
+
+    delete_resp = client.delete(f"/api/v1/applications/{app_id}/")
+
+    assert delete_resp.status_code == 204
+    assert not Application.objects.filter(id=app_id).exists()
+
+
 def test_refresh_returns_new_access(db):
     """RefreshView возвращает новый access token."""
     from tests.factories import MsUserFactory

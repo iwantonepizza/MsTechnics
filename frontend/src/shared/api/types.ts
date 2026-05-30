@@ -14,12 +14,35 @@ export type DisplayListItem = Schemas['DisplayList'] & {
   slug: string
   rows: number
   cols: number
+  aggregated_condition: Condition | null
 }
-export type DisplayDetail = Omit<Schemas['DisplayDetail'], 'slug' | 'rows' | 'cols' | 'cells'> & {
+export interface DisplayContact {
+  id: number
+  full_name: string
+  description: string
+  phone: string | null
+  telegram_id: string | null
+}
+
+export interface DisplayPhoto {
+  id: number
+  url: string | null
+  uploaded_at: string | null
+}
+
+export type DisplayDetail = Omit<
+  Schemas['DisplayDetail'],
+  'slug' | 'rows' | 'cols' | 'cells' | 'file_url' | 'project_photo_url' | 'camera_link'
+> & {
   slug: string
   rows: number
   cols: number
+  file_url: string | null
+  project_photo_url: string | null
+  camera_link: string | null
   cells: Cell[]
+  contacts: DisplayContact[]
+  photos: DisplayPhoto[]
 }
 export type Cell = Schemas['Cell']
 export type Panel = Schemas['Panel']

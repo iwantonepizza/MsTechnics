@@ -8,6 +8,7 @@ export interface ApplicationsFilter {
   panel?: number
   cell?: number
   cursor?: string
+  enabled?: boolean
 }
 
 export function useApplications(filter: ApplicationsFilter) {
@@ -25,7 +26,7 @@ export function useApplications(filter: ApplicationsFilter) {
       const res = await apiClient.get<PaginatedResponse<ApplicationListItem>>('/applications/', { params })
       return res.data
     },
-    enabled: true,
+    enabled: filter.enabled ?? true,
   })
 }
 
@@ -70,6 +71,20 @@ export function useCreateApplication() {
       return res.data
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['applications'] }),
+  })
+}
+
+export function useDeleteApplication() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id }: { id: number }) => {
+      await apiClient.delete(`/applications/${id}/`)
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['applications'] })
+      qc.invalidateQueries({ queryKey: ['application', vars.id] })
+      qc.invalidateQueries({ queryKey: ['application-events', vars.id] })
+    },
   })
 }
 

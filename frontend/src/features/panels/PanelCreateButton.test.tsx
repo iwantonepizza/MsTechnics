@@ -62,6 +62,22 @@ describe('PanelCreateButton (T-7-035)', () => {
     expect(createMutation.mutateAsync).not.toHaveBeenCalled()
   })
 
+  it('uses readable contrast styles for modal form controls', async () => {
+    render(<PanelCreateButton />)
+    fireEvent.click(screen.getByTestId('create-panel-button'))
+
+    const nameInput = await screen.findByTestId('create-panel-name')
+    const displaySelect = screen.getByTestId('create-panel-display')
+    const commentInput = screen.getByTestId('create-panel-comment')
+
+    expect(nameInput).toHaveStyle('background: var(--bg-0)')
+    expect(nameInput).toHaveStyle('color: var(--fg)')
+    expect(displaySelect.getAttribute('style')).toContain('border: 1px solid var(--border-subtle)')
+    expect(displaySelect).toHaveStyle('color: var(--fg)')
+    expect(commentInput).toHaveStyle('background: var(--bg-0)')
+    expect(commentInput.getAttribute('style')).toContain('border: 1px solid var(--border-subtle)')
+  })
+
   it('подаёт запрос с display из select когда presetDisplayId не задан', async () => {
     render(<PanelCreateButton />)
     fireEvent.click(screen.getByTestId('create-panel-button'))

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -9,49 +9,109 @@ const mockDisplays = [
     id: 1,
     slug: 'ekb-1',
     name: 'display-1',
-    description: 'Альфа',
+    description: 'РђР»СЊС„Р°',
     rows: 4,
     cols: 4,
-    city: { id: 1, name: 'Екатеринбург', slug: 'ekb' },
+    aggregated_condition: {
+      id: 10,
+      name: 'error',
+      description: 'Ошибка',
+      color: { id: 100, name: 'yellow', hex: '#ffcc00' },
+      icon: { id: 1, unicode_symbol: '!' },
+    },
+    city: { id: 1, name: 'Р•РєР°С‚РµСЂРёРЅР±СѓСЂРі', slug: 'ekb' },
   },
   {
     id: 2,
     slug: 'ekb-2',
     name: 'display-2',
-    description: 'Бета',
+    description: 'Р‘РµС‚Р°',
     rows: 10,
     cols: 10,
-    city: { id: 1, name: 'Екатеринбург', slug: 'ekb' },
+    aggregated_condition: {
+      id: 11,
+      name: 'work',
+      description: 'Работает',
+      color: { id: 101, name: 'green', hex: '#00aa55' },
+      icon: { id: 2, unicode_symbol: '+' },
+    },
+    city: { id: 1, name: 'Р•РєР°С‚РµСЂРёРЅР±СѓСЂРі', slug: 'ekb' },
   },
   {
     id: 3,
     slug: 'msk-1',
     name: 'display-3',
-    description: 'Альфа',
+    description: 'РђР»СЊС„Р°',
     rows: 6,
     cols: 6,
-    city: { id: 2, name: 'Москва', slug: 'msk' },
+    aggregated_condition: null,
+    city: { id: 2, name: 'РњРѕСЃРєРІР°', slug: 'msk' },
   },
   {
     id: 4,
     slug: 'kzn-1',
     name: 'display-4',
-    description: 'Гамма',
+    description: 'Р“Р°РјРјР°',
     rows: 8,
     cols: 8,
-    city: { id: 3, name: 'Казань', slug: 'kzn' },
+    aggregated_condition: {
+      id: 12,
+      name: 'unrecoverable',
+      description: 'Неремонтопригодна',
+      color: { id: 102, name: 'red', hex: '#dd3344' },
+      icon: { id: 3, unicode_symbol: 'x' },
+    },
+    city: { id: 3, name: 'РљР°Р·Р°РЅСЊ', slug: 'kzn' },
   },
 ]
 
 const mockCities = [
-  { id: 1, name: 'Екатеринбург', slug: 'ekb' },
-  { id: 2, name: 'Москва', slug: 'msk' },
-  { id: 3, name: 'Казань', slug: 'kzn' },
+  { id: 1, name: 'Р•РєР°С‚РµСЂРёРЅР±СѓСЂРі', slug: 'ekb' },
+  { id: 2, name: 'РњРѕСЃРєРІР°', slug: 'msk' },
+  { id: 3, name: 'РљР°Р·Р°РЅСЊ', slug: 'kzn' },
 ]
+
+const mockDisplayDetail = {
+  id: 1,
+  slug: 'ekb-1',
+  name: 'display-1',
+  description: 'РђР»СЊС„Р°',
+  rows: 4,
+  cols: 4,
+  city: { id: 1, name: 'Р•РєР°С‚РµСЂРёРЅР±СѓСЂРі', slug: 'ekb' },
+  file_url: '/media/schematics/ekb-1.pdf',
+  project_photo_url: '/media/projects/ekb-1.jpg',
+  contacts: [
+    {
+      id: 7,
+      full_name: 'РРІР°РЅ РџРµС‚СЂРѕРІ',
+      description: 'Р­Р»РµРєС‚СЂРёРє',
+      phone: '+79001234567',
+      telegram_id: null,
+    },
+  ],
+  photos: [
+    {
+      id: 77,
+      url: '/media/photos/ekb-1.jpg',
+      uploaded_at: '2026-05-30T10:00:00Z',
+    },
+  ],
+  cells: [],
+}
+
+const mockApiPost = vi.fn()
+const mockApiDelete = vi.fn()
+const mockRefetchDetail = vi.fn()
 
 vi.mock('@/entities/display/hooks', () => ({
   useDisplays: vi.fn(() => ({ data: mockDisplays, isLoading: false, error: null, refetch: vi.fn() })),
   useCities: vi.fn(() => ({ data: mockCities, isLoading: false, error: null })),
+  useDisplayDetail: vi.fn((slug: string | null) => ({
+    data: slug ? mockDisplayDetail : undefined,
+    isLoading: false,
+    refetch: mockRefetchDetail,
+  })),
 }))
 
 vi.mock('@/entities/application/hooks', () => ({
@@ -61,6 +121,13 @@ vi.mock('@/entities/application/hooks', () => ({
     error: null,
     refetch: vi.fn(),
   })),
+}))
+
+vi.mock('@/shared/api/client', () => ({
+  apiClient: {
+    post: (...args: unknown[]) => mockApiPost(...args),
+    delete: (...args: unknown[]) => mockApiDelete(...args),
+  },
 }))
 
 vi.mock('@/widgets/navigation/CrumbContext', () => ({
@@ -73,12 +140,23 @@ vi.mock('@/entities/application/ApplicationCard', () => ({
   ),
 }))
 
-function renderPage(initialPath = '/monitoring') {
+vi.mock('sonner', () => ({
+  toast: {
+    success: vi.fn(),
+  },
+}))
+
+function renderPage(
+  initialPath = '/monitoring',
+  department: 'monitoring' | 'control' | 'service' = 'monitoring',
+) {
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
       <Routes>
-        <Route path="/monitoring" element={<DepartmentListPage department="monitoring" />} />
-        <Route path="/monitoring/:citySlug" element={<DepartmentListPage department="monitoring" />} />
+        <Route path="/monitoring" element={<DepartmentListPage department={department} />} />
+        <Route path="/monitoring/:citySlug" element={<DepartmentListPage department={department} />} />
+        <Route path="/service" element={<DepartmentListPage department={department} />} />
+        <Route path="/service/:citySlug" element={<DepartmentListPage department={department} />} />
       </Routes>
     </MemoryRouter>,
   )
@@ -86,27 +164,40 @@ function renderPage(initialPath = '/monitoring') {
 
 beforeEach(() => {
   sessionStorage.clear()
+  mockApiPost.mockReset()
+  mockApiDelete.mockReset()
+  mockRefetchDetail.mockReset()
+  mockRefetchDetail.mockResolvedValue(undefined)
+  mockApiPost.mockResolvedValue({ data: { id: 99, url: '/media/photos/new.jpg', uploaded_at: null } })
+  mockApiDelete.mockResolvedValue({ data: null })
+
+  Object.assign(navigator, {
+    clipboard: {
+      writeText: vi.fn().mockResolvedValue(undefined),
+    },
+  })
 })
 
 afterEach(() => {
   sessionStorage.clear()
+  vi.clearAllMocks()
 })
 
 describe('DepartmentListPage - merged sort/filter/quick-links', () => {
   it('renders 3 city groups with default name-asc sort inside each', () => {
     renderPage()
 
-    expect(screen.getByText('Екатеринбург')).toBeInTheDocument()
-    expect(screen.getByText('Москва')).toBeInTheDocument()
-    expect(screen.getByText('Казань')).toBeInTheDocument()
+    expect(screen.getByText('Р•РєР°С‚РµСЂРёРЅР±СѓСЂРі')).toBeInTheDocument()
+    expect(screen.getByText('РњРѕСЃРєРІР°')).toBeInTheDocument()
+    expect(screen.getByText('РљР°Р·Р°РЅСЊ')).toBeInTheDocument()
 
     const ekbCards = [
       screen.getByTestId('display-card-ekb-1'),
       screen.getByTestId('display-card-ekb-2'),
     ]
 
-    expect(within(ekbCards[0]).getByText('Альфа')).toBeInTheDocument()
-    expect(within(ekbCards[1]).getByText('Бета')).toBeInTheDocument()
+    expect(within(ekbCards[0]).getByText('РђР»СЊС„Р°')).toBeInTheDocument()
+    expect(within(ekbCards[1]).getByText('Р‘РµС‚Р°')).toBeInTheDocument()
   })
 
   it('shows city filter when there are at least 3 cities and filters groups by substring', () => {
@@ -115,20 +206,20 @@ describe('DepartmentListPage - merged sort/filter/quick-links', () => {
     const filter = screen.getByTestId('city-filter').querySelector('input') as HTMLInputElement
     expect(filter).toBeInTheDocument()
 
-    fireEvent.change(filter, { target: { value: 'каз' } })
+    fireEvent.change(filter, { target: { value: 'РљР°Р·' } })
 
-    expect(screen.getByText('Казань')).toBeInTheDocument()
-    expect(screen.queryByText('Москва')).not.toBeInTheDocument()
-    expect(screen.queryByText('Екатеринбург')).not.toBeInTheDocument()
+    expect(screen.getByText('РљР°Р·Р°РЅСЊ')).toBeInTheDocument()
+    expect(screen.queryByText('РњРѕСЃРєРІР°')).not.toBeInTheDocument()
+    expect(screen.queryByText('Р•РєР°С‚РµСЂРёРЅР±СѓСЂРі')).not.toBeInTheDocument()
   })
 
   it('shows empty-state when city filter has no matches', () => {
     renderPage()
 
     const filter = screen.getByTestId('city-filter').querySelector('input') as HTMLInputElement
-    fireEvent.change(filter, { target: { value: 'неттакого' } })
+    fireEvent.change(filter, { target: { value: 'РЅРµС‚С‚Р°РєРѕРіРѕ' } })
 
-    expect(screen.getByText('Городов не найдено')).toBeInTheDocument()
+    expect(screen.getByText('Р“РѕСЂРѕРґРѕРІ РЅРµ РЅР°Р№РґРµРЅРѕ')).toBeInTheDocument()
   })
 
   it('size-desc sort puts larger displays first inside city', () => {
@@ -138,8 +229,8 @@ describe('DepartmentListPage - merged sort/filter/quick-links', () => {
     fireEvent.change(select, { target: { value: 'size-desc' } })
 
     const ekbCards = screen.getAllByTestId(/^display-card-ekb-/)
-    expect(within(ekbCards[0]).getByText('Бета')).toBeInTheDocument()
-    expect(within(ekbCards[1]).getByText('Альфа')).toBeInTheDocument()
+    expect(within(ekbCards[0]).getByText('Р‘РµС‚Р°')).toBeInTheDocument()
+    expect(within(ekbCards[1]).getByText('РђР»СЊС„Р°')).toBeInTheDocument()
   })
 
   it('renders quick-links for each card', () => {
@@ -167,8 +258,81 @@ describe('DepartmentListPage - merged sort/filter/quick-links', () => {
   it('filters displays by route citySlug', () => {
     renderPage('/monitoring/ekb')
 
-    expect(screen.getByText('Екатеринбург')).toBeInTheDocument()
-    expect(screen.queryByText('Москва')).not.toBeInTheDocument()
-    expect(screen.queryByText('Казань')).not.toBeInTheDocument()
+    expect(screen.getByText('Р•РєР°С‚РµСЂРёРЅР±СѓСЂРі')).toBeInTheDocument()
+    expect(screen.queryByText('РњРѕСЃРєРІР°')).not.toBeInTheDocument()
+    expect(screen.queryByText('РљР°Р·Р°РЅСЊ')).not.toBeInTheDocument()
+  })
+
+  it('renders 4 action buttons for each display', () => {
+    renderPage()
+
+    expect(screen.getByTestId('display-action-schematic-ekb-1')).toBeInTheDocument()
+    expect(screen.getByTestId('display-action-project-ekb-1')).toBeInTheDocument()
+    expect(screen.getByTestId('display-action-contacts-ekb-1')).toBeInTheDocument()
+    expect(screen.getByTestId('display-action-photos-ekb-1')).toBeInTheDocument()
+  })
+
+  it('renders aggregated condition indicator with accessible label', () => {
+    renderPage()
+
+    expect(screen.getByTestId('display-condition-ekb-1-error')).toHaveAttribute('aria-label', 'Ошибка')
+    expect(screen.getByTestId('display-condition-msk-1-empty')).toHaveAttribute(
+      'aria-label',
+      'Состояние не определено',
+    )
+  })
+
+  it('opens contacts modal with contact list and phone link', async () => {
+    renderPage()
+
+    fireEvent.click(screen.getByTestId('display-action-contacts-ekb-1'))
+
+    expect(await screen.findByText(/РљРѕРЅС‚Р°РєС‚С‹/)).toBeInTheDocument()
+    expect(screen.getByText('РРІР°РЅ РџРµС‚СЂРѕРІ')).toBeInTheDocument()
+    expect(screen.getByText('Р­Р»РµРєС‚СЂРёРє')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'РџРѕР·РІРѕРЅРёС‚СЊ' })).toHaveAttribute(
+      'href',
+      'tel:+79001234567',
+    )
+  })
+
+  it('opens schematic modal with downloadable asset link', async () => {
+    renderPage()
+
+    fireEvent.click(screen.getByTestId('display-action-schematic-ekb-1'))
+
+    expect(await screen.findByText(/Р­Р»РµРєС‚СЂРѕСЃС…РµРјР°/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'РЎРєР°С‡Р°С‚СЊ' })).toHaveAttribute(
+      'href',
+      '/media/schematics/ekb-1.pdf',
+    )
+  })
+
+  it('service photo modal uploads and deletes photos through task routes', async () => {
+    renderPage('/service', 'service')
+
+    fireEvent.click(screen.getByTestId('display-action-photos-ekb-1'))
+
+    const input = await screen.findByTestId('photo-upload-input')
+    const file = new File(['gif-content'], 'screen.gif', { type: 'image/gif' })
+    fireEvent.change(input, { target: { files: [file] } })
+
+    await waitFor(() => {
+      expect(mockApiPost).toHaveBeenCalledWith(
+        '/displays/ekb-1/photos/',
+        expect.any(FormData),
+        expect.objectContaining({
+          headers: { 'Content-Type': 'multipart/form-data' },
+        }),
+      )
+    })
+
+    fireEvent.click(screen.getByTestId('photo-delete-77'))
+    fireEvent.click(await screen.findByTestId('confirm-dialog-confirm'))
+
+    await waitFor(() => {
+      expect(mockApiDelete).toHaveBeenCalledWith('/displays/ekb-1/photos/77/')
+      expect(mockRefetchDetail).toHaveBeenCalled()
+    })
   })
 })

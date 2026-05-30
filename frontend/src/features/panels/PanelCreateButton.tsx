@@ -20,6 +20,17 @@ interface PanelCreateButtonProps {
 }
 
 const ALLOWED_ROLES = new Set(['service', 'admin', 'all'])
+const FIELD_LABEL_STYLE = { color: 'var(--fg)' } as const
+const FIELD_CONTROL_STYLE = {
+  background: 'var(--bg-0)',
+  border: '1px solid var(--border-subtle)',
+  borderRadius: 'var(--r-sm)',
+  color: 'var(--fg)',
+} as const
+const FIELD_OPTION_STYLE = {
+  background: 'var(--bg-0)',
+  color: 'var(--fg)',
+} as const
 
 export function PanelCreateButton({ presetDisplayId }: PanelCreateButtonProps) {
   const { data: me } = useMe()
@@ -101,7 +112,7 @@ function CreatePanelModalInner({
           handleSubmit()
         }}
       >
-        <label className="flex flex-col gap-1 text-sm" style={{ color: 'var(--fg-dim)' }}>
+        <label className="flex flex-col gap-1 text-sm" style={FIELD_LABEL_STYLE}>
           <span>Имя панели *</span>
           <input
             type="text"
@@ -112,33 +123,23 @@ function CreatePanelModalInner({
             autoFocus
             data-testid="create-panel-name"
             className="h-input px-2 text-sm"
-            style={{
-              background: 'var(--bg-2)',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--r-sm)',
-              color: 'var(--fg)',
-            }}
+            style={FIELD_CONTROL_STYLE}
           />
         </label>
 
         {presetDisplayId == null && (
-          <label className="flex flex-col gap-1 text-sm" style={{ color: 'var(--fg-dim)' }}>
+          <label className="flex flex-col gap-1 text-sm" style={FIELD_LABEL_STYLE}>
             <span>Экран *</span>
             <select
               value={displayId ?? ''}
               onChange={e => setDisplayId(e.target.value ? Number(e.target.value) : null)}
               data-testid="create-panel-display"
               className="h-input px-2 text-sm"
-              style={{
-                background: 'var(--bg-2)',
-                border: '1px solid var(--border)',
-                borderRadius: 'var(--r-sm)',
-                color: 'var(--fg)',
-              }}
+              style={FIELD_CONTROL_STYLE}
             >
-              <option value="">— выберите —</option>
+              <option value="" style={FIELD_OPTION_STYLE}>— выберите —</option>
               {displays.map(d => (
-                <option key={d.id} value={d.id}>
+                <option key={d.id} value={d.id} style={FIELD_OPTION_STYLE}>
                   {d.city.name} — {d.description ?? d.name}
                 </option>
               ))}
@@ -146,7 +147,7 @@ function CreatePanelModalInner({
           </label>
         )}
 
-        <label className="flex flex-col gap-1 text-sm" style={{ color: 'var(--fg-dim)' }}>
+        <label className="flex flex-col gap-1 text-sm" style={FIELD_LABEL_STYLE}>
           <span>Комментарий</span>
           <textarea
             value={comment}
@@ -155,12 +156,7 @@ function CreatePanelModalInner({
             rows={2}
             data-testid="create-panel-comment"
             className="px-2 py-1 text-sm"
-            style={{
-              background: 'var(--bg-2)',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--r-sm)',
-              color: 'var(--fg)',
-            }}
+            style={FIELD_CONTROL_STYLE}
           />
         </label>
 

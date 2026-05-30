@@ -75,8 +75,8 @@ class IsAdmin(BasePermission):
 
 
 class CanCreateApplication(BasePermission):
-    """monitoring, control, admin могут создавать заявки."""
-    ALLOWED = (DEPARTMENT_MON, DEPARTMENT_CTRL, DEPARTMENT_ADMIN)
+    """Only monitoring/admin/all can create applications."""
+    ALLOWED = (DEPARTMENT_MON, DEPARTMENT_ADMIN, DEPARTMENT_ALL)
 
     def has_permission(self, request, view) -> bool:
         return request.user.is_authenticated and has_role(request.user, *self.ALLOWED)

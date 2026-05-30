@@ -6,12 +6,28 @@ T-2-013: перенесено из zip/models.py.
 Display.save() с side effects оставлен как есть — рефакторинг в T-2-027.
 """
 from django.apps import apps
-from django.db import models, transaction
+from django.db import models
 from django.db.models import UniqueConstraint
 
 import structlog
 
 logger = structlog.get_logger(__name__)
+
+
+CONDITION_SEVERITY = {
+    "work": 10,
+    "default": 20,
+    "problem": 30,
+    "error": 30,
+    "broken": 30,
+    "unrecoverable": 40,
+}
+
+
+def condition_severity(condition) -> tuple[int, int]:
+    if condition is None:
+        return (-1, -1)
+    return (CONDITION_SEVERITY.get(condition.name, 0), condition.id)
 
 
 class Display(models.Model):
@@ -59,12 +75,16 @@ class Display(models.Model):
     @property
     def current_condition(self):
         """Возвращает наихудшее состояние среди всех панелей экрана."""
-        worst_id = self.cell_set.aggregate(
-            worst=models.Max("panel__condition__id")
-        )["worst"]
-        if worst_id:
-            Condition = apps.get_model("core_references", "Condition")
-            return Condition.objects.filter(id=worst_id).first()
+        Condition = apps.get_model("core_references", "Condition")
+        worst_condition = None
+        for condition in (
+            Condition.objects.filter(id__in=self.cell_set.values_list("panel__condition_id", flat=True))
+            .only("id", "name")
+        ):
+            if condition_severity(condition) > condition_severity(worst_condition):
+                worst_condition = condition
+        if worst_condition is not None:
+            return worst_condition
         return None
 
     def save(self, *args, **kwargs):

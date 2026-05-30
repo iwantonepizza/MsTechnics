@@ -120,10 +120,12 @@ def test_e2e_invalid_transition_returns_409():
     display = DisplayFactory(name="disp-409", city=city)
     panel = PanelFactory(name="P-409", display=display)
     cell = CellFactory(display=display, row=1, col=1, panel=panel)
-    user = MsUserFactory(permission="control")
-    user.allowed_city.add(city)
+    monitor = MsUserFactory(permission="monitoring")
+    monitor.allowed_city.add(city)
+    control = MsUserFactory(permission="control")
+    control.allowed_city.add(city)
     client = APIClient()
-    client.force_authenticate(user=user)
+    client.force_authenticate(user=monitor)
     resp = client.post("/api/v1/applications/", {
         "display_id": display.id, "panel_id": panel.id,
         "cell_id": cell.id, "comment": "test 409",
@@ -131,6 +133,7 @@ def test_e2e_invalid_transition_returns_409():
     assert resp.status_code == 201
     app_id = resp.data["id"]
     # sent_to_control → done НЕЛЬЗЯ
+    client.force_authenticate(user=control)
     resp = client.post(f"/api/v1/applications/{app_id}/transition/",
                        {"target_state": "done", "comment": ""}, format="json")
     assert resp.status_code == 409

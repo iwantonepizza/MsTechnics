@@ -1,11 +1,9 @@
 """
-apps/workflow/applications/services.py — сервисный слой заявок.
+Application service layer.
 
-T-2-040: заменяет application/utils.py.
-Вся бизнес-логика здесь. Views вызывают только эти методы.
-
-Compat: application/utils.py оставлен как shim для старых views.
+Business rules for application lifecycle live here; views should only delegate.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -15,7 +13,6 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.activity.services import activity_logger
-from apps.workflow.applications.exceptions import ApplicationNotFound
 from apps.workflow.applications.state_machine import application_fsm
 from shared.exceptions import DomainError
 
@@ -27,7 +24,7 @@ logger = structlog.get_logger(__name__)
 
 
 class ApplicationService:
-    """Сервис управления жизненным циклом заявок."""
+    """Service for application lifecycle operations."""
 
     @staticmethod
     def create(
@@ -38,27 +35,20 @@ class ApplicationService:
         user: "MsUser",
         file=None,
     ) -> "Application":
-        """
-        Создать заявку на панель.
-
-        Raises:
-            DomainError: если панель не в подходящем состоянии или уже имеет заявку.
-        """
+        """Create a new application for an installed panel."""
         from apps.directory.displays.models import Cell
-        from apps.workflow.applications.models import Application, ApplicationEvent, ApplicationStatus
+        from apps.workflow.applications.models import (
+            Application,
+            ApplicationEvent,
+            ApplicationStatus,
+        )
 
-        if panel.application_status and panel.application_status.name != "default":
+        active_application = panel.active_application
+        if active_application is not None:
             raise DomainError(
                 f"Панель {panel.name} уже имеет активную заявку.",
                 panel=panel.name,
-                current_status=panel.application_status.name,
-            )
-
-        if panel.condition and panel.condition.name == "unrecoverable":
-            raise DomainError(
-                f"Панель {panel.name} в состоянии '{panel.condition.name}' — заявку создать нельзя.",
-                panel=panel.name,
-                condition=panel.condition.name,
+                current_status=active_application.status.name,
             )
 
         cell = Cell.objects.filter(panel=panel).first()
@@ -77,7 +67,7 @@ class ApplicationService:
                 time_monitoring=time_event,
                 last_update_date_time=time_event,
                 file_monitoring=file,
-                user_monitoring=user.full_name if hasattr(user, "full_name") else str(user),
+                user_monitoring=user.username if hasattr(user, "username") else str(user),
             )
 
             ApplicationEvent.objects.create(
@@ -96,7 +86,10 @@ class ApplicationService:
                 event_type="application_create",
                 description=f"Создана заявка #{app.id} на панель {panel.name}",
                 comment=comment or "",
-                payload={"panel": panel.name, "display": panel.display.name if panel.display else None},
+                payload={
+                    "panel": panel.name,
+                    "display": panel.display.name if panel.display else None,
+                },
             )
 
         logger.info("application_created", application_id=app.id, panel=panel.name)
@@ -117,7 +110,7 @@ class ApplicationService:
         comment: str = "",
         file=None,
     ) -> "Application":
-        """Выполнить переход заявки. Делегирует в ApplicationStateMachine."""
+        """Perform an FSM transition for an application."""
         app = application_fsm.transition(
             application=application,
             target_status=target_status,
@@ -141,12 +134,7 @@ class ApplicationService:
         actor: "MsUser",
         comment: str = "",
     ) -> None:
-        """
-        Удалить заявку.
-        Разрешено только из статуса 'sent_to_control'.
-        """
-        from apps.workflow.applications.models import ApplicationStatus
-
+        """Delete an application only from the initial monitoring-created state."""
         allowed_statuses = ("sent_to_control",)
         if application.status.name not in allowed_statuses:
             raise DomainError(
@@ -179,9 +167,7 @@ class ApplicationService:
         actor: "MsUser",
         comment: str = "",
     ) -> "Application":
-        """Назначить/сменить исполнителя заявки."""
-        from apps.workflow.applications.models import ApplicationEvent
-
+        """Assign or replace the executor for an application."""
         old_executor = application.executor
         application.executor = executor
         application.save(update_fields=["executor"])
@@ -191,14 +177,6 @@ class ApplicationService:
             if old_executor
             else f"Назначен исполнитель: {executor}"
         )
-        ApplicationEvent.objects.create(
-            application=application,
-            stage="monitoring_create",  # TODO: добавить stage executor_change
-            comment=comment or desc,
-            actor=actor,
-            actor_name=getattr(actor, "full_name", str(actor)),
-        )
-
         activity_logger.log(
             actor=actor,
             target=application,
@@ -211,7 +189,9 @@ class ApplicationService:
 
             notify_application_assigned(application)
         except Exception:
-            logger.exception("application_assigned_notification_failed", application_id=application.id)
+            logger.exception(
+                "application_assigned_notification_failed", application_id=application.id
+            )
         return application
 
     @staticmethod
@@ -224,14 +204,17 @@ class ApplicationService:
         user,
         file=None,
     ):
-        """Wrapper принимающий pk вместо объектов — для API views."""
+        """Compatibility wrapper that accepts ids instead of model instances."""
         from apps.directory.panels.models import Panel
+
         panel = Panel.objects.get(id=panel_id)
         return ApplicationService.create(
-            panel=panel, comment=comment,
-            time_event=None, user=user, file=file,
+            panel=panel,
+            comment=comment,
+            time_event=None,
+            user=user,
+            file=file,
         )
 
 
-# Глобальный синглтон
 application_service = ApplicationService()

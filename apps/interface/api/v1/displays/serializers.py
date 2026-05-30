@@ -1,7 +1,7 @@
 from drf_spectacular.utils import OpenApiTypes, extend_schema_field
 from rest_framework import serializers
 
-from apps.directory.displays.models import Cell, Display
+from apps.directory.displays.models import Cell, Display, condition_severity
 from apps.directory.panels.models import Panel
 from apps.interface.api.v1.refs.serializers import CitySerializer, ConditionSerializer
 
@@ -50,15 +50,13 @@ class DisplayListSerializer(serializers.ModelSerializer):
         prefetched_cells = getattr(display, "_prefetched_objects_cache", {}).get("cell_set")
         if prefetched_cells is not None:
             worst_condition = None
-            worst_condition_id = -1
             for cell in prefetched_cells:
                 panel = getattr(cell, "panel", None)
                 condition = getattr(panel, "condition", None)
                 if condition is None:
                     continue
-                if condition.id > worst_condition_id:
+                if condition_severity(condition) > condition_severity(worst_condition):
                     worst_condition = condition
-                    worst_condition_id = condition.id
             if worst_condition is None:
                 return None
             return ConditionSerializer(worst_condition).data
@@ -74,6 +72,9 @@ class DisplayDetailSerializer(serializers.ModelSerializer):
     cells = serializers.SerializerMethodField()
     file_url = serializers.SerializerMethodField()
     project_photo_url = serializers.SerializerMethodField()
+    camera_link = serializers.URLField(read_only=True, allow_null=True)
+    contacts = serializers.SerializerMethodField()
+    photos = serializers.SerializerMethodField()
 
     class Meta:
         model = Display
@@ -87,6 +88,9 @@ class DisplayDetailSerializer(serializers.ModelSerializer):
             "cols",
             "file_url",
             "project_photo_url",
+            "camera_link",
+            "contacts",
+            "photos",
             "cells",
         ]
 
@@ -117,6 +121,38 @@ class DisplayDetailSerializer(serializers.ModelSerializer):
     @extend_schema_field(OpenApiTypes.URI)
     def get_project_photo_url(self, d) -> str | None:
         return d.project_photo.url if d.project_photo else None
+
+    @extend_schema_field(
+        serializers.ListField(
+            child=serializers.DictField(),
+        )
+    )
+    def get_contacts(self, display):
+        contacts = display.contacts.all().order_by("last_name", "first_name")
+        return [
+            {
+                "id": contact.id,
+                "full_name": " ".join(
+                    part for part in [contact.first_name, contact.last_name] if part
+                ).strip(),
+                "description": contact.description,
+                "phone": contact.phone_number,
+                "telegram_id": contact.telegram_id,
+            }
+            for contact in contacts
+        ]
+
+    @extend_schema_field(serializers.ListField(child=serializers.DictField()))
+    def get_photos(self, display):
+        photos = display.photos.all().order_by("-id") if hasattr(display, "photos") else []
+        return [
+            {
+                "id": photo.id,
+                "url": photo.image.url if photo.image else None,
+                "uploaded_at": getattr(photo, "uploaded_at", None),
+            }
+            for photo in photos
+        ]
 
 
 class PhotoUploadSerializer(serializers.Serializer):

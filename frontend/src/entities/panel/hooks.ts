@@ -2,15 +2,47 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api/client'
 import type { Panel, PaginatedResponse } from '@/shared/api/types'
 
-export function usePanels(filter: { department?: string; display?: string | null } = {}) {
+interface PanelsFilter {
+  department?: string
+  display?: string | null
+  fetchAll?: boolean
+}
+
+export function usePanels(filter: PanelsFilter = {}) {
   return useQuery({
     queryKey: ['panels', filter],
     queryFn: async () => {
       const params: Record<string, string | undefined> = {}
       if (filter.department) params.department = filter.department
       if (filter.display) params.display = filter.display
-      const res = await apiClient.get<PaginatedResponse<Panel>>('/panels/', { params })
-      return res.data.results ?? []
+
+      const fetchPage = async (cursor?: string) => {
+        const response = await apiClient.get<PaginatedResponse<Panel>>('/panels/', {
+          params: {
+            ...params,
+            cursor,
+          },
+        })
+        return response.data
+      }
+
+      const firstPage = await fetchPage()
+      const firstResults = firstPage.results ?? []
+
+      if (!filter.fetchAll || !firstPage.next_cursor) {
+        return firstResults
+      }
+
+      const allPanels = [...firstResults]
+      let cursor: string | null = firstPage.next_cursor
+
+      while (cursor) {
+        const page = await fetchPage(cursor)
+        allPanels.push(...(page.results ?? []))
+        cursor = page.next_cursor ?? null
+      }
+
+      return allPanels
     },
     staleTime: 30_000,
   })

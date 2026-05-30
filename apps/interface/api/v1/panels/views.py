@@ -9,7 +9,7 @@ from rest_framework.viewsets import GenericViewSet
 from apps.activity.services import activity_logger
 from apps.core.users.permissions import is_admin
 from apps.directory.panels.models import Panel
-from apps.directory.panels.services import panel_mover
+from apps.directory.panels.services import delete_panel, panel_mover
 from shared.exceptions import DomainError
 from shared.permissions import HasDepartmentAccess
 from shared.throttling import TransitionRateThrottle
@@ -127,35 +127,7 @@ class PanelViewSet(
     @extend_schema(tags=["panels"], summary="Удалить панель (T-7-036, admin-only, Z8)")
     def destroy(self, request, *_args, **_kwargs):
         panel = self.get_object()
-        # Безопасность: панель, установленную в ячейке, не удаляем — снять и потом удалить.
-        if hasattr(panel, "cell"):
-            try:
-                cell = panel.cell
-                if cell is not None:
-                    raise DomainError(
-                        f"Панель {panel.name} установлена в ячейку {cell.id}. "
-                        "Сначала снимите через POST /panels/{id}/remove/.",
-                        code="panel_installed",
-                    )
-            except Panel.cell.RelatedObjectDoesNotExist:  # type: ignore[attr-defined]
-                pass
-
-        active_app = panel.active_application
-        if active_app:
-            raise DomainError(
-                f"У панели {panel.name} есть активная заявка #{active_app.id}. "
-                "Сначала закройте заявку.",
-                code="panel_has_active_application",
-            )
-
-        name = panel.name
-        activity_logger.log(
-            event_type="panel.deleted",
-            target=panel,
-            actor=request.user,
-            description=f"Удалена панель {name}",
-        )
-        panel.delete()
+        delete_panel(panel=panel, actor=request.user)
         return Response(status=204)
 
     @extend_schema(

@@ -156,3 +156,46 @@ class PhotoDisplay(models.Model):
 
     def __str__(self) -> str:
         return f"Фото {self.display.name}"
+
+
+class DisplayNote(models.Model):
+    """T-8-003: заметка/комментарий об экране, общая для всех отделов."""
+
+    display = models.ForeignKey(
+        "Display",
+        on_delete=models.CASCADE,
+        related_name="notes",
+        verbose_name="экран",
+    )
+    author = models.ForeignKey(
+        "user.MsUser",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="display_notes",
+        verbose_name="автор",
+    )
+    author_name = models.CharField(
+        max_length=80,
+        blank=True,
+        verbose_name="имя автора (snapshot)",
+        help_text="Снимок ФИО — сохраняется даже если пользователь удалён.",
+    )
+    department = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name="отдел автора",
+        help_text="Отдел автора на момент записи (monitoring/control/service/admin).",
+    )
+    text = models.TextField(verbose_name="текст заметки")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="создано")
+
+    class Meta:
+        app_label = "directory_displays"
+        db_table = "display_note"
+        verbose_name = "Заметка об экране"
+        verbose_name_plural = "Заметки об экране"
+        ordering = ["-created_at", "-id"]
+
+    def __str__(self) -> str:
+        return f"Заметка {self.display.name} ({self.author_name})"

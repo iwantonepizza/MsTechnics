@@ -55,6 +55,11 @@ class MsUser(AbstractUser):
         blank=True,
         verbose_name="Дополнительные права",
     )
+    show_activity_feed = models.BooleanField(
+        default=False,
+        verbose_name="Показывать ленту действий на главной",
+        help_text="T-8-020: включает блок «Последние действия» на главном экране для этого пользователя.",
+    )
     telegram_id = models.CharField(
         max_length=20,  # расширили с 10 до 20 — telegram_id бывает длиннее
         blank=True,

@@ -19,6 +19,7 @@ urlpatterns = [
     # 3.3 Workflow
     path("", include("apps.interface.api.v1.applications.urls")),
     path("", include("apps.interface.api.v1.departures.urls")),
+    path("", include("apps.interface.api.v1.daily_tasks.urls")),
 
     # 3.4 Лог и реалтайм
     path("", include("apps.interface.api.v1.activity.urls")),

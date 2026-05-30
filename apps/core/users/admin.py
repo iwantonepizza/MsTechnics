@@ -36,13 +36,23 @@ class RoleAdmin(admin.ModelAdmin):
 @admin.register(MsUser)
 class MsUserAdmin(UserAdmin):
     form = MsUserAdminForm
-    list_display = ("username", "permission", "email", "is_active")
-    list_filter = ("permission", "is_active", "roles")
-    search_fields = ("username", "email")
+    list_display = ("username", "first_name", "last_name", "permission", "email", "show_activity_feed", "is_active")
+    list_filter = ("permission", "is_active", "roles", "show_activity_feed", "allowed_city")
+    search_fields = ("username", "email", "first_name", "last_name")
     filter_horizontal = ("roles", "allowed_city", "groups", "user_permissions")
     fieldsets = UserAdmin.fieldsets + (
         (
             "Доступ",
-            {"fields": ("permission", "roles", "extra_permissions", "allowed_city", "telegram_id", "max_id")},
+            {
+                "fields": (
+                    "permission",
+                    "roles",
+                    "extra_permissions",
+                    "allowed_city",
+                    "telegram_id",
+                    "max_id",
+                    "show_activity_feed",
+                )
+            },
         ),
     )

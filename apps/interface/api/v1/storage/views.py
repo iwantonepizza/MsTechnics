@@ -28,6 +28,22 @@ def _make_storage_viewset(model, serializer_cls, tag):
         def get_permissions(self):
             return [CanManageStorageItems()]
 
+        def perform_update(self, serializer):
+            # T-8-063: при изменении количества пишем запись в журнал.
+            old_count = serializer.instance.count
+            item = serializer.save()
+            new_count = item.count
+            if new_count != old_count:
+                from apps.activity.services import activity_logger
+
+                activity_logger.log(
+                    actor=self.request.user,
+                    target=item,
+                    event_type="storage.count_changed",
+                    description=f"{item.name}: {old_count} → {new_count}",
+                    payload={"from": old_count, "to": new_count, "kind": tag},
+                )
+
     _VS.__name__ = f"{model.__name__}ViewSet"
     return _VS
 

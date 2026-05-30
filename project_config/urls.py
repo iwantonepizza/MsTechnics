@@ -6,6 +6,11 @@ from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
+# T-8-072: русификация заголовков админки.
+admin.site.site_header = "Суперсимметрия — администрирование"
+admin.site.site_title = "Суперсимметрия"
+admin.site.index_title = "Управление данными"
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include("django_prometheus.urls")),

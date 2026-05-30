@@ -93,6 +93,43 @@ class DisplayViewSet(ReadOnlyModelViewSet):
             return self.get_paginated_response(AlarmEventSerializer(page, many=True).data)
         return Response(AlarmEventSerializer(qs[:200], many=True).data)
 
+    @extend_schema(tags=["displays"], summary="Заметки об экране")
+    @action(detail=True, methods=["get", "post"])
+    def notes(self, request, slug=None):
+        del slug
+        from apps.activity.services import activity_logger
+        from apps.directory.displays.models import DisplayNote
+
+        from .serializers import DisplayNoteSerializer
+
+        display = self.get_object()
+        if request.method == "GET":
+            qs = DisplayNote.objects.filter(display=display).order_by("-created_at", "-id")
+            return Response(DisplayNoteSerializer(qs, many=True).data)
+
+        s = DisplayNoteSerializer(data=request.data)
+        s.is_valid(raise_exception=True)
+        user = request.user
+        author_name = getattr(user, "full_name", None) or user.get_username()
+        department = getattr(user, "permission", "") or ""
+        note = DisplayNote.objects.create(
+            display=display,
+            author=user,
+            author_name=author_name,
+            department=department,
+            text=s.validated_data["text"],
+        )
+        activity_logger.log(
+            actor=user,
+            target=display,
+            event_type="display.note_added",
+            description=f"Заметка к экрану {display.name}",
+            comment=note.text[:200],
+        )
+        return Response(
+            DisplayNoteSerializer(note).data, status=http_status.HTTP_201_CREATED
+        )
+
     @extend_schema(tags=["displays"], summary="Фотографии экрана")
     @action(detail=True, methods=["get", "post"], parser_classes=[MultiPartParser, FormParser])
     def photos(self, request, slug=None):

@@ -160,6 +160,16 @@ class PhotoUploadSerializer(serializers.Serializer):
     description = serializers.CharField(max_length=200, required=False, allow_blank=True)
 
 
+class DisplayNoteSerializer(serializers.Serializer):
+    """T-8-003: заметка об экране."""
+
+    id = serializers.IntegerField(read_only=True)
+    text = serializers.CharField()
+    author_name = serializers.CharField(read_only=True)
+    department = serializers.CharField(read_only=True)
+    created_at = serializers.DateTimeField(read_only=True)
+
+
 class AlarmEventSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     type = serializers.CharField()

@@ -183,7 +183,7 @@ class DisplayViewSet(ReadOnlyModelViewSet):
 
     @extend_schema(
         tags=["displays"],
-        summary="РЈРґР°Р»РёС‚СЊ С„РѕС‚Рѕ СЌРєСЂР°РЅР°",
+        summary="Удалить фото экрана",
         parameters=[OpenApiParameter("photo_id", OpenApiTypes.INT, OpenApiParameter.PATH)],
     )
     @action(
@@ -199,6 +199,6 @@ class DisplayViewSet(ReadOnlyModelViewSet):
         try:
             photo = PhotoDisplay.objects.get(id=photo_id, display=display)
         except PhotoDisplay.DoesNotExist as exc:
-            raise NotFound("Р¤РѕС‚Рѕ РЅРµ РЅР°Р№РґРµРЅРѕ.") from exc
+            raise NotFound("Фото не найдено.") from exc
         photo.delete()
         return Response(status=http_status.HTTP_204_NO_CONTENT)

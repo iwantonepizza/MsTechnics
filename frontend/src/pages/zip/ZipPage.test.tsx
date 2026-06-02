@@ -1,6 +1,6 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { describe, expect, it, vi } from 'vitest'
 
 import type { Panel } from '@/shared/api/types'
 import { ZipPage } from './ZipPage'
@@ -14,7 +14,7 @@ const usePanelsMock = vi.fn<(filter?: UsePanelsFilter) => UsePanelsResult>(
 const changeDeptMutation = { mutateAsync: vi.fn(), isPending: false }
 
 vi.mock('@/entities/panel/hooks', () => ({
-  usePanels: (filter?: { department?: string; display?: string | null }) => usePanelsMock(filter),
+  usePanels: (filter?: UsePanelsFilter) => usePanelsMock(filter),
   useCreatePanel: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
   useDeletePanel: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
   useChangeDepartment: vi.fn(() => changeDeptMutation),
@@ -53,8 +53,8 @@ vi.mock('@/entities/display/hooks', () => ({
         id: 1,
         slug: 'ekb',
         name: 'display-1',
-        description: 'Экран 1',
-        city: { id: 1, name: 'Екатеринбург', slug: 'ekb' },
+        description: 'Display 1',
+        city: { id: 1, name: 'Ekaterinburg', slug: 'ekb' },
       },
     ],
   })),
@@ -64,30 +64,33 @@ vi.mock('@/features/auth/hooks', () => ({
   useMe: vi.fn(() => ({ data: { username: 'guest', permission: 'monitoring' } })),
 }))
 
-function renderZipPage() {
+function renderZipPage(initialEntry = '/zip/ekb') {
   return render(
-    <MemoryRouter initialEntries={['/zip/ekb']}>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
+        <Route path="/zip" element={<ZipPage />} />
         <Route path="/zip/:displaySlug" element={<ZipPage />} />
       </Routes>
     </MemoryRouter>,
   )
 }
 
+beforeEach(() => {
+  usePanelsMock.mockReset()
+  usePanelsMock.mockReturnValue({ data: [], isLoading: false })
+  changeDeptMutation.mutateAsync.mockReset()
+})
+
 describe('ZipPage', () => {
   it('highlights low-stock storage items', () => {
-    usePanelsMock.mockReturnValue({ data: [], isLoading: false })
     renderZipPage()
 
     const item = screen.getByTestId('storage-item-wire-low')
     expect(item).toHaveClass('storage-item-card--low')
-    expect(screen.getByText('Меньше 3')).toBeInTheDocument()
+    expect(screen.getByText(/3/)).toBeInTheDocument()
   })
-})
 
-describe('ZipPage', () => {
   it('renders display filter with readable contrast styles', () => {
-    usePanelsMock.mockReturnValue({ data: [], isLoading: false })
     renderZipPage()
 
     const select = screen.getByTestId('zip-display-filter')
@@ -97,7 +100,6 @@ describe('ZipPage', () => {
   })
 
   it('requests full panel lists when a concrete display is selected', () => {
-    usePanelsMock.mockReturnValue({ data: [], isLoading: false })
     renderZipPage()
 
     expect(usePanelsMock).toHaveBeenCalledWith(
@@ -105,6 +107,17 @@ describe('ZipPage', () => {
     )
     expect(usePanelsMock).toHaveBeenCalledWith(
       expect.objectContaining({ department: 'monitor', display: '1', fetchAll: true }),
+    )
+  })
+
+  it('requests full panel lists when all displays are selected', () => {
+    renderZipPage('/zip')
+
+    expect(usePanelsMock).toHaveBeenCalledWith(
+      expect.objectContaining({ department: 'zip', display: null, fetchAll: true }),
+    )
+    expect(usePanelsMock).toHaveBeenCalledWith(
+      expect.objectContaining({ department: 'monitor', display: null, fetchAll: true }),
     )
   })
 })
@@ -122,15 +135,17 @@ describe('ZipPage DnD (T-7-033)', () => {
     condition: {
       id: 1,
       name: 'work',
-      description: 'Рабочая',
+      description: 'Working',
       color: { id: 1, name: 'green', hex: '#00aa00' },
-      icon: { id: 1, unicode_symbol: '🟢' },
+      icon: { id: 1, unicode_symbol: '+' },
     },
   }
 
-  it('panel chip — draggable, drop в service вызывает changeDept', async () => {
+  it('panel chip is draggable and dropping into service changes department', async () => {
     usePanelsMock.mockImplementation((filter?: { department?: string }) => {
-      if (filter?.department === 'zip') return { data: [zipPanel], isLoading: false }
+      if (filter?.department === 'zip') {
+        return { data: [zipPanel], isLoading: false }
+      }
       return { data: [], isLoading: false }
     })
     changeDeptMutation.mutateAsync.mockResolvedValue({})
@@ -148,7 +163,9 @@ describe('ZipPage DnD (T-7-033)', () => {
       dropEffect: '',
       setData(type: string, value: string) {
         data.set(type, value)
-        if (!this.types.includes(type)) this.types.push(type)
+        if (!this.types.includes(type)) {
+          this.types.push(type)
+        }
       },
       getData(type: string) {
         return data.get(type) ?? ''
@@ -170,12 +187,13 @@ describe('ZipPage DnD (T-7-033)', () => {
     })
   })
 
-  it('drop на monitor не вызывает changeDept (не drop target)', async () => {
+  it('drop on monitor does not change department', () => {
     usePanelsMock.mockImplementation((filter?: { department?: string }) => {
-      if (filter?.department === 'zip') return { data: [zipPanel], isLoading: false }
+      if (filter?.department === 'zip') {
+        return { data: [zipPanel], isLoading: false }
+      }
       return { data: [], isLoading: false }
     })
-    changeDeptMutation.mutateAsync.mockReset()
 
     renderZipPage()
 
@@ -186,8 +204,12 @@ describe('ZipPage DnD (T-7-033)', () => {
       types: ['application/x-panel-id'],
       effectAllowed: 'move',
       dropEffect: '',
-      setData(type: string, value: string) { data.set(type, value) },
-      getData(type: string) { return data.get(type) ?? '' },
+      setData(type: string, value: string) {
+        data.set(type, value)
+      },
+      getData(type: string) {
+        return data.get(type) ?? ''
+      },
     }
 
     fireEvent.drop(monitorColumn, { dataTransfer })

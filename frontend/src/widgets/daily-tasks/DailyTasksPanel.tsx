@@ -25,12 +25,14 @@ const STATUS_META: Record<DailyTaskStatus, { label: string; color: string }> = {
 export function DailyTasksPanel({
   cityId,
   readOnly = false,
+  defaultOpen = false,
 }: {
   cityId: number | undefined
   readOnly?: boolean
+  defaultOpen?: boolean
 }) {
-  const [open, setOpen] = useState(false)
-  const { data = [], isLoading } = useDailyTasks(open ? cityId : undefined)
+  const [open, setOpen] = useState(defaultOpen)
+  const { data = [], isLoading } = useDailyTasks(cityId)
   const complete = useCompleteDailyTask()
 
   const doneCount = data.filter(t => t.status === 'done').length

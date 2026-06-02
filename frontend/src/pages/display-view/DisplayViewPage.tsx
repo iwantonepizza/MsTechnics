@@ -310,6 +310,8 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
   const canDeleteSelectedApplication =
     selectedApp?.status.name === 'sent_to_control' && (isAdmin || isMonitoring)
   const canRemovePanelFromApplication = Boolean(selectedAppPanel && (isAdmin || isService))
+  const showCameraCard = department === 'monitoring' && Boolean(display?.camera_link)
+  const showDailyTasks = department === 'monitoring' || department === 'control'
 
   const selectedAppActions: ApplicationSheetAction[] = [
     ...(canDeleteSelectedApplication
@@ -445,17 +447,6 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
           />
         </div>
 
-        {department === 'monitoring' && display.camera_link ? (
-          <DisplayCameraCard cameraLink={display.camera_link} />
-        ) : null}
-
-        {/* T-8-035: ежедневные задачи — мониторинг интерактив, контроль read-only */}
-        {(department === 'monitoring' || department === 'control') ? (
-          <DailyTasksPanel cityId={display.city?.id} readOnly={department === 'control'} />
-        ) : null}
-
-        {/* T-8-003: заметки об экране — во всех отделах */}
-        <DisplayNotes slug={display.slug ?? displaySlug ?? ''} />
       </div>
 
       <div
@@ -629,16 +620,27 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
             </button>
           ))}
         </div>
-        {railTab === 'applications' ? (
-          <ApplicationsPanel
-            displaySlug={display.slug ?? displaySlug ?? ''}
-            department={department}
-            onApplicationSelect={handleAppSelect}
-            selectedId={selectedAppId}
+        <div className="min-h-0 flex-1">
+          {railTab === 'applications' ? (
+            <ApplicationsPanel
+              displaySlug={display.slug ?? displaySlug ?? ''}
+              department={department}
+              onApplicationSelect={handleAppSelect}
+              selectedId={selectedAppId}
+            />
+          ) : (
+            <AlarmRail alarms={alarms} canCreate={canCreateFromAlarm} onCreate={handleAlarmCreate} />
+          )}
+        </div>
+        {showCameraCard ? <DisplayCameraCard cameraLink={display.camera_link!} /> : null}
+        {showDailyTasks ? (
+          <DailyTasksPanel
+            cityId={display.city?.id}
+            readOnly={department === 'control'}
+            defaultOpen
           />
-        ) : (
-          <AlarmRail alarms={alarms} canCreate={canCreateFromAlarm} onCreate={handleAlarmCreate} />
-        )}
+        ) : null}
+        <DisplayNotes slug={display.slug ?? displaySlug ?? ''} />
       </div>
 
       {createOpen && selectedCell ? (
@@ -723,19 +725,31 @@ function DisplayCameraCard({
 }) {
   const [expanded, setExpanded] = useState(true)
   const [loadFailed, setLoadFailed] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     if (!expanded) {
       setLoadFailed(false)
+      setIsLoading(false)
+      return
+    }
+
+    setLoadFailed(false)
+    setIsLoading(true)
+  }, [expanded, cameraLink])
+
+  useEffect(() => {
+    if (!expanded || !isLoading || loadFailed) {
       return
     }
 
     const timeoutId = window.setTimeout(() => {
       setLoadFailed(true)
+      setIsLoading(false)
     }, 5000)
 
     return () => window.clearTimeout(timeoutId)
-  }, [expanded, cameraLink])
+  }, [cameraLink, expanded, isLoading, loadFailed])
 
   return (
     <section
@@ -794,8 +808,14 @@ function DisplayCameraCard({
               src={cameraLink}
               title="Камера экрана"
               className="h-48 w-full border-0"
-              onLoad={() => setLoadFailed(false)}
-              onError={() => setLoadFailed(true)}
+              onLoad={() => {
+                setLoadFailed(false)
+                setIsLoading(false)
+              }}
+              onError={() => {
+                setLoadFailed(true)
+                setIsLoading(false)
+              }}
             />
           </div>
         )

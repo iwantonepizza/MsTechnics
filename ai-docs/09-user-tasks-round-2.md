@@ -63,7 +63,7 @@
 ### T-8-104 — Снова слетела кодировка русского (mojibake) — нужен ПОСТОЯННЫЙ guard
 - **Статус:** 🔴 (повторяется) · **Scope:** FE + BE + инфра
 - **Подтверждено (проверено git-grep'ом):** двойная перекодировка UTF-8→cp1251 в:
-  - `frontend/src/pages/department/DepartmentListPage.tsx` (весь файл: «РќРµ СѓРґР°Р»РѕСЃСЊ» = «Не удалось», «Р¤РѕС‚Рѕ» = «Фото»),
+  - `frontend/src/pages/department/DepartmentListPage.tsx` (весь файл: битые сообщения интерфейса вроде «Не удалось» и «Фото»),
   - `frontend/src/features/panels/PanelActionModals.tsx`,
   - `frontend/src/pages/department/DepartmentListPage.test.tsx`,
   - `apps/interface/api/v1/displays/views.py` (напр. сообщение `delete_photo`, extend_schema summary).

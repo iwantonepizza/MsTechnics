@@ -27,10 +27,13 @@ import {
 import { toast } from 'sonner'
 
 import { ApplicationCard } from '@/entities/application/ApplicationCard'
+import { useActivityLog } from '@/entities/activity/hooks'
 import { useApplications } from '@/entities/application/hooks'
 import { useCities, useDisplayDetail, useDisplays } from '@/entities/display/hooks'
+import { useMe } from '@/features/auth/hooks'
 import { apiClient } from '@/shared/api/client'
 import type { City, DisplayDetail, DisplayListItem, DisplayPhoto } from '@/shared/api/types'
+import { formatRelative } from '@/shared/lib/utils'
 import { useDeferredLoading } from '@/shared/lib/useDeferredLoading'
 import { Button } from '@/shared/ui/Button'
 import { ConfirmDialog, useConfirmDialog } from '@/shared/ui/ConfirmDialog'
@@ -49,27 +52,27 @@ type DisplayActionState = {
 
 const DEPT_CONFIG: Record<Dept, { title: string; railTitle: string; boxForRail: string }> = {
   monitoring: {
-    title: 'РњРѕРЅРёС‚РѕСЂРёРЅРі вЂ” СЃРїРёСЃРѕРє СЌРєСЂР°РЅРѕРІ',
-    railTitle: 'РџРѕСЃР»РµРґРЅРёРµ Р·Р°СЏРІРєРё',
+    title: 'Мониторинг — список экранов',
+    railTitle: 'Последние заявки',
     boxForRail: 'received',
   },
   control: {
-    title: 'РљРѕРЅС‚СЂРѕР»СЊ вЂ” СЃРїРёСЃРѕРє СЌРєСЂР°РЅРѕРІ',
-    railTitle: 'РћС‡РµСЂРµРґСЊ РєРѕРЅС‚СЂРѕР»СЏ',
+    title: 'Контроль — список экранов',
+    railTitle: 'Очередь контроля',
     boxForRail: 'received',
   },
   service: {
-    title: 'РЎРµСЂРІРёСЃ вЂ” СЃРїРёСЃРѕРє СЌРєСЂР°РЅРѕРІ',
-    railTitle: 'РњРѕРё РІ СЂР°Р±РѕС‚Рµ',
+    title: 'Сервис — список экранов',
+    railTitle: 'Мои в работе',
     boxForRail: 'at_work',
   },
 }
 
 const SORT_LABELS: Record<SortOption, string> = {
-  'name-asc': 'РџРѕ РЅР°Р·РІР°РЅРёСЋ (Рђ-РЇ)',
-  'name-desc': 'РџРѕ РЅР°Р·РІР°РЅРёСЋ (РЇ-Рђ)',
-  'size-desc': 'РџРѕ СЂР°Р·РјРµСЂСѓ (Р±РѕР»СЊС€РёРµ РІС‹С€Рµ)',
-  'size-asc': 'РџРѕ СЂР°Р·РјРµСЂСѓ (РјР°Р»С‹Рµ РІС‹С€Рµ)',
+  'name-asc': 'По названию (А-Я)',
+  'name-desc': 'По названию (Я-А)',
+  'size-desc': 'По размеру (большие выше)',
+  'size-asc': 'По размеру (малые выше)',
 }
 
 const SORT_STORAGE_KEY = 'department.displaySort'
@@ -135,7 +138,7 @@ function isPdfUrl(url: string | null) {
 }
 
 function formatPhotoDate(value: string | null) {
-  if (!value) return 'Р‘РµР· РґР°С‚С‹'
+  if (!value) return 'Без даты'
   const parsed = new Date(value)
   if (Number.isNaN(parsed.getTime())) return value
   return parsed.toLocaleString('ru-RU')
@@ -183,7 +186,15 @@ function ActionLink({
   )
 }
 
-function SideRail({ department, activeCity }: { department: Dept; activeCity: string | null }) {
+function SideRail({
+  department,
+  activeCity,
+  showActivityFeed,
+}: {
+  department: Dept
+  activeCity: string | null
+  showActivityFeed: boolean
+}) {
   const config = DEPT_CONFIG[department]
   const { data, isLoading, error, refetch } = useApplications({ box: config.boxForRail })
   const showSkeleton = useDeferredLoading(isLoading)
@@ -191,49 +202,128 @@ function SideRail({ department, activeCity }: { department: Dept; activeCity: st
 
   return (
     <aside className="flex min-h-0 flex-col bg-bg-1">
-      <div
-        className="h-11 shrink-0 px-4 py-3"
-        style={{ borderBottom: '1px solid var(--border-subtle)' }}
-      >
-        <div className="flex items-center justify-between gap-2">
-          <span
-            className="text-2xs font-mono uppercase tracking-wider"
-            style={{ color: 'var(--fg-mute)' }}
-          >
-            {config.railTitle}
-          </span>
-          {activeCity ? (
+      <div className="min-h-0 flex flex-1 flex-col">
+        <div
+          className="h-11 shrink-0 px-4 py-3"
+          style={{ borderBottom: '1px solid var(--border-subtle)' }}
+        >
+          <div className="flex items-center justify-between gap-2">
             <span
-              className="truncate text-2xs font-mono"
-              style={{ color: 'var(--fg-faint)' }}
+              className="text-2xs font-mono uppercase tracking-wider"
+              style={{ color: 'var(--fg-mute)' }}
             >
-              {activeCity}
+              {config.railTitle}
             </span>
-          ) : null}
+            {activeCity ? (
+              <span
+                className="truncate text-2xs font-mono"
+                style={{ color: 'var(--fg-faint)' }}
+              >
+                {activeCity}
+              </span>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto p-1.5">
+          {error ? (
+            <div
+              className="flex h-40 flex-col items-center justify-center gap-2 text-xs"
+              style={{ color: 'var(--err)' }}
+            >
+              <AlertTriangle size={18} />
+              <span>Не удалось загрузить</span>
+              <button className="btn btn-secondary sm" onClick={() => refetch()}>
+                Повторить
+              </button>
+            </div>
+          ) : showSkeleton ? (
+            <SkeletonList rows={6} height="var(--h-row)" />
+          ) : items.length === 0 ? (
+            <EmptyState icon={<Inbox size={20} />} title="Пусто" className="py-10" />
+          ) : (
+            items.map(app => <ApplicationCard key={app.id} application={app} compact />)
+          )}
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-1.5">
-        {error ? (
-          <div
-            className="flex h-40 flex-col items-center justify-center gap-2 text-xs"
-            style={{ color: 'var(--err)' }}
-          >
-            <AlertTriangle size={18} />
-            <span>РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ</span>
-            <button className="btn btn-secondary sm" onClick={() => refetch()}>
-              РџРѕРІС‚РѕСЂРёС‚СЊ
+      {showActivityFeed ? <ActivityFeedBand /> : null}
+    </aside>
+  )
+}
+
+function monthsAgoIso(months: number): string {
+  const date = new Date()
+  date.setMonth(date.getMonth() - months)
+  return date.toISOString()
+}
+
+function ActivityFeedBand() {
+  const [months, setMonths] = useState(1)
+  const since = monthsAgoIso(months)
+  const { data = [], isLoading } = useActivityLog({ feed: true, since, limit: 60 })
+  const show = useDeferredLoading(isLoading)
+
+  return (
+    <div
+      className="flex h-[170px] shrink-0 flex-col"
+      style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-0)' }}
+      data-testid="department-activity-feed"
+    >
+      <div
+        className="flex h-9 shrink-0 items-center justify-between px-3"
+        style={{ borderBottom: '1px solid var(--border-subtle)' }}
+      >
+        <div className="flex items-center gap-2 text-xs font-semibold" style={{ color: 'var(--fg)' }}>
+          <Activity size={13} style={{ color: 'var(--fg-dim)' }} />
+          Последние действия
+        </div>
+        <div className="flex gap-1">
+          {[1, 2].map(month => (
+            <button
+              key={month}
+              type="button"
+              onClick={() => setMonths(month)}
+              className="rounded px-1.5 py-0.5 text-2xs transition-colors"
+              style={{
+                background: months === month ? 'var(--accent)' : 'var(--bg-2)',
+                color: months === month ? 'var(--accent-fg, #fff)' : 'var(--fg-dim)',
+                border: `1px solid ${months === month ? 'var(--accent-edge)' : 'var(--border-subtle)'}`,
+              }}
+            >
+              {month} мес
             </button>
+          ))}
+        </div>
+      </div>
+      <div className="flex-1 overflow-y-auto p-2">
+        {show ? (
+          <SkeletonList rows={4} height="28px" />
+        ) : data.length === 0 ? (
+          <div className="flex h-full items-center justify-center text-xs" style={{ color: 'var(--fg-faint)' }}>
+            Действий за период нет
           </div>
-        ) : showSkeleton ? (
-          <SkeletonList rows={6} height="var(--h-row)" />
-        ) : items.length === 0 ? (
-          <EmptyState icon={<Inbox size={20} />} title="РџСѓСЃС‚Рѕ" className="py-10" />
         ) : (
-          items.map(app => <ApplicationCard key={app.id} application={app} compact />)
+          <div className="space-y-1">
+            {data.map(entry => (
+              <div
+                key={entry.id}
+                className="flex items-center justify-between gap-2 rounded px-2 py-1 text-xs"
+                style={{ background: 'var(--bg-1)' }}
+              >
+                <span className="truncate" style={{ color: 'var(--fg-dim)' }}>
+                  {entry.description}
+                </span>
+                <span className="flex shrink-0 gap-2 text-2xs" style={{ color: 'var(--fg-faint)' }}>
+                  <span className="font-mono">{entry.actor_name}</span>
+                  <span>{formatRelative(entry.occurred_at)}</span>
+                </span>
+              </div>
+            ))}
+          </div>
         )}
       </div>
-    </aside>
+    </div>
   )
 }
 
@@ -258,8 +348,8 @@ function AssetModal({
         ) : !url ? (
           <EmptyState
             icon={<FileText size={20} />}
-            title="Р¤Р°Р№Р» РЅРµ Р·Р°РіСЂСѓР¶РµРЅ"
-            description="Р”Р»СЏ СЌС‚РѕРіРѕ СЌРєСЂР°РЅР° РїРѕРєР° РЅРµС‚ РІР»РѕР¶РµРЅРёСЏ"
+            title="Файл не загружен"
+            description="Для этого экрана пока нет вложения"
           />
         ) : isPdfUrl(url) ? (
           <iframe
@@ -279,9 +369,9 @@ function AssetModal({
       </Modal.Body>
       <Modal.Footer>
         <Button variant="ghost" onClick={onClose}>
-          Р—Р°РєСЂС‹С‚СЊ
+          Закрыть
         </Button>
-        {url ? <ActionLink href={url} label="РЎРєР°С‡Р°С‚СЊ" icon={<Download size={12} />} /> : null}
+        {url ? <ActionLink href={url} label="Скачать" icon={<Download size={12} />} /> : null}
       </Modal.Footer>
     </Modal>
   )
@@ -319,8 +409,8 @@ function ContactsModal({
         ) : !detail || detail.contacts.length === 0 ? (
           <EmptyState
             icon={<Phone size={20} />}
-            title="РљРѕРЅС‚Р°РєС‚РѕРІ РЅРµС‚"
-            description="Р”Р»СЏ СЌС‚РѕРіРѕ СЌРєСЂР°РЅР° РµС‰С‘ РЅРµ РґРѕР±Р°РІРёР»Рё РєРѕРЅС‚Р°РєС‚-Р»РёСЃС‚"
+            title="Контактов нет"
+            description="Для этого экрана ещё не добавили контакт-лист"
           />
         ) : (
           <div className="space-y-2">
@@ -332,20 +422,20 @@ function ContactsModal({
               >
                 <div className="min-w-0">
                   <div className="truncate text-sm font-medium" style={{ color: 'var(--fg)' }}>
-                    {contact.full_name || 'Р‘РµР· РёРјРµРЅРё'}
+                    {contact.full_name || 'Без имени'}
                   </div>
                   <div className="mt-1 text-xs" style={{ color: 'var(--fg-mute)' }}>
-                    {contact.description || 'Р‘РµР· РґРѕР»Р¶РЅРѕСЃС‚Рё'}
+                    {contact.description || 'Без должности'}
                   </div>
                   <div className="mt-1 text-xs font-mono" style={{ color: 'var(--fg-faint)' }}>
-                    {contact.phone || 'РўРµР»РµС„РѕРЅ РЅРµ СѓРєР°Р·Р°РЅ'}
+                    {contact.phone || 'Телефон не указан'}
                   </div>
                 </div>
 
                 <div className="flex shrink-0 items-center gap-2">
                   {contact.phone ? (
                     <a href={`tel:${contact.phone}`}>
-                      <Button variant="ghost" size="sm">РџРѕР·РІРѕРЅРёС‚СЊ</Button>
+                      <Button variant="ghost" size="sm">Позвонить</Button>
                     </a>
                   ) : null}
                   <Button
@@ -356,7 +446,7 @@ function ContactsModal({
                     data-testid={`contact-copy-${contact.id}`}
                     disabled={!contact.phone}
                   >
-                    {copiedId === contact.id ? 'РЎРєРѕРїРёСЂРѕРІР°РЅРѕ' : 'РљРѕРїРёСЂРѕРІР°С‚СЊ'}
+                    {copiedId === contact.id ? 'Скопировано' : 'Копировать'}
                   </Button>
                 </div>
               </div>
@@ -415,12 +505,12 @@ function PhotoBankModal({
       }
       await onRefresh()
       if (inputRef.current) inputRef.current.value = ''
-      toast.success('Р¤РѕС‚РѕРіСЂР°С„РёРё Р·Р°РіСЂСѓР¶РµРЅС‹')
+      toast.success('Фотографии загружены')
     } catch (uploadError: unknown) {
       const detailMessage = (
         uploadError as { response?: { data?: { detail?: string } } }
       )?.response?.data?.detail
-      setError(detailMessage ?? 'РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ С„РѕС‚РѕРіСЂР°С„РёРё')
+      setError(detailMessage ?? 'Не удалось загрузить фотографии')
     } finally {
       setUploading(false)
     }
@@ -433,12 +523,12 @@ function PhotoBankModal({
       await apiClient.delete(`/displays/${slug}/photos/${photoToDelete.id}/`)
       await onRefresh()
       setPhotoToDelete(null)
-      toast.success('Р¤РѕС‚Рѕ СѓРґР°Р»РµРЅРѕ')
+      toast.success('Фото удалено')
     } catch (deleteError: unknown) {
       const detailMessage = (
         deleteError as { response?: { data?: { detail?: string } } }
       )?.response?.data?.detail
-      setError(detailMessage ?? 'РќРµ СѓРґР°Р»РѕСЃСЊ СѓРґР°Р»РёС‚СЊ С„РѕС‚Рѕ')
+      setError(detailMessage ?? 'Не удалось удалить фото')
       throw deleteError
     }
   }
@@ -454,10 +544,10 @@ function PhotoBankModal({
             >
               <div>
                 <div className="text-sm font-medium" style={{ color: 'var(--fg)' }}>
-                  Р”РѕР±Р°РІРёС‚СЊ С„РѕС‚РѕРіСЂР°С„РёРё
+                  Добавить фотографии
                 </div>
                 <div className="mt-1 text-xs" style={{ color: 'var(--fg-mute)' }}>
-                  РњРѕР¶РЅРѕ РІС‹Р±СЂР°С‚СЊ СЃСЂР°Р·Сѓ РЅРµСЃРєРѕР»СЊРєРѕ С„Р°Р№Р»РѕРІ
+                  Можно выбрать сразу несколько файлов
                 </div>
               </div>
               <label
@@ -469,7 +559,7 @@ function PhotoBankModal({
                 }}
               >
                 <Upload size={12} />
-                {uploading ? 'Р—Р°РіСЂСѓР·РєР°...' : 'Р’С‹Р±СЂР°С‚СЊ С„Р°Р№Р»С‹'}
+                {uploading ? 'Загрузка...' : 'Выбрать файлы'}
                 <input
                   ref={inputRef}
                   type="file"
@@ -497,8 +587,8 @@ function PhotoBankModal({
           ) : !detail || detail.photos.length === 0 ? (
             <EmptyState
               icon={<Camera size={20} />}
-              title="Р¤РѕС‚РѕР±Р°РЅРє РїСѓСЃС‚"
-              description="Р”Р»СЏ СЌС‚РѕРіРѕ СЌРєСЂР°РЅР° РїРѕРєР° РЅРµС‚ Р·Р°РіСЂСѓР¶РµРЅРЅС‹С… С„РѕС‚РѕРіСЂР°С„РёР№"
+              title="Фотобанк пуст"
+              description="Для этого экрана пока нет загруженных фотографий"
             />
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
@@ -509,13 +599,13 @@ function PhotoBankModal({
                   style={{ borderColor: 'var(--border-subtle)', background: 'var(--bg-0)' }}
                 >
                   {photo.url ? (
-                    <img src={photo.url} alt={`Р¤РѕС‚Рѕ ${photo.id}`} className="h-44 w-full object-cover" />
+                    <img src={photo.url} alt={`Фото ${photo.id}`} className="h-44 w-full object-cover" />
                   ) : (
                     <div
                       className="flex h-44 items-center justify-center text-xs"
                       style={{ color: 'var(--fg-faint)' }}
                     >
-                      РќРµС‚ РїСЂРµРІСЊСЋ
+                      Нет превью
                     </div>
                   )}
                   <div className="flex items-center justify-between gap-2 px-3 py-2">
@@ -524,7 +614,7 @@ function PhotoBankModal({
                     </span>
                     <div className="flex items-center gap-2">
                       {photo.url ? (
-                        <ActionLink href={photo.url} label="РћС‚РєСЂС‹С‚СЊ" icon={<Download size={12} />} />
+                        <ActionLink href={photo.url} label="Открыть" icon={<Download size={12} />} />
                       ) : null}
                       {canManage ? (
                         <Button
@@ -537,7 +627,7 @@ function PhotoBankModal({
                           }}
                           data-testid={`photo-delete-${photo.id}`}
                         >
-                          РЈРґР°Р»РёС‚СЊ
+                          Удалить
                         </Button>
                       ) : null}
                     </div>
@@ -552,13 +642,13 @@ function PhotoBankModal({
       <ConfirmDialog
         {...confirmDelete.props}
         onConfirm={handleDelete}
-        title="РЈРґР°Р»РёС‚СЊ С„РѕС‚Рѕ?"
+        title="Удалить фото?"
         description={
           photoToDelete
-            ? `Р¤РѕС‚РѕРіСЂР°С„РёСЏ #${photoToDelete.id} Р±СѓРґРµС‚ СѓРґР°Р»РµРЅР° Р±РµР· РІРѕР·РјРѕР¶РЅРѕСЃС‚Рё РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёСЏ.`
-            : 'Р¤РѕС‚РѕРіСЂР°С„РёСЏ Р±СѓРґРµС‚ СѓРґР°Р»РµРЅР° Р±РµР· РІРѕР·РјРѕР¶РЅРѕСЃС‚Рё РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёСЏ.'
+            ? `Фотография #${photoToDelete.id} будет удалена без возможности восстановления.`
+            : 'Фотография будет удалена без возможности восстановления.'
         }
-        confirmText="РЈРґР°Р»РёС‚СЊ"
+        confirmText="Удалить"
         variant="danger"
       />
     </>
@@ -628,7 +718,7 @@ function DisplayRow({
             type="button"
             onClick={() => onOpenAction('schematic', display)}
             className="icon-btn"
-            title="Р­Р»РµРєС‚СЂРѕСЃС…РµРјР°"
+            title="Электросхема"
             data-testid={`display-action-schematic-${display.slug}`}
           >
             <Cpu size={13} />
@@ -637,7 +727,7 @@ function DisplayRow({
             type="button"
             onClick={() => onOpenAction('project', display)}
             className="icon-btn"
-            title="РџСЂРѕРµРєС‚"
+            title="Проект"
             data-testid={`display-action-project-${display.slug}`}
           >
             <FileText size={13} />
@@ -646,7 +736,7 @@ function DisplayRow({
             type="button"
             onClick={() => onOpenAction('contacts', display)}
             className="icon-btn"
-            title="РљРѕРЅС‚Р°РєС‚С‹"
+            title="Контакты"
             data-testid={`display-action-contacts-${display.slug}`}
           >
             <Phone size={13} />
@@ -655,7 +745,7 @@ function DisplayRow({
             type="button"
             onClick={() => onOpenAction('photos', display)}
             className="icon-btn"
-            title="Р¤РѕС‚РѕР±Р°РЅРє"
+            title="Фотобанк"
             data-testid={`display-action-photos-${display.slug}`}
           >
             <Camera size={13} />
@@ -666,7 +756,7 @@ function DisplayRow({
           <Link
             to={`/zip/${display.slug}`}
             className="inline-flex items-center gap-1 hover:text-fg-dim"
-            title="Р—РРџ СЌРєСЂР°РЅР°"
+            title="ЗИП экрана"
             data-testid={`quicklink-zip-${display.slug}`}
           >
             <Package size={11} /> Р—РРџ
@@ -674,7 +764,7 @@ function DisplayRow({
           <Link
             to={`/control/${display.city.slug}/${display.slug}`}
             className="inline-flex items-center gap-1 hover:text-fg-dim"
-            title="Р’СЃРµ Р·Р°СЏРІРєРё РїРѕ СЌРєСЂР°РЅСѓ"
+            title="Все заявки по экрану"
             data-testid={`quicklink-applications-${display.slug}`}
           >
             <ClipboardList size={11} /> Р—Р°СЏРІРєРё
@@ -682,10 +772,10 @@ function DisplayRow({
           <Link
             to={`/${department}/${display.city.slug}/${display.slug}?tab=history`}
             className="inline-flex items-center gap-1 hover:text-fg-dim"
-            title="Р–СѓСЂРЅР°Р» СЃРѕР±С‹С‚РёР№ РїРѕ СЌРєСЂР°РЅСѓ"
+            title="Журнал событий по экрану"
             data-testid={`quicklink-history-${display.slug}`}
           >
-            <Activity size={11} /> РСЃС‚РѕСЂРёСЏ
+            <Activity size={11} /> История
           </Link>
         </div>
       </div>
@@ -729,7 +819,7 @@ function CityBlock({
             {city.name}
           </span>
           <span className="text-xs" style={{ color: 'var(--fg-mute)' }}>
-            {displays.length} СЌРєСЂР°РЅРѕРІ
+            {displays.length} экранов
           </span>
         </div>
       </button>
@@ -754,6 +844,7 @@ function CityBlock({
 export function DepartmentListPage({ department }: { department: Dept }) {
   const { citySlug } = useParams<{ citySlug?: string }>()
   const { setCrumb } = useCrumb()
+  const { data: me } = useMe()
   const { data: cities = [], isLoading: citiesLoading, error: citiesError } = useCities()
   const {
     data: displays = [],
@@ -765,6 +856,7 @@ export function DepartmentListPage({ department }: { department: Dept }) {
   const [sortBy, setSortBy] = useState<SortOption>(readPersistedSort)
   const [cityQuery, setCityQuery] = useState('')
   const [activeAction, setActiveAction] = useState<DisplayActionState>(null)
+  const showActivityFeed = Boolean((me as { show_activity_feed?: boolean } | undefined)?.show_activity_feed)
 
   const config = DEPT_CONFIG[department]
   const showSkeleton = useDeferredLoading(citiesLoading || displaysLoading)
@@ -843,8 +935,8 @@ export function DepartmentListPage({ department }: { department: Dept }) {
               >
                 <Clock size={11} />
                 <span>
-                  {groups.length} РіРѕСЂРѕРґРѕРІ В·{' '}
-                  {groups.reduce((sum, group) => sum + group.displays.length, 0)} СЌРєСЂР°РЅРѕРІ
+                  {groups.length} городов ·{' '}
+                  {groups.reduce((sum, group) => sum + group.displays.length, 0)} экранов
                 </span>
               </div>
             </div>
@@ -859,7 +951,7 @@ export function DepartmentListPage({ department }: { department: Dept }) {
                   />
                   <input
                     type="search"
-                    placeholder="Р“РѕСЂРѕРґ..."
+                    placeholder="Город..."
                     value={cityQuery}
                     onChange={event => setCityQuery(event.target.value)}
                     className="input pl-7"
@@ -895,9 +987,9 @@ export function DepartmentListPage({ department }: { department: Dept }) {
               style={{ color: 'var(--err)' }}
             >
               <AlertTriangle size={22} />
-              <span>РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ СЃРїРёСЃРѕРє СЌРєСЂР°РЅРѕРІ</span>
+              <span>Не удалось загрузить список экранов</span>
               <button className="btn btn-secondary sm" onClick={() => refetch()}>
-                РџРѕРІС‚РѕСЂРёС‚СЊ
+                Повторить
               </button>
             </div>
           ) : showSkeleton ? (
@@ -925,14 +1017,14 @@ export function DepartmentListPage({ department }: { department: Dept }) {
             cityQuery ? (
               <EmptyState
                 icon={<SearchX size={24} />}
-                title="Р“РѕСЂРѕРґРѕРІ РЅРµ РЅР°Р№РґРµРЅРѕ"
-                description={`РџРѕ Р·Р°РїСЂРѕСЃСѓ В«${cityQuery}В» РЅРёС‡РµРіРѕ РЅРµ РЅР°С€Р»РѕСЃСЊ`}
+                title="Городов не найдено"
+                description={`По запросу «${cityQuery}» ничего не нашлось`}
               />
             ) : (
               <EmptyState
                 icon={<Building2 size={24} />}
-                title="РќРµС‚ РґРѕСЃС‚СѓРїРЅС‹С… СЌРєСЂР°РЅРѕРІ"
-                description="РџРѕРїСЂРѕСЃРёС‚Рµ Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР° РґРѕР±Р°РІРёС‚СЊ РіРѕСЂРѕРґР°"
+                title="Нет доступных экранов"
+                description="Попросите администратора добавить города"
               />
             )
           ) : (
@@ -951,7 +1043,11 @@ export function DepartmentListPage({ department }: { department: Dept }) {
         </main>
 
         <div className="hidden min-h-0 md:block">
-          <SideRail department={department} activeCity={activeCity} />
+          <SideRail
+            department={department}
+            activeCity={activeCity}
+            showActivityFeed={showActivityFeed}
+          />
         </div>
       </div>
 
@@ -959,7 +1055,7 @@ export function DepartmentListPage({ department }: { department: Dept }) {
         <AssetModal
           open
           onClose={closeAction}
-          title={`Р­Р»РµРєС‚СЂРѕСЃС…РµРјР° · ${activeAction.display.description ?? activeAction.display.name}`}
+          title={`Электросхема · ${activeAction.display.description ?? activeAction.display.name}`}
           url={activeDisplayDetail?.file_url ?? null}
           loading={detailLoading}
         />
@@ -969,7 +1065,7 @@ export function DepartmentListPage({ department }: { department: Dept }) {
         <AssetModal
           open
           onClose={closeAction}
-          title={`РџСЂРѕРµРєС‚ · ${activeAction.display.description ?? activeAction.display.name}`}
+          title={`Проект · ${activeAction.display.description ?? activeAction.display.name}`}
           url={activeDisplayDetail?.project_photo_url ?? null}
           loading={detailLoading}
         />
@@ -979,7 +1075,7 @@ export function DepartmentListPage({ department }: { department: Dept }) {
         <ContactsModal
           open
           onClose={closeAction}
-          title={`РљРѕРЅС‚Р°РєС‚С‹ · ${activeAction.display.description ?? activeAction.display.name}`}
+          title={`Контакты · ${activeAction.display.description ?? activeAction.display.name}`}
           detail={activeDisplayDetail}
           loading={detailLoading}
         />
@@ -989,7 +1085,7 @@ export function DepartmentListPage({ department }: { department: Dept }) {
         <PhotoBankModal
           open
           onClose={closeAction}
-          title={`Р¤РѕС‚РѕР±Р°РЅРє · ${activeAction.display.description ?? activeAction.display.name}`}
+          title={`Фотобанк · ${activeAction.display.description ?? activeAction.display.name}`}
           slug={activeAction.display.slug}
           detail={activeDisplayDetail}
           loading={detailLoading}

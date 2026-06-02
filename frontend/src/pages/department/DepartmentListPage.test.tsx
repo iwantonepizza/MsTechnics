@@ -19,13 +19,13 @@ const mockDisplays = [
       color: { id: 100, name: 'yellow', hex: '#ffcc00' },
       icon: { id: 1, unicode_symbol: '!' },
     },
-    city: { id: 1, name: 'Р•РєР°С‚РµСЂРёРЅР±СѓСЂРі', slug: 'ekb' },
+    city: { id: 1, name: 'Екатеринбург', slug: 'ekb' },
   },
   {
     id: 2,
     slug: 'ekb-2',
     name: 'display-2',
-    description: 'Р‘РµС‚Р°',
+    description: 'Бета',
     rows: 10,
     cols: 10,
     aggregated_condition: {
@@ -35,7 +35,7 @@ const mockDisplays = [
       color: { id: 101, name: 'green', hex: '#00aa55' },
       icon: { id: 2, unicode_symbol: '+' },
     },
-    city: { id: 1, name: 'Р•РєР°С‚РµСЂРёРЅР±СѓСЂРі', slug: 'ekb' },
+    city: { id: 1, name: 'Екатеринбург', slug: 'ekb' },
   },
   {
     id: 3,
@@ -51,7 +51,7 @@ const mockDisplays = [
     id: 4,
     slug: 'kzn-1',
     name: 'display-4',
-    description: 'Р“Р°РјРјР°',
+    description: 'Гамма',
     rows: 8,
     cols: 8,
     aggregated_condition: {
@@ -61,14 +61,14 @@ const mockDisplays = [
       color: { id: 102, name: 'red', hex: '#dd3344' },
       icon: { id: 3, unicode_symbol: 'x' },
     },
-    city: { id: 3, name: 'РљР°Р·Р°РЅСЊ', slug: 'kzn' },
+    city: { id: 3, name: 'Казань', slug: 'kzn' },
   },
 ]
 
 const mockCities = [
-  { id: 1, name: 'Р•РєР°С‚РµСЂРёРЅР±СѓСЂРі', slug: 'ekb' },
+  { id: 1, name: 'Екатеринбург', slug: 'ekb' },
   { id: 2, name: 'РњРѕСЃРєРІР°', slug: 'msk' },
-  { id: 3, name: 'РљР°Р·Р°РЅСЊ', slug: 'kzn' },
+  { id: 3, name: 'Казань', slug: 'kzn' },
 ]
 
 const mockDisplayDetail = {
@@ -78,14 +78,14 @@ const mockDisplayDetail = {
   description: 'РђР»СЊС„Р°',
   rows: 4,
   cols: 4,
-  city: { id: 1, name: 'Р•РєР°С‚РµСЂРёРЅР±СѓСЂРі', slug: 'ekb' },
+  city: { id: 1, name: 'Екатеринбург', slug: 'ekb' },
   file_url: '/media/schematics/ekb-1.pdf',
   project_photo_url: '/media/projects/ekb-1.jpg',
   contacts: [
     {
       id: 7,
-      full_name: 'РРІР°РЅ РџРµС‚СЂРѕРІ',
-      description: 'Р­Р»РµРєС‚СЂРёРє',
+      full_name: 'Иван Петров',
+      description: 'Электрик',
       phone: '+79001234567',
       telegram_id: null,
     },
@@ -103,6 +103,15 @@ const mockDisplayDetail = {
 const mockApiPost = vi.fn()
 const mockApiDelete = vi.fn()
 const mockRefetchDetail = vi.fn()
+let mockShowActivityFeed = true
+const mockActivityEntries = [
+  {
+    id: 501,
+    description: 'Panel moved',
+    actor_name: 'dispatcher',
+    occurred_at: '2026-05-30T10:00:00Z',
+  },
+]
 
 vi.mock('@/entities/display/hooks', () => ({
   useDisplays: vi.fn(() => ({ data: mockDisplays, isLoading: false, error: null, refetch: vi.fn() })),
@@ -120,6 +129,22 @@ vi.mock('@/entities/application/hooks', () => ({
     isLoading: false,
     error: null,
     refetch: vi.fn(),
+  })),
+}))
+
+vi.mock('@/entities/activity/hooks', () => ({
+  useActivityLog: vi.fn(() => ({
+    data: mockActivityEntries,
+    isLoading: false,
+  })),
+}))
+
+vi.mock('@/features/auth/hooks', () => ({
+  useMe: vi.fn(() => ({
+    data: {
+      permission: 'monitoring',
+      show_activity_feed: mockShowActivityFeed,
+    },
   })),
 }))
 
@@ -164,6 +189,7 @@ function renderPage(
 
 beforeEach(() => {
   sessionStorage.clear()
+  mockShowActivityFeed = true
   mockApiPost.mockReset()
   mockApiDelete.mockReset()
   mockRefetchDetail.mockReset()
@@ -187,9 +213,9 @@ describe('DepartmentListPage - merged sort/filter/quick-links', () => {
   it('renders 3 city groups with default name-asc sort inside each', () => {
     renderPage()
 
-    expect(screen.getByText('Р•РєР°С‚РµСЂРёРЅР±СѓСЂРі')).toBeInTheDocument()
+    expect(screen.getByText('Екатеринбург')).toBeInTheDocument()
     expect(screen.getByText('РњРѕСЃРєРІР°')).toBeInTheDocument()
-    expect(screen.getByText('РљР°Р·Р°РЅСЊ')).toBeInTheDocument()
+    expect(screen.getByText('Казань')).toBeInTheDocument()
 
     const ekbCards = [
       screen.getByTestId('display-card-ekb-1'),
@@ -197,7 +223,7 @@ describe('DepartmentListPage - merged sort/filter/quick-links', () => {
     ]
 
     expect(within(ekbCards[0]).getByText('РђР»СЊС„Р°')).toBeInTheDocument()
-    expect(within(ekbCards[1]).getByText('Р‘РµС‚Р°')).toBeInTheDocument()
+    expect(within(ekbCards[1]).getByText('Бета')).toBeInTheDocument()
   })
 
   it('shows city filter when there are at least 3 cities and filters groups by substring', () => {
@@ -206,20 +232,20 @@ describe('DepartmentListPage - merged sort/filter/quick-links', () => {
     const filter = screen.getByTestId('city-filter').querySelector('input') as HTMLInputElement
     expect(filter).toBeInTheDocument()
 
-    fireEvent.change(filter, { target: { value: 'РљР°Р·' } })
+    fireEvent.change(filter, { target: { value: 'Каз' } })
 
-    expect(screen.getByText('РљР°Р·Р°РЅСЊ')).toBeInTheDocument()
+    expect(screen.getByText('Казань')).toBeInTheDocument()
     expect(screen.queryByText('РњРѕСЃРєРІР°')).not.toBeInTheDocument()
-    expect(screen.queryByText('Р•РєР°С‚РµСЂРёРЅР±СѓСЂРі')).not.toBeInTheDocument()
+    expect(screen.queryByText('Екатеринбург')).not.toBeInTheDocument()
   })
 
   it('shows empty-state when city filter has no matches', () => {
     renderPage()
 
     const filter = screen.getByTestId('city-filter').querySelector('input') as HTMLInputElement
-    fireEvent.change(filter, { target: { value: 'РЅРµС‚С‚Р°РєРѕРіРѕ' } })
+    fireEvent.change(filter, { target: { value: 'неттакого' } })
 
-    expect(screen.getByText('Р“РѕСЂРѕРґРѕРІ РЅРµ РЅР°Р№РґРµРЅРѕ')).toBeInTheDocument()
+    expect(screen.getByText('Городов не найдено')).toBeInTheDocument()
   })
 
   it('size-desc sort puts larger displays first inside city', () => {
@@ -229,7 +255,7 @@ describe('DepartmentListPage - merged sort/filter/quick-links', () => {
     fireEvent.change(select, { target: { value: 'size-desc' } })
 
     const ekbCards = screen.getAllByTestId(/^display-card-ekb-/)
-    expect(within(ekbCards[0]).getByText('Р‘РµС‚Р°')).toBeInTheDocument()
+    expect(within(ekbCards[0]).getByText('Бета')).toBeInTheDocument()
     expect(within(ekbCards[1]).getByText('РђР»СЊС„Р°')).toBeInTheDocument()
   })
 
@@ -242,6 +268,13 @@ describe('DepartmentListPage - merged sort/filter/quick-links', () => {
       'href',
       '/monitoring/ekb/ekb-1?tab=history',
     )
+  })
+
+  it('shows the activity feed in the side rail when enabled for the user', () => {
+    renderPage()
+
+    expect(screen.getByTestId('department-activity-feed')).toBeInTheDocument()
+    expect(screen.getByText('Panel moved')).toBeInTheDocument()
   })
 
   it('persists sort choice via sessionStorage across remounts', () => {
@@ -258,9 +291,9 @@ describe('DepartmentListPage - merged sort/filter/quick-links', () => {
   it('filters displays by route citySlug', () => {
     renderPage('/monitoring/ekb')
 
-    expect(screen.getByText('Р•РєР°С‚РµСЂРёРЅР±СѓСЂРі')).toBeInTheDocument()
+    expect(screen.getByText('Екатеринбург')).toBeInTheDocument()
     expect(screen.queryByText('РњРѕСЃРєРІР°')).not.toBeInTheDocument()
-    expect(screen.queryByText('РљР°Р·Р°РЅСЊ')).not.toBeInTheDocument()
+    expect(screen.queryByText('Казань')).not.toBeInTheDocument()
   })
 
   it('renders 4 action buttons for each display', () => {
@@ -287,10 +320,10 @@ describe('DepartmentListPage - merged sort/filter/quick-links', () => {
 
     fireEvent.click(screen.getByTestId('display-action-contacts-ekb-1'))
 
-    expect(await screen.findByText(/РљРѕРЅС‚Р°РєС‚С‹/)).toBeInTheDocument()
-    expect(screen.getByText('РРІР°РЅ РџРµС‚СЂРѕРІ')).toBeInTheDocument()
-    expect(screen.getByText('Р­Р»РµРєС‚СЂРёРє')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'РџРѕР·РІРѕРЅРёС‚СЊ' })).toHaveAttribute(
+    expect(await screen.findByText(/Контакты/)).toBeInTheDocument()
+    expect(screen.getByText('Иван Петров')).toBeInTheDocument()
+    expect(screen.getByText('Электрик')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Позвонить' })).toHaveAttribute(
       'href',
       'tel:+79001234567',
     )
@@ -301,8 +334,8 @@ describe('DepartmentListPage - merged sort/filter/quick-links', () => {
 
     fireEvent.click(screen.getByTestId('display-action-schematic-ekb-1'))
 
-    expect(await screen.findByText(/Р­Р»РµРєС‚СЂРѕСЃС…РµРјР°/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'РЎРєР°С‡Р°С‚СЊ' })).toHaveAttribute(
+    expect(await screen.findByText(/Электросхема/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Скачать' })).toHaveAttribute(
       'href',
       '/media/schematics/ekb-1.pdf',
     )

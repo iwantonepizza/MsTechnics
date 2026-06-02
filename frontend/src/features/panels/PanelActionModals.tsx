@@ -326,7 +326,7 @@ export function PanelRemovalModal({
   onRemoved?: () => void
 }) {
   const applicationContext = applicationId != null
-  const subtitle = applicationContext ? `Р—Р°РєСЂС‹С‚РёРµ Р·Р°СЏРІРєРё #${applicationId}` : `РЎРЅСЏС‚РёРµ РїР°РЅРµР»Рё ${panel.name}`
+  const subtitle = applicationContext ? `Закрытие заявки #${applicationId}` : `Снятие панели ${panel.name}`
   const conditions = useConditions()
   const mutation = useRemovePanel()
   const schema = buildRemovalSchema(applicationContext)

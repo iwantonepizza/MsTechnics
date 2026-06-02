@@ -113,7 +113,7 @@ function PanelColumn({
   const { data = [], isLoading } = usePanels({
     department: dept.key,
     display: displayId,
-    fetchAll: Boolean(displayId),
+    fetchAll: true,
   })
   const show = useDeferredLoading(isLoading)
   const changeDept = useChangeDepartment()

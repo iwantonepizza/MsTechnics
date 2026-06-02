@@ -261,6 +261,19 @@ describe('DisplayViewPage role matrix', () => {
     expect(screen.getByTestId('display-view-rail-column').className).toContain('lg:w-[320px]')
   })
 
+  it('renders camera, daily tasks, and notes inside the right rail', () => {
+    renderPage('monitoring')
+
+    const rail = screen.getByTestId('display-view-rail-column')
+    const grid = screen.getByTestId('display-view-grid-column')
+
+    expect(rail).toContainElement(screen.getByTestId('display-camera-card'))
+    expect(rail).toContainElement(screen.getByTestId('daily-tasks'))
+    expect(rail).toContainElement(screen.getByTestId('display-notes'))
+    expect(grid).not.toContainElement(screen.getByTestId('daily-tasks'))
+    expect(grid).not.toContainElement(screen.getByTestId('display-notes'))
+  })
+
   it('service can install panel into empty cell', () => {
     mockPermission = 'service'
     renderPage('service')
@@ -282,6 +295,22 @@ describe('DisplayViewPage role matrix', () => {
     })
 
     expect(screen.getByRole('button', { name: 'Открыть камеру' })).toBeInTheDocument()
+    vi.useRealTimers()
+  })
+
+  it('keeps embedded camera visible after a successful load event', () => {
+    vi.useFakeTimers()
+    renderPage('monitoring')
+
+    const iframe = screen.getByTitle('Камера экрана')
+    fireEvent.load(iframe)
+
+    act(() => {
+      vi.advanceTimersByTime(5000)
+    })
+
+    expect(screen.getByTitle('Камера экрана')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Открыть камеру' })).not.toBeInTheDocument()
     vi.useRealTimers()
   })
 

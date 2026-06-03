@@ -48,7 +48,7 @@ exports[`PanelRemovalModal > renders application-context mode 1`] = `
         class="sr-only"
         id="radix-:r2:"
       >
-        Р—Р°РєСЂС‹С‚РёРµ Р·Р°СЏРІРєРё #42
+        Закрытие заявки #42
       </p>
       <button
         aria-label="Закрыть"
@@ -221,7 +221,7 @@ exports[`PanelRemovalModal > renders manual mode with active-application warning
         class="sr-only"
         id="radix-:r5:"
       >
-        РЎРЅСЏС‚РёРµ РїР°РЅРµР»Рё P-002
+        Снятие панели P-002
       </p>
       <button
         aria-label="Закрыть"

@@ -250,17 +250,17 @@ describe('DisplayViewPage role matrix', () => {
     expect(screen.queryByTestId('display-camera-card')).not.toBeInTheDocument()
   })
 
-  it('keeps mobile-first stacked layout classes on display view columns', () => {
+  it('renders resizable layout handles for desktop panes', () => {
     renderPage('monitoring')
 
-    expect(screen.getByTestId('display-view-layout').className).toContain('flex-col')
-    expect(screen.getByTestId('display-view-layout').className).toContain('lg:flex-row')
+    expect(screen.getByTestId('display-view-layout').className).toContain('display-view-resizable')
     expect(screen.getByTestId('display-view-grid-column').className).toContain('border-b')
     expect(screen.getByTestId('display-view-grid-column').className).toContain('lg:border-r')
     expect(screen.getByTestId('display-view-detail-column').className).toContain('w-full')
-    expect(screen.getByTestId('display-view-detail-column').className).toContain('lg:w-[360px]')
     expect(screen.getByTestId('display-view-rail-column').className).toContain('w-full')
-    expect(screen.getByTestId('display-view-rail-column').className).toContain('lg:w-[320px]')
+    expect(screen.getByTestId('display-detail-resize-handle')).toBeInTheDocument()
+    expect(screen.getByTestId('display-rail-resize-handle')).toBeInTheDocument()
+    expect(screen.getByTestId('display-rail-main-resize-handle')).toBeInTheDocument()
   })
 
   it('renders camera, daily tasks, and notes inside the right rail', () => {

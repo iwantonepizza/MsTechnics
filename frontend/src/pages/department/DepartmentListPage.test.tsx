@@ -275,6 +275,9 @@ describe('DepartmentListPage - merged sort/filter/quick-links', () => {
   it('shows the activity feed in the side rail when enabled for the user', () => {
     renderPage()
 
+    expect(screen.getByTestId('department-list-layout').className).toContain('department-list-layout')
+    expect(screen.getByTestId('department-rail-resize-handle')).toBeInTheDocument()
+    expect(screen.getByTestId('department-activity-resize-handle')).toBeInTheDocument()
     expect(screen.getByTestId('department-activity-feed')).toBeInTheDocument()
     expect(screen.getByText('Panel moved')).toBeInTheDocument()
   })

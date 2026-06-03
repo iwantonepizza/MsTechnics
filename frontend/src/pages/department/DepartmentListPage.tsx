@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import type { CSSProperties, PointerEventHandler } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
   Activity,
@@ -33,12 +34,14 @@ import { useCities, useDisplayDetail, useDisplays } from '@/entities/display/hoo
 import { useMe } from '@/features/auth/hooks'
 import { apiClient } from '@/shared/api/client'
 import type { City, DisplayDetail, DisplayListItem, DisplayPhoto } from '@/shared/api/types'
+import { useResizableValue, useResizeDrag } from '@/shared/lib/useResizableValue'
 import { formatRelative } from '@/shared/lib/utils'
 import { useDeferredLoading } from '@/shared/lib/useDeferredLoading'
 import { Button } from '@/shared/ui/Button'
 import { ConfirmDialog, useConfirmDialog } from '@/shared/ui/ConfirmDialog'
 import { EmptyState } from '@/shared/ui/EmptyState'
 import { Modal } from '@/shared/ui/Modal'
+import { ResizeHandle } from '@/shared/ui/ResizeHandle'
 import { Skeleton, SkeletonList } from '@/shared/ui/Skeleton'
 import { useCrumb } from '@/widgets/navigation/CrumbContext'
 
@@ -190,10 +193,14 @@ function SideRail({
   department,
   activeCity,
   showActivityFeed,
+  activityHeight,
+  onActivityResize,
 }: {
   department: Dept
   activeCity: string | null
   showActivityFeed: boolean
+  activityHeight: number
+  onActivityResize: PointerEventHandler<HTMLButtonElement>
 }) {
   const config = DEPT_CONFIG[department]
   const { data, isLoading, error, refetch } = useApplications({ box: config.boxForRail })
@@ -247,7 +254,17 @@ function SideRail({
         </div>
       </div>
 
-      {showActivityFeed ? <ActivityFeedBand /> : null}
+      {showActivityFeed ? (
+        <>
+          <ResizeHandle
+            orientation="horizontal"
+            label="Изменить высоту ленты активности"
+            onPointerDown={onActivityResize}
+            testId="department-activity-resize-handle"
+          />
+          <ActivityFeedBand height={activityHeight} />
+        </>
+      ) : null}
     </aside>
   )
 }
@@ -258,7 +275,7 @@ function monthsAgoIso(months: number): string {
   return date.toISOString()
 }
 
-function ActivityFeedBand() {
+function ActivityFeedBand({ height }: { height: number }) {
   const [months, setMonths] = useState(1)
   const since = monthsAgoIso(months)
   const { data = [], isLoading } = useActivityLog({ feed: true, since, limit: 60 })
@@ -266,8 +283,12 @@ function ActivityFeedBand() {
 
   return (
     <div
-      className="flex h-[170px] shrink-0 flex-col"
-      style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-0)' }}
+      className="flex shrink-0 flex-col"
+      style={{
+        height,
+        borderTop: '1px solid var(--border-subtle)',
+        background: 'var(--bg-0)',
+      }}
       data-testid="department-activity-feed"
     >
       <div
@@ -857,6 +878,34 @@ export function DepartmentListPage({ department }: { department: Dept }) {
   const [cityQuery, setCityQuery] = useState('')
   const [activeAction, setActiveAction] = useState<DisplayActionState>(null)
   const showActivityFeed = Boolean((me as { show_activity_feed?: boolean } | undefined)?.show_activity_feed)
+  const [railWidth, setRailWidth] = useResizableValue({
+    storageKey: `department-list:${department}:rail-width`,
+    defaultValue: 320,
+    min: 260,
+    max: 520,
+  })
+  const [activityHeight, setActivityHeight] = useResizableValue({
+    storageKey: `department-list:${department}:activity-height`,
+    defaultValue: 170,
+    min: 120,
+    max: 420,
+  })
+  const onRailResize = useResizeDrag({
+    value: railWidth,
+    setValue: setRailWidth,
+    axis: 'x',
+    direction: -1,
+    min: 260,
+    max: 520,
+  })
+  const onActivityResize = useResizeDrag({
+    value: activityHeight,
+    setValue: setActivityHeight,
+    axis: 'y',
+    direction: -1,
+    min: 120,
+    max: 420,
+  })
 
   const config = DEPT_CONFIG[department]
   const showSkeleton = useDeferredLoading(citiesLoading || displaysLoading)
@@ -917,8 +966,12 @@ export function DepartmentListPage({ department }: { department: Dept }) {
   return (
     <>
       <div
-        className="grid h-full min-h-0 grid-cols-1 md:grid-cols-[1fr_320px]"
-        style={{ background: 'var(--border-subtle)' }}
+        className="department-list-layout h-full min-h-0"
+        style={{
+          '--department-rail-width': `${railWidth}px`,
+          background: 'var(--border-subtle)',
+        } as CSSProperties}
+        data-testid="department-list-layout"
       >
         <main className="min-h-0 overflow-y-auto bg-bg-0">
           <div
@@ -1042,11 +1095,21 @@ export function DepartmentListPage({ department }: { department: Dept }) {
           )}
         </main>
 
+        <ResizeHandle
+          orientation="vertical"
+          label="Изменить ширину правой панели"
+          className="hidden md:flex"
+          onPointerDown={onRailResize}
+          testId="department-rail-resize-handle"
+        />
+
         <div className="hidden min-h-0 md:block">
           <SideRail
             department={department}
             activeCity={activeCity}
             showActivityFeed={showActivityFeed}
+            activityHeight={activityHeight}
+            onActivityResize={onActivityResize}
           />
         </div>
       </div>

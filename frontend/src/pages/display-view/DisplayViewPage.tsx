@@ -2,7 +2,7 @@
  * Display view: grid | detail | applications/alarms rail.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import {
   Archive,
@@ -44,9 +44,11 @@ import { Badge } from '@/shared/ui/Badge'
 import { Button, type ButtonProps } from '@/shared/ui/Button'
 import { ConfirmDialog, useConfirmDialog } from '@/shared/ui/ConfirmDialog'
 import { Skeleton } from '@/shared/ui/Skeleton'
+import { ResizeHandle } from '@/shared/ui/ResizeHandle'
 import { useDeferredLoading } from '@/shared/lib/useDeferredLoading'
 import { formatDate, getErrorMessage } from '@/shared/lib/utils'
 import { useKeyboard } from '@/shared/lib/useKeyboard'
+import { useResizableValue, useResizeDrag } from '@/shared/lib/useResizableValue'
 import { ApplicationsPanel } from '@/widgets/applications-panel/ApplicationsPanel'
 import { useCrumb } from '@/widgets/navigation/CrumbContext'
 import { DisplayGrid } from '@/widgets/display-grid/DisplayGrid'
@@ -316,6 +318,48 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
   )
   const showCameraCard = department === 'monitoring' && Boolean(display?.camera_link)
   const showDailyTasks = department === 'monitoring' || department === 'control'
+  const [detailWidth, setDetailWidth] = useResizableValue({
+    storageKey: `display-view:${department}:detail-width`,
+    defaultValue: 360,
+    min: 280,
+    max: 560,
+  })
+  const [railWidth, setRailWidth] = useResizableValue({
+    storageKey: `display-view:${department}:rail-width`,
+    defaultValue: 320,
+    min: 280,
+    max: 560,
+  })
+  const [railMainHeight, setRailMainHeight] = useResizableValue({
+    storageKey: `display-view:${department}:rail-main-height`,
+    defaultValue: 360,
+    min: 180,
+    max: 720,
+  })
+  const onDetailResize = useResizeDrag({
+    value: detailWidth,
+    setValue: setDetailWidth,
+    axis: 'x',
+    direction: -1,
+    min: 280,
+    max: 560,
+  })
+  const onRailResize = useResizeDrag({
+    value: railWidth,
+    setValue: setRailWidth,
+    axis: 'x',
+    direction: -1,
+    min: 280,
+    max: 560,
+  })
+  const onRailMainResize = useResizeDrag({
+    value: railMainHeight,
+    setValue: setRailMainHeight,
+    axis: 'y',
+    direction: 1,
+    min: 180,
+    max: 720,
+  })
 
   const selectedAppActions: ApplicationSheetAction[] = [
     ...(canDeleteSelectedApplication
@@ -417,12 +461,17 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
 
   return (
     <div
-      className="display-view-page flex h-full flex-col overflow-y-auto lg:flex-row lg:overflow-hidden"
-      style={{ background: 'var(--bg-0)' }}
+      className="display-view-page display-view-resizable h-full overflow-y-auto lg:overflow-hidden"
+      style={{
+        '--display-detail-width': `${detailWidth}px`,
+        '--display-rail-width': `${railWidth}px`,
+        '--display-rail-main-height': `${railMainHeight}px`,
+        background: 'var(--bg-0)',
+      } as CSSProperties}
       data-testid="display-view-layout"
     >
       <div
-        className="display-view-grid-column flex min-w-0 flex-col border-b lg:flex-1 lg:border-b-0 lg:border-r"
+        className="display-view-grid-column flex min-w-0 flex-col border-b lg:border-b-0 lg:border-r"
         style={{ borderColor: 'var(--border-subtle)' }}
         data-testid="display-view-grid-column"
       >
@@ -453,8 +502,16 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
 
       </div>
 
+      <ResizeHandle
+        orientation="vertical"
+        label="Изменить ширину деталей"
+        className="hidden lg:flex"
+        onPointerDown={onDetailResize}
+        testId="display-detail-resize-handle"
+      />
+
       <div
-        className="display-view-detail-column flex w-full shrink-0 flex-col border-t lg:w-[360px] lg:border-t-0 lg:border-r"
+        className="display-view-detail-column flex w-full shrink-0 flex-col border-t lg:border-t-0 lg:border-r"
         style={{
           borderColor: 'var(--border-subtle)',
           background: 'var(--bg-1)',
@@ -597,8 +654,16 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
         )}
       </div>
 
+      <ResizeHandle
+        orientation="vertical"
+        label="Изменить ширину правой панели"
+        className="hidden lg:flex"
+        onPointerDown={onRailResize}
+        testId="display-rail-resize-handle"
+      />
+
       <div
-        className="display-view-rail-column flex w-full shrink-0 flex-col border-t lg:w-[320px] lg:border-t-0"
+        className="display-view-rail-column flex w-full shrink-0 flex-col border-t lg:border-t-0"
         style={{ borderColor: 'var(--border-subtle)', background: 'var(--bg-0)' }}
         data-testid="display-view-rail-column"
       >
@@ -624,7 +689,7 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
             </button>
           ))}
         </div>
-        <div className="min-h-0 flex-1">
+        <div className="display-view-rail-main">
           {railTab === 'applications' ? (
             <ApplicationsPanel
               displaySlug={display.slug ?? displaySlug ?? ''}
@@ -636,6 +701,13 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
             <AlarmRail alarms={alarms} canCreate={canCreateFromAlarm} onCreate={handleAlarmCreate} />
           )}
         </div>
+        <ResizeHandle
+          orientation="horizontal"
+          label="Изменить высоту заявок"
+          className="hidden lg:flex"
+          onPointerDown={onRailMainResize}
+          testId="display-rail-main-resize-handle"
+        />
         {showCameraCard ? <DisplayCameraCard cameraLink={display.camera_link!} /> : null}
         {showDailyTasks ? (
           <DailyTasksPanel

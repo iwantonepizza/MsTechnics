@@ -17,7 +17,7 @@ export interface DailyTask {
   available: boolean
 }
 
-export function useDailyTasks(cityId?: number | null) {
+export function useDailyTasks(cityId?: number | null, enabled = true) {
   return useQuery({
     queryKey: ['daily-tasks', cityId ?? null],
     queryFn: async () => {
@@ -26,6 +26,7 @@ export function useDailyTasks(cityId?: number | null) {
       })
       return res.data.results ?? []
     },
+    enabled,
     staleTime: 30_000,
   })
 }

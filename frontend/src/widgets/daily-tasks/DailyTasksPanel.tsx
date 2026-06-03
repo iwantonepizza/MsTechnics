@@ -32,8 +32,14 @@ export function DailyTasksPanel({
   defaultOpen?: boolean
 }) {
   const [open, setOpen] = useState(defaultOpen)
-  const { data = [], isLoading } = useDailyTasks(cityId)
+  const scopedTasks = useDailyTasks(cityId)
+  const shouldLoadFallback = Boolean(
+    cityId != null && !scopedTasks.isLoading && (scopedTasks.data?.length ?? 0) === 0,
+  )
+  const fallbackTasks = useDailyTasks(null, shouldLoadFallback)
   const complete = useCompleteDailyTask()
+  const data = shouldLoadFallback ? (fallbackTasks.data ?? []) : (scopedTasks.data ?? [])
+  const isLoading = scopedTasks.isLoading || (shouldLoadFallback && fallbackTasks.isLoading)
 
   const doneCount = data.filter(t => t.status === 'done').length
 

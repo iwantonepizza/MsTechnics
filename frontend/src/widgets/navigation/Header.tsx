@@ -116,7 +116,7 @@ export function Header({ crumb }: HeaderProps) {
         <img
           src="/logo-supersymmetria.svg"
           alt="Суперсимметрия"
-          className="hidden h-5 w-auto sm:block"
+          className="theme-logo hidden h-5 w-auto sm:block"
         />
         <span className="text-sm font-semibold sm:hidden" style={{ color: 'var(--fg)' }}>
           Суперсимметрия

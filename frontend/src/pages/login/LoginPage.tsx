@@ -50,7 +50,7 @@ export function LoginPage() {
           <img
             src="/logo-supersymmetria.svg"
             alt="Суперсимметрия"
-            className="mb-3 h-auto w-[240px]"
+            className="theme-logo mb-3 h-auto w-[240px]"
           />
           <div
             className="text-lg font-semibold"

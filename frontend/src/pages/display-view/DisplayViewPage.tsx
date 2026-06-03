@@ -92,7 +92,6 @@ const ACTION_LABELS: Record<TransitionKind, { Icon: LucideIcon; label: string }>
 }
 
 const ADMIN_ROLES = new Set(['admin', 'all'])
-const MONITORING_EDITABLE_CONDITIONS = new Set(['work', 'problem', 'error', 'broken'])
 const MONITORING_CREATEABLE_CONDITIONS = new Set(['problem', 'error', 'broken', 'unrecoverable'])
 
 interface DisplayViewPageProps {
@@ -108,10 +107,6 @@ interface ApplicationSheetAction {
 
 function isAdminRole(role: string) {
   return ADMIN_ROLES.has(role)
-}
-
-function canMonitoringChangeCondition(conditionName: string | null) {
-  return Boolean(conditionName && MONITORING_EDITABLE_CONDITIONS.has(conditionName))
 }
 
 function canMonitoringCreateApplication(conditionName: string | null) {
@@ -298,18 +293,27 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
     [display?.cells, selectedApp?.panel.id],
   )
 
-  const selectedCellConditionName = selectedCell?.panel?.condition.name ?? null
+  const canMutatePanelsInDepartment = department !== 'monitoring'
   const canChangeCondition = Boolean(
     selectedCell?.panel &&
-      (isAdmin || isService || (isMonitoring && canMonitoringChangeCondition(selectedCellConditionName))),
+      canMutatePanelsInDepartment &&
+      (isAdmin || isService),
   )
-  const canChangeDepartment = Boolean(selectedCell?.panel && (isAdmin || isService))
-  const canRemoveSelectedPanel = Boolean(selectedCell?.panel && (isAdmin || isService))
-  const canInstallPanel = Boolean(selectedCell && !selectedCell.panel && (isAdmin || isService))
+  const canChangeDepartment = Boolean(
+    selectedCell?.panel && canMutatePanelsInDepartment && (isAdmin || isService),
+  )
+  const canRemoveSelectedPanel = Boolean(
+    selectedCell?.panel && canMutatePanelsInDepartment && (isAdmin || isService),
+  )
+  const canInstallPanel = Boolean(
+    selectedCell && !selectedCell.panel && canMutatePanelsInDepartment && (isAdmin || isService),
+  )
   const canCreateSelectedCellApplication = canCreateForCell(selectedCell)
   const canDeleteSelectedApplication =
     selectedApp?.status.name === 'sent_to_control' && (isAdmin || isMonitoring)
-  const canRemovePanelFromApplication = Boolean(selectedAppPanel && (isAdmin || isService))
+  const canRemovePanelFromApplication = Boolean(
+    selectedAppPanel && canMutatePanelsInDepartment && (isAdmin || isService),
+  )
   const showCameraCard = department === 'monitoring' && Boolean(display?.camera_link)
   const showDailyTasks = department === 'monitoring' || department === 'control'
 
@@ -670,9 +674,6 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
           open
           onClose={() => setPanelAction(null)}
           panel={selectedCell.panel}
-          allowedConditionNames={
-            isMonitoring ? Array.from(MONITORING_EDITABLE_CONDITIONS) : undefined
-          }
         />
       ) : null}
 

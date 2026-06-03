@@ -213,26 +213,28 @@ beforeEach(() => {
 })
 
 describe('DisplayViewPage role matrix', () => {
-  it('monitoring sees condition only on healthy panel and cannot create application', () => {
+  it('monitoring does not see panel mutation actions on a healthy panel', () => {
     renderPage('monitoring')
 
     fireEvent.click(screen.getByTestId('grid-cell-11'))
 
-    expect(screen.getByRole('button', { name: 'Состояние' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Состояние' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Отдел' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Снять панель' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Поставить панель' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Создать заявку' })).not.toBeInTheDocument()
   })
 
-  it('monitoring can create application only for non-work panel', () => {
+  it('monitoring can create application for non-work panel without panel mutation actions', () => {
     renderPage('monitoring')
 
     fireEvent.click(screen.getByTestId('grid-cell-12'))
 
-    expect(screen.getByRole('button', { name: 'Состояние' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Создать заявку' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Состояние' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Отдел' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Снять панель' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Поставить панель' })).not.toBeInTheDocument()
   })
 
   it('control does not see panel mutation or create actions', () => {

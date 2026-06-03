@@ -1,5 +1,7 @@
 /* Supersymmetria design tokens */
 :root {
+  color-scheme: light;
+
   /* Canonical palette: light theme */
   --bg-0: #fafcff;
   --bg-1: #e1e5ea;
@@ -72,19 +74,22 @@
 
   --skeleton-bg: #e1e5ea;
   --skeleton-shimmer: #d2d8df;
+  --logo-filter: none;
 }
 
 [data-theme="dark"] {
-  --bg-0: #040f1d;
-  --bg-1: #3c4856;
-  --bg-2: #b8bfc6;
-  --bg-3: #4c5967;
-  --bg-4: #5c6975;
+  color-scheme: dark;
+
+  --bg-0: #07111c;
+  --bg-1: #101d2b;
+  --bg-2: #182737;
+  --bg-3: #243445;
+  --bg-4: #314255;
 
   --fg-0: #fafcff;
-  --fg-1: #e1e5ea;
-  --fg-mute: #b8bfc6;
-  --fg-faint: #8f99a5;
+  --fg-1: #e8edf3;
+  --fg-mute: #9aa8b7;
+  --fg-faint: #738293;
 
   --accent-0: #ffea00;
   --accent-1: #fdd734;
@@ -95,13 +100,13 @@
   --success: #4fd095;
   --info: #5ba8ff;
 
-  --border-0: #3c4856;
-  --border-1: #6f7a86;
+  --border-0: #223143;
+  --border-1: #405268;
 
   --fg: var(--fg-0);
   --fg-dim: var(--fg-1);
   --border-subtle: var(--border-0);
-  --border: #55616f;
+  --border: #2d4054;
   --border-strong: var(--border-1);
 
   --brand: var(--accent-0);
@@ -129,20 +134,23 @@
 
   --skeleton-bg: #3c4856;
   --skeleton-shimmer: #4c5967;
+  --logo-filter: brightness(0) invert(1);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
-    --bg-0: #040f1d;
-    --bg-1: #3c4856;
-    --bg-2: #b8bfc6;
-    --bg-3: #4c5967;
-    --bg-4: #5c6975;
+    color-scheme: dark;
+
+    --bg-0: #07111c;
+    --bg-1: #101d2b;
+    --bg-2: #182737;
+    --bg-3: #243445;
+    --bg-4: #314255;
 
     --fg-0: #fafcff;
-    --fg-1: #e1e5ea;
-    --fg-mute: #b8bfc6;
-    --fg-faint: #8f99a5;
+    --fg-1: #e8edf3;
+    --fg-mute: #9aa8b7;
+    --fg-faint: #738293;
 
     --accent-0: #ffea00;
     --accent-1: #fdd734;
@@ -153,13 +161,13 @@
     --success: #4fd095;
     --info: #5ba8ff;
 
-    --border-0: #3c4856;
-    --border-1: #6f7a86;
+    --border-0: #223143;
+    --border-1: #405268;
 
     --fg: var(--fg-0);
     --fg-dim: var(--fg-1);
     --border-subtle: var(--border-0);
-    --border: #55616f;
+    --border: #2d4054;
     --border-strong: var(--border-1);
 
     --brand: var(--accent-0);
@@ -187,6 +195,7 @@
 
     --skeleton-bg: #3c4856;
     --skeleton-shimmer: #4c5967;
+    --logo-filter: brightness(0) invert(1);
   }
 }
 

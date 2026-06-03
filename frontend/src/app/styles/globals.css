@@ -74,9 +74,20 @@
   [data-sonner-toast].sonner-info [data-icon] {
     color: var(--info);
   }
+
+  select,
+  option {
+    background-color: var(--bg-1);
+    color: var(--fg);
+  }
 }
 
 @layer components {
+  .theme-logo {
+    filter: var(--logo-filter);
+    transition: filter 160ms ease;
+  }
+
   .input {
     display: inline-flex;
     align-items: center;
@@ -117,6 +128,11 @@
 
   select.input {
     padding-right: 28px;
+  }
+
+  select.input option {
+    background-color: var(--bg-1);
+    color: var(--fg);
   }
 
   .panel-mono {

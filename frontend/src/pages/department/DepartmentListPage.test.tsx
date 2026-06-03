@@ -263,7 +263,9 @@ describe('DepartmentListPage - merged sort/filter/quick-links', () => {
     renderPage()
 
     expect(screen.getByTestId('quicklink-zip-ekb-1')).toHaveAttribute('href', '/zip/ekb-1')
+    expect(screen.getByTestId('quicklink-zip-ekb-1')).toHaveTextContent('ЗИП')
     expect(screen.getByTestId('quicklink-applications-ekb-1')).toHaveAttribute('href', '/control/ekb/ekb-1')
+    expect(screen.getByTestId('quicklink-applications-ekb-1')).toHaveTextContent('Заявки')
     expect(screen.getByTestId('quicklink-history-ekb-1')).toHaveAttribute(
       'href',
       '/monitoring/ekb/ekb-1?tab=history',

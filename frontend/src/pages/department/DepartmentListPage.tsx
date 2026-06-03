@@ -759,7 +759,7 @@ function DisplayRow({
             title="ЗИП экрана"
             data-testid={`quicklink-zip-${display.slug}`}
           >
-            <Package size={11} /> Р—РРџ
+            <Package size={11} /> ЗИП
           </Link>
           <Link
             to={`/control/${display.city.slug}/${display.slug}`}
@@ -767,7 +767,7 @@ function DisplayRow({
             title="Все заявки по экрану"
             data-testid={`quicklink-applications-${display.slug}`}
           >
-            <ClipboardList size={11} /> Р—Р°СЏРІРєРё
+            <ClipboardList size={11} /> Заявки
           </Link>
           <Link
             to={`/${department}/${display.city.slug}/${display.slug}?tab=history`}

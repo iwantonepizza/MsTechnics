@@ -86,11 +86,17 @@ def test_activity_cell_filter_returns_place_events() -> None:
     ActivityLog.objects.create(
         target=panel, event_type="panel.condition_changed", description="not-place"
     )
+    ActivityLog.objects.create(
+        target=display,
+        event_type="display.panel_installed",
+        description="legacy-place",
+        payload={"legacy_slot_id": cell.id},
+    )
 
     res = client.get(f"/api/v1/activity-log/?cell={cell.id}")
     assert res.status_code == 200
     descriptions = {row["description"] for row in res.data["results"]}
-    assert descriptions == {"removed-from-place"}
+    assert descriptions == {"removed-from-place", "legacy-place"}
 
 
 # ─── T-8-062: набор типов событий ───────────────────────────────────────────

@@ -9,10 +9,10 @@ interface ModalProps {
   title: string
   description?: string
   children: React.ReactNode
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg' | 'xl'
 }
 
-const SIZE_W = { sm: '380px', md: '480px', lg: '600px' }
+const SIZE_W = { sm: '380px', md: '480px', lg: '600px', xl: 'min(92vw, 1100px)' }
 
 function Root({
   open,

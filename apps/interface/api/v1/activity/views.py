@@ -108,10 +108,16 @@ class ActivityLogViewSet(ReadOnlyModelViewSet):
         # panel.removed пишет payload.from_cell_id; display_panel_replace — cell_position на target=display
         return qs.filter(
             Q(payload__from_cell_id=cell.id)
+            | Q(payload__cell_id=cell.id)
             | Q(
                 target_type=ct["display"],
                 target_id=cell.display_id,
                 payload__cell_position=cell.position,
+            )
+            | Q(
+                target_type=ct["display"],
+                target_id=cell.display_id,
+                payload__legacy_slot_id=cell.id,
             )
         )
 

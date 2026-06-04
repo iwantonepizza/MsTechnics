@@ -56,7 +56,7 @@ describe('ApplicationsPanel', () => {
     expect(screen.getByText('application #11')).toBeInTheDocument()
     expect(mockUseActivityLog).toHaveBeenLastCalledWith({
       display: 'ekb-1',
-      kind: 'application.',
+      eventTypes: expect.stringContaining('application.created'),
     })
   })
 

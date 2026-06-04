@@ -92,19 +92,12 @@ function connectSSE(token: string, setStatus: (s: SSEStatus) => void, invalidate
   }
 }
 
-export function useSSESubscription() {
+export function useSSESubscription(token: string | null | undefined) {
   const qc = useQueryClient()
   const setStatus = useSSEStore(s => s.setStatus)
 
   useEffect(() => {
-    // Токен читаем из auth store (через window.__authStore)
-    const getToken = (): string | null => {
-      try {
-        return (window as any).__authStore?.getState?.()?.accessToken ?? null
-      } catch { return null }
-    }
-
-    const token = getToken()
+    // Token comes from the auth store so login/refresh reconnects the stream.
     if (!token) {
       setStatus('disconnected')
       return
@@ -121,5 +114,5 @@ export function useSSESubscription() {
       if (_reconnectTimer) { clearTimeout(_reconnectTimer) }
       setStatus('disconnected')
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [qc, setStatus, token])
 }

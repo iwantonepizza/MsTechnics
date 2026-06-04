@@ -32,6 +32,17 @@ const TABS: Record<Dept, Array<{ value: string; label: string }>> = {
   ],
 }
 
+const APPLICATION_HISTORY_EVENT_TYPES = [
+  'application_create',
+  'application_transition',
+  'application_delete',
+  'application_executor_change',
+  'application.created',
+  'application.transitioned',
+  'application.deleted',
+  'application.executor_changed',
+].join(',')
+
 interface ApplicationsPanelProps {
   displaySlug: string
   department: Dept
@@ -55,7 +66,7 @@ export function ApplicationsPanel({
     enabled: !isHistoryTab,
   })
   const { data: history = [], isLoading: historyLoading } = useActivityLog(
-    isHistoryTab ? { display: displaySlug, kind: 'application.' } : {},
+    isHistoryTab ? { display: displaySlug, eventTypes: APPLICATION_HISTORY_EVENT_TYPES } : {},
   )
 
   const showSkeleton = useDeferredLoading(isHistoryTab ? historyLoading : isLoading)

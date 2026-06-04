@@ -11,6 +11,7 @@ import {
   Package,
   Plug,
   Wrench,
+  ZoomIn,
   type LucideIcon,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -39,6 +40,18 @@ const HISTORY_TYPES: Array<{ key: string; label: string; eventTypes: string }> =
 
 // T-7-033: целевые отделы для DnD. 'monitor' исключён — установка в ячейку
 // идёт через replace_panel_in_cell, не через смену department.
+const LEGACY_HISTORY_EVENT_TYPES: Record<string, string> = {
+  move: 'panel.moved,panel.deleted,display.panel_installed',
+  breakdown: 'panel.breakdown',
+  service: 'panel.service_note',
+  application: 'application_executor_change,application.executor_changed',
+}
+
+function getHistoryEventTypes(type: { key: string; eventTypes: string }) {
+  const legacyTypes = LEGACY_HISTORY_EVENT_TYPES[type.key]
+  return legacyTypes ? `${type.eventTypes},${legacyTypes}` : type.eventTypes
+}
+
 const DND_ALLOWED_TARGETS = new Set(['zip', 'hand', 'service'])
 const DRAG_MIME = 'application/x-panel-id'
 
@@ -238,10 +251,12 @@ function ConsumableModal({
   kind,
   item,
   onClose,
+  onPreview,
 }: {
   kind: StorageKind
   item: StorageItem
   onClose: () => void
+  onPreview: (item: StorageItem) => void
 }) {
   const update = useUpdateStorageItem(kind)
   const [count, setCount] = useState<number>(item.count ?? 0)
@@ -302,12 +317,28 @@ function ConsumableModal({
         <div>
           <p className="mb-1 text-2xs" style={{ color: 'var(--fg-mute)' }}>Фото</p>
           {itemAny.photo ? (
-            <img
-              src={itemAny.photo}
-              alt={item.name}
-              className="mb-2 max-h-40 rounded object-contain"
-              style={{ border: '1px solid var(--border-subtle)' }}
-            />
+            <button
+              type="button"
+              onClick={() => onPreview(item)}
+              className="group mb-2 block w-full text-left"
+              aria-label={`Open ${item.name} photo preview`}
+            >
+              <span className="relative block">
+                <img
+                  src={itemAny.photo}
+                  alt={item.name}
+                  className="max-h-40 w-full rounded object-contain"
+                  style={{ border: '1px solid var(--border-subtle)', background: 'var(--bg-0)' }}
+                />
+                <span
+                  className="absolute bottom-2 right-2 flex items-center gap-1 rounded px-2 py-1 text-2xs opacity-90 transition-opacity group-hover:opacity-100"
+                  style={{ background: 'var(--bg-1)', color: 'var(--fg-dim)', border: '1px solid var(--border-subtle)' }}
+                >
+                  <ZoomIn size={12} />
+                  Крупно
+                </span>
+              </span>
+            </button>
           ) : (
             <p className="mb-2 text-2xs" style={{ color: 'var(--fg-faint)' }}>Фото нет</p>
           )}
@@ -328,8 +359,34 @@ function ConsumableModal({
   )
 }
 
+function ConsumablePhotoPreview({
+  item,
+  onClose,
+}: {
+  item: StorageItem
+  onClose: () => void
+}) {
+  const photoUrl = (item as StorageItem & { photo?: string | null }).photo
+
+  if (!photoUrl) return null
+
+  return (
+    <Modal open onClose={onClose} title={item.name} size="xl">
+      <Modal.Body>
+        <img
+          src={photoUrl}
+          alt={item.name}
+          className="mx-auto max-h-[75vh] w-full object-contain"
+          style={{ background: 'var(--bg-0)' }}
+        />
+      </Modal.Body>
+    </Modal>
+  )
+}
+
 function StorageSection({ highlightedStorageId }: { highlightedStorageId: string | null }) {
   const [editing, setEditing] = useState<{ kind: StorageKind; item: StorageItem } | null>(null)
+  const [previewItem, setPreviewItem] = useState<StorageItem | null>(null)
   const lamels = useStorage('lamels')
   const hubs = useStorage('hubs')
   const wires = useStorage('wires')
@@ -455,7 +512,11 @@ function StorageSection({ highlightedStorageId }: { highlightedStorageId: string
           kind={editing.kind}
           item={editing.item}
           onClose={() => setEditing(null)}
+          onPreview={setPreviewItem}
         />
+      )}
+      {previewItem && (
+        <ConsumablePhotoPreview item={previewItem} onClose={() => setPreviewItem(null)} />
       )}
     </div>
   )
@@ -514,8 +575,8 @@ function HistoryRail({
   // Если выбрана панель — история по панели; иначе по экрану.
   const { data = [], isLoading } = useActivityLog(
     selectedPanel
-      ? { panel: selectedPanel.id, eventTypes: active.eventTypes }
-      : { display: displaySlug ?? undefined, eventTypes: active.eventTypes },
+      ? { panel: selectedPanel.id, eventTypes: getHistoryEventTypes(active) }
+      : { display: displaySlug ?? undefined, eventTypes: getHistoryEventTypes(active) },
   )
   const show = useDeferredLoading(isLoading)
 

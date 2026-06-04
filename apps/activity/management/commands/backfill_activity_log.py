@@ -172,6 +172,9 @@ class Command(BaseCommand):
             "legacy_slot_id": row.slot_id,
             "legacy_display_name": getattr(row.display, "name", None),
         }
+        if row.slot_id:
+            payload["cell_id"] = row.slot_id
+            payload["cell_position"] = getattr(row.slot, "position", None)
 
         if row.display_id:
             display = LegacyDisplay.objects.filter(name=row.display_id).first()

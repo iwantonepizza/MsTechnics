@@ -25,7 +25,8 @@ import { ThemeProvider, useTheme } from '@/shared/lib/theme'
 
 // Инициализируем SSE при монтировании приложения
 function SSEInit() {
-  useSSESubscription()
+  const accessToken = useAuthStore(s => s.accessToken)
+  useSSESubscription(accessToken)
   return null
 }
 
@@ -67,7 +68,6 @@ function AppShell() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <SSEInit />
         <GlobalSearch />
         <Routes>
           {/* Публичные */}
@@ -77,7 +77,10 @@ function AppShell() {
           <Route
             element={
               <RequireAuth>
-                <AppLayout />
+                <>
+                  <SSEInit />
+                  <AppLayout />
+                </>
               </RequireAuth>
             }
           >

@@ -122,15 +122,24 @@ class DailyTask(models.Model):
         async_to_sync(presend_filters)(text=f"🔄 Задание {self.name} обновлено", type_msg="server_checker")
 
     def check_status(self, current_datetime: datetime) -> None:
+        start_delta = (
+            datetime.combine(current_datetime.date(), self.start_time)
+            - datetime.combine(current_datetime.date(), current_datetime.time())
+            if self.start_time
+            else None
+        )
+        end_delta = (
+            datetime.combine(current_datetime.date(), self.end_time)
+            - datetime.combine(current_datetime.date(), current_datetime.time())
+            if self.end_time
+            else None
+        )
+
         if (
             not self.has_notified("alert")
             and self.status == "not_ready"
-            and self.start_time
-            and (
-                datetime.combine(current_datetime.date(), self.start_time)
-                - datetime.combine(current_datetime.date(), current_datetime.time())
-            )
-            <= timedelta(minutes=5)
+            and start_delta is not None
+            and timedelta(0) <= start_delta <= timedelta(minutes=5)
         ):
             self.save(update_fields=self._mark_notification_stage("alert"))
             async_to_sync(presend_filters)(
@@ -149,12 +158,8 @@ class DailyTask(models.Model):
             async_to_sync(presend_filters)(text=f"❌ {self.name} просрочен ❌", type_msg="daily")
         elif (
             not self.has_notified("deadline")
-            and self.end_time
-            and (
-                datetime.combine(current_datetime.date(), self.end_time)
-                - datetime.combine(current_datetime.date(), current_datetime.time())
-            )
-            < timedelta(hours=1)
+            and end_delta is not None
+            and end_delta < timedelta(hours=1)
         ):
             self.status = "deadline"
             update_fields = ["status", *self._mark_notification_stage("deadline")]

@@ -40,7 +40,11 @@ services:
     command: >
       bash -c "if [ \"$${RUN_MIGRATIONS:-0}\" = \"1\" ]; then python manage.py migrate; fi &&
                python manage.py collectstatic --noinput &&
-               gunicorn project_config.wsgi:application --bind 0.0.0.0:8000 --workers $${GUNICORN_WORKERS:-3} --timeout $${GUNICORN_TIMEOUT:-120}"
+               gunicorn project_config.wsgi:application --bind 0.0.0.0:8000
+               --worker-class $${GUNICORN_WORKER_CLASS:-gevent}
+               --worker-connections $${GUNICORN_WORKER_CONNECTIONS:-1000}
+               --workers $${GUNICORN_WORKERS:-3}
+               --timeout $${GUNICORN_TIMEOUT:-120}"
 
   redis:
     image: redis:7

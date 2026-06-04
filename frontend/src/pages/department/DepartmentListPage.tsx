@@ -277,8 +277,8 @@ function monthsAgoIso(months: number): string {
 
 function ActivityFeedBand({ height }: { height: number }) {
   const [months, setMonths] = useState(1)
-  const since = monthsAgoIso(months)
-  const { data = [], isLoading } = useActivityLog({ feed: true, since, limit: 60 })
+  const since = useMemo(() => monthsAgoIso(months), [months])
+  const { data = [], isLoading, isError, refetch } = useActivityLog({ feed: true, since, limit: 60 })
   const show = useDeferredLoading(isLoading)
 
   return (
@@ -308,8 +308,8 @@ function ActivityFeedBand({ height }: { height: number }) {
               className="rounded px-1.5 py-0.5 text-2xs transition-colors"
               style={{
                 background: months === month ? 'var(--accent)' : 'var(--bg-2)',
-                color: months === month ? 'var(--accent-fg, #fff)' : 'var(--fg-dim)',
-                border: `1px solid ${months === month ? 'var(--accent-edge)' : 'var(--border-subtle)'}`,
+                color: months === month ? 'var(--accent-ink)' : 'var(--fg)',
+                border: `1px solid ${months === month ? 'var(--accent-edge)' : 'var(--border-strong)'}`,
               }}
             >
               {month} мес
@@ -320,6 +320,16 @@ function ActivityFeedBand({ height }: { height: number }) {
       <div className="flex-1 overflow-y-auto p-2">
         {show ? (
           <SkeletonList rows={4} height="28px" />
+        ) : isError && data.length === 0 ? (
+          <div
+            className="flex h-full flex-col items-center justify-center gap-2 text-xs"
+            style={{ color: 'var(--err)' }}
+          >
+            <span>Не удалось загрузить последние действия</span>
+            <button type="button" className="btn btn-secondary sm" onClick={() => void refetch()}>
+              Повторить
+            </button>
+          </div>
         ) : data.length === 0 ? (
           <div className="flex h-full items-center justify-center text-xs" style={{ color: 'var(--fg-faint)' }}>
             Действий за период нет
@@ -866,12 +876,17 @@ export function DepartmentListPage({ department }: { department: Dept }) {
   const { citySlug } = useParams<{ citySlug?: string }>()
   const { setCrumb } = useCrumb()
   const { data: me } = useMe()
-  const { data: cities = [], isLoading: citiesLoading, error: citiesError } = useCities()
+  const {
+    data: cities = [],
+    isLoading: citiesLoading,
+    error: citiesError,
+    refetch: refetchCities,
+  } = useCities()
   const {
     data: displays = [],
     isLoading: displaysLoading,
     error: displaysError,
-    refetch,
+    refetch: refetchDisplays,
   } = useDisplays()
   const [activeCity, setActiveCity] = useState<string | null>(citySlug ?? null)
   const [sortBy, setSortBy] = useState<SortOption>(readPersistedSort)
@@ -1041,7 +1056,10 @@ export function DepartmentListPage({ department }: { department: Dept }) {
             >
               <AlertTriangle size={22} />
               <span>Не удалось загрузить список экранов</span>
-              <button className="btn btn-secondary sm" onClick={() => refetch()}>
+              <button
+                className="btn btn-secondary sm"
+                onClick={() => void Promise.all([refetchCities(), refetchDisplays()])}
+              >
                 Повторить
               </button>
             </div>

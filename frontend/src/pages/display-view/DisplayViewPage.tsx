@@ -850,28 +850,7 @@ function DisplayCameraCard({
       </div>
 
       {expanded ? (
-        loadFailed ? (
-          <div
-            className="rounded-md border px-3 py-3"
-            style={{
-              borderColor: 'var(--border-subtle)',
-              background: 'var(--bg-0)',
-            }}
-          >
-            <p className="text-xs" style={{ color: 'var(--fg-dim)' }}>
-              Встроить поток не удалось. Камеру можно открыть отдельно.
-            </p>
-            <Button
-              variant="primary"
-              size="sm"
-              icon={<ExternalLink size={12} />}
-              className="mt-3"
-              onClick={() => window.open(cameraLink, '_blank', 'noopener,noreferrer')}
-            >
-              Открыть камеру
-            </Button>
-          </div>
-        ) : (
+        <div className="space-y-2">
           <div
             className="overflow-hidden rounded-md border"
             style={{ borderColor: 'var(--border-subtle)', background: 'var(--bg-0)' }}
@@ -881,6 +860,9 @@ function DisplayCameraCard({
               src={cameraLink}
               title="Камера экрана"
               className="h-48 w-full border-0"
+              loading="eager"
+              allow="autoplay; fullscreen; picture-in-picture"
+              allowFullScreen
               onLoad={() => {
                 setLoadFailed(false)
                 setIsLoading(false)
@@ -891,7 +873,29 @@ function DisplayCameraCard({
               }}
             />
           </div>
-        )
+          {loadFailed ? (
+            <div
+              className="rounded-md border px-3 py-2 text-xs"
+              style={{
+                borderColor: 'var(--border-subtle)',
+                background: 'var(--bg-0)',
+                color: 'var(--fg-dim)',
+              }}
+              data-testid="camera-fallback-message"
+            >
+              Поток загружается медленно или поставщик запрещает встраивание. Камеру можно открыть
+              отдельно.
+            </div>
+          ) : null}
+          <Button
+            variant="primary"
+            size="sm"
+            icon={<ExternalLink size={12} />}
+            onClick={() => window.open(cameraLink, '_blank', 'noopener,noreferrer')}
+          >
+            Открыть камеру
+          </Button>
+        </div>
       ) : null}
     </section>
   )

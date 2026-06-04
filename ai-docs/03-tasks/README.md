@@ -193,6 +193,15 @@
 
 ---
 
+### Фаза 8. Owner feedback + prod stabilization
+
+| ID | Название | Статус | Часов |
+|----|----------|--------|-------|
+| [T-8-107](phase-8-owner-feedback/T-8-107-prod-ui-stability.md) | **P0:** Activity request-loop/429, mobile camera, SSE native runtime | in-progress | 2-3 |
+| [T-8-108](phase-8-owner-feedback/T-8-108-prod-media-reconciliation.md) | **P1:** Сверка отсутствующих prod media-файлов | ready | 1-2 + owner data |
+
+---
+
 ## Total
 
 - Фаза 1 (foundation): ~17ч → **done**

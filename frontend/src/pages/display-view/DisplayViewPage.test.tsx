@@ -285,18 +285,20 @@ describe('DisplayViewPage role matrix', () => {
     expect(screen.getByRole('button', { name: 'Поставить панель' })).toBeInTheDocument()
   })
 
-  it('monitoring renders camera widget and falls back to external link after timeout', () => {
+  it('keeps camera iframe visible and adds fallback help after timeout', () => {
     vi.useFakeTimers()
     renderPage('monitoring')
 
     expect(screen.getByTestId('display-camera-card')).toBeInTheDocument()
     expect(screen.getByTitle('Камера экрана')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Открыть камеру' })).toBeInTheDocument()
 
     act(() => {
       vi.advanceTimersByTime(5000)
     })
 
-    expect(screen.getByRole('button', { name: 'Открыть камеру' })).toBeInTheDocument()
+    expect(screen.getByTitle('Камера экрана')).toBeInTheDocument()
+    expect(screen.getByTestId('camera-fallback-message')).toBeInTheDocument()
     vi.useRealTimers()
   })
 
@@ -312,7 +314,8 @@ describe('DisplayViewPage role matrix', () => {
     })
 
     expect(screen.getByTitle('Камера экрана')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Открыть камеру' })).not.toBeInTheDocument()
+    expect(screen.queryByTestId('camera-fallback-message')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Открыть камеру' })).toBeInTheDocument()
     vi.useRealTimers()
   })
 

@@ -4,6 +4,22 @@
 
 Цель: убрать legacy compat-path и выполнить один поддерживаемый сценарий `pg_restore -> showmigrations -> migrate -> check` для выката на Linux-сервере. `scripts/prod_dump_compat.sql` больше не используется и не должен возвращаться ни в каком виде.
 
+## Актуальная prod-топология 2026-06-04
+
+- Рабочий каталог: `/root/DisplayControl/MsTechnics`.
+- Python runtime: отдельный venv `/root/DisplayControl/venv-<revision>`.
+- Запуск: native PostgreSQL 16 + Redis + nginx + systemd `gunicorn.service`.
+- Health: `/api/v1/health/live` и `/api/v1/health/ready` без завершающего `/`.
+- Backup: `mstechnics-db-backup.timer`, локальные dumps в
+  `/var/backups/mstechnics/scheduled`.
+- Для SSE gunicorn обязан использовать `--worker-class gevent --worker-connections 1000`.
+  Sync workers блокируются долгоживущими `/api/v1/events/stream` и уходят в timeout.
+- Для nginx нужен отдельный `location = /api/v1/events/stream` с `proxy_buffering off`,
+  длинным `proxy_read_timeout` и `access_log off`, чтобы query JWT не попадал в access log.
+
+Команды ниже по-прежнему используют `/opt/mstechnics` как стандартный шаблон. На текущем native
+prod заменить путь на фактический из списка выше.
+
 ## 1. Что подготовить заранее
 
 - Подтвердить, где именно лежит рабочий каталог проекта на сервере. Ниже по умолчанию используется `/opt/mstechnics`.
@@ -104,6 +120,24 @@ docker compose ps
 ```
 
 Если процессы запускаются через systemd/gunicorn вне compose, вместо этого выполнить локальный restart соответствующих unit-файлов.
+
+Перед restart native gunicorn проверить, что unit не запускает sync workers:
+
+```bash
+systemctl cat gunicorn
+gunicorn --check-config \
+  --worker-class gevent \
+  --worker-connections 1000 \
+  project_config.wsgi:application
+```
+
+После изменения unit:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart gunicorn
+sudo systemctl status gunicorn --no-pager
+```
 
 ## 7. Smoke после cutover
 

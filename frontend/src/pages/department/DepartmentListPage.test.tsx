@@ -103,7 +103,12 @@ const mockDisplayDetail = {
 const mockApiPost = vi.fn()
 const mockApiDelete = vi.fn()
 const mockRefetchDetail = vi.fn()
+const mockRefetchCities = vi.fn()
+const mockRefetchDisplays = vi.fn()
+const mockUseActivityLog = vi.fn()
 let mockShowActivityFeed = true
+let mockCitiesError: Error | null = null
+let mockDisplaysError: Error | null = null
 const mockActivityEntries = [
   {
     id: 501,
@@ -114,8 +119,18 @@ const mockActivityEntries = [
 ]
 
 vi.mock('@/entities/display/hooks', () => ({
-  useDisplays: vi.fn(() => ({ data: mockDisplays, isLoading: false, error: null, refetch: vi.fn() })),
-  useCities: vi.fn(() => ({ data: mockCities, isLoading: false, error: null })),
+  useDisplays: vi.fn(() => ({
+    data: mockDisplays,
+    isLoading: false,
+    error: mockDisplaysError,
+    refetch: mockRefetchDisplays,
+  })),
+  useCities: vi.fn(() => ({
+    data: mockCities,
+    isLoading: false,
+    error: mockCitiesError,
+    refetch: mockRefetchCities,
+  })),
   useDisplayDetail: vi.fn((slug: string | null) => ({
     data: slug ? mockDisplayDetail : undefined,
     isLoading: false,
@@ -133,10 +148,14 @@ vi.mock('@/entities/application/hooks', () => ({
 }))
 
 vi.mock('@/entities/activity/hooks', () => ({
-  useActivityLog: vi.fn(() => ({
-    data: mockActivityEntries,
-    isLoading: false,
-  })),
+  useActivityLog: (filter: unknown) => mockUseActivityLog(filter),
+}))
+
+mockUseActivityLog.mockImplementation(() => ({
+  data: mockActivityEntries,
+  isLoading: false,
+  isError: false,
+  refetch: vi.fn(),
 }))
 
 vi.mock('@/features/auth/hooks', () => ({
@@ -190,8 +209,13 @@ function renderPage(
 beforeEach(() => {
   sessionStorage.clear()
   mockShowActivityFeed = true
+  mockCitiesError = null
+  mockDisplaysError = null
   mockApiPost.mockReset()
   mockApiDelete.mockReset()
+  mockRefetchCities.mockReset()
+  mockRefetchDisplays.mockReset()
+  mockUseActivityLog.mockClear()
   mockRefetchDetail.mockReset()
   mockRefetchDetail.mockResolvedValue(undefined)
   mockApiPost.mockResolvedValue({ data: { id: 99, url: '/media/photos/new.jpg', uploaded_at: null } })
@@ -280,6 +304,32 @@ describe('DepartmentListPage - merged sort/filter/quick-links', () => {
     expect(screen.getByTestId('department-activity-resize-handle')).toBeInTheDocument()
     expect(screen.getByTestId('department-activity-feed')).toBeInTheDocument()
     expect(screen.getByText('Panel moved')).toBeInTheDocument()
+  })
+
+  it('keeps the activity since filter stable across unrelated renders', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-06-04T10:00:00Z'))
+    renderPage()
+    const firstSince =
+      mockUseActivityLog.mock.calls[mockUseActivityLog.mock.calls.length - 1]?.[0].since
+
+    vi.setSystemTime(new Date('2026-06-04T10:01:00Z'))
+    const select = screen.getByTestId('sort-select').querySelector('select') as HTMLSelectElement
+    fireEvent.change(select, { target: { value: 'name-desc' } })
+
+    const lastCall = mockUseActivityLog.mock.calls[mockUseActivityLog.mock.calls.length - 1]
+    expect(lastCall?.[0].since).toBe(firstSince)
+    vi.useRealTimers()
+  })
+
+  it('retries both city and display queries after a list load error', () => {
+    mockCitiesError = new Error('rate limited')
+    renderPage()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Повторить' }))
+
+    expect(mockRefetchCities).toHaveBeenCalledTimes(1)
+    expect(mockRefetchDisplays).toHaveBeenCalledTimes(1)
   })
 
   it('persists sort choice via sessionStorage across remounts', () => {

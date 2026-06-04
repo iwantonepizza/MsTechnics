@@ -41,12 +41,20 @@ interface StorageItem {
 }
 
 type Dept = 'monitoring' | 'control' | 'service'
+type ActivityKind = 'all' | 'application' | 'panel' | 'display'
 
 const DEPT_LABELS: Record<Dept, string> = {
   monitoring: 'Мониторинг',
   control: 'Контроль',
   service: 'Сервис',
 }
+
+const ACTIVITY_KIND_FILTERS: Array<{ value: ActivityKind; label: string }> = [
+  { value: 'all', label: 'Все' },
+  { value: 'application', label: 'Заявки' },
+  { value: 'panel', label: 'Панели' },
+  { value: 'display', label: 'Экраны' },
+]
 
 function useDashboard() {
   return useQuery<DashboardData>({
@@ -378,27 +386,49 @@ function monthsAgoIso(months: number): string {
   return d.toISOString()
 }
 
-/** T-8-020: лента последних действий, видна только при включённом тумблере у пользователя. */
-function ActivityFeedBand() {
+/** T-8-020/T-8-107: лента последних действий с устойчивым query key. */
+export function ActivityFeedBand() {
   const [months, setMonths] = useState(1)
-  const since = monthsAgoIso(months)
-  const { data = [], isLoading } = useActivityLog({ feed: true, since, limit: 60 })
+  const [kind, setKind] = useState<ActivityKind>('all')
+  const since = useMemo(() => monthsAgoIso(months), [months])
+  const { data = [], isLoading, isError, refetch } = useActivityLog({
+    feed: true,
+    since,
+    kind: kind === 'all' ? undefined : kind,
+    limit: 60,
+  })
   const show = useDeferredLoading(isLoading)
 
   return (
     <div
-      className="flex h-[170px] shrink-0 flex-col"
+      className="flex h-[190px] shrink-0 flex-col"
       style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-0)' }}
     >
       <div
-        className="flex h-9 shrink-0 items-center justify-between px-3"
+        className="flex min-h-9 shrink-0 flex-wrap items-center justify-between gap-1 px-3 py-1"
         style={{ borderBottom: '1px solid var(--border-subtle)' }}
       >
         <div className="flex items-center gap-2 text-xs font-semibold" style={{ color: 'var(--fg)' }}>
           <Activity size={13} style={{ color: 'var(--fg-dim)' }} />
           Последние действия
         </div>
-        <div className="flex gap-1">
+        <div className="flex flex-wrap items-center justify-end gap-1">
+          {ACTIVITY_KIND_FILTERS.map(filter => (
+            <button
+              key={filter.value}
+              type="button"
+              onClick={() => setKind(filter.value)}
+              className="rounded px-1.5 py-0.5 text-2xs transition-colors"
+              style={{
+                background: kind === filter.value ? 'var(--accent)' : 'var(--bg-2)',
+                color: kind === filter.value ? 'var(--accent-ink)' : 'var(--fg)',
+                border: `1px solid ${kind === filter.value ? 'var(--accent-edge)' : 'var(--border-strong)'}`,
+              }}
+              data-testid={`activity-kind-${filter.value}`}
+            >
+              {filter.label}
+            </button>
+          ))}
           {[1, 2].map(m => (
             <button
               key={m}
@@ -407,9 +437,10 @@ function ActivityFeedBand() {
               className="rounded px-1.5 py-0.5 text-2xs transition-colors"
               style={{
                 background: months === m ? 'var(--accent)' : 'var(--bg-2)',
-                color: months === m ? 'var(--accent-fg, #fff)' : 'var(--fg-dim)',
-                border: `1px solid ${months === m ? 'var(--accent-edge)' : 'var(--border-subtle)'}`,
+                color: months === m ? 'var(--accent-ink)' : 'var(--fg)',
+                border: `1px solid ${months === m ? 'var(--accent-edge)' : 'var(--border-strong)'}`,
               }}
+              data-testid={`activity-months-${m}`}
             >
               {m} мес
             </button>
@@ -419,6 +450,16 @@ function ActivityFeedBand() {
       <div className="flex-1 overflow-y-auto p-2">
         {show ? (
           <SkeletonList rows={4} height="28px" />
+        ) : isError && data.length === 0 ? (
+          <div
+            className="flex h-full flex-col items-center justify-center gap-2 text-xs"
+            style={{ color: 'var(--err)' }}
+          >
+            <span>Не удалось загрузить последние действия</span>
+            <button type="button" className="btn btn-secondary sm" onClick={() => void refetch()}>
+              Повторить
+            </button>
+          </div>
         ) : data.length === 0 ? (
           <div className="flex h-full items-center justify-center text-xs" style={{ color: 'var(--fg-faint)' }}>
             Действий за период нет

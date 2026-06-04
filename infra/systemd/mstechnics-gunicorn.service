@@ -1,0 +1,19 @@
+[Unit]
+Description=MsTechnics gunicorn with gevent workers for SSE
+After=network.target postgresql.service redis-server.service
+
+[Service]
+WorkingDirectory=/opt/mstechnics
+EnvironmentFile=/opt/mstechnics/Config/.env
+ExecStart=/opt/mstechnics/.venv/bin/gunicorn \
+    --workers 3 \
+    --worker-class gevent \
+    --worker-connections 1000 \
+    --bind unix:/run/gunicorn.sock \
+    --timeout 120 \
+    project_config.wsgi:application
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

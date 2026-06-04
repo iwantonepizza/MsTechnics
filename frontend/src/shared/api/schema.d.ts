@@ -407,6 +407,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/displays/{slug}/photos/{photo_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Удалить фото экрана */
+        delete: operations["displays_photos_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/displays/{slug}/notes/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Заметки об экране */
+        get: operations["displays_notes_retrieve"];
+        put?: never;
+        /** Заметки об экране */
+        post: operations["displays_notes_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/displays/{slug}/photos/": {
         parameters: {
             query?: never;
@@ -417,7 +452,25 @@ export interface paths {
         /** Фотографии экрана */
         get: operations["displays_photos_retrieve"];
         put?: never;
-        post?: never;
+        /** Фотографии экрана */
+        post: operations["displays_photos_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/displays/{slug}/assets/{asset_kind}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Загрузить электросхему или проект */
+        post: operations["displays_assets_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -987,6 +1040,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/daily-tasks/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Список ежедневных задач
+         * @description T-8-035: ежедневные задачи. Мониторинг выполняет, контроль смотрит прогресс.
+         */
+        get: operations["daily_tasks_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/daily-tasks/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Задача
+         * @description T-8-035: ежедневные задачи. Мониторинг выполняет, контроль смотрит прогресс.
+         */
+        get: operations["daily_tasks_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/daily-tasks/{id}/complete/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Отметить задачу выполненной (открыл ссылку)
+         * @description T-8-035: ежедневные задачи. Мониторинг выполняет, контроль смотрит прогресс.
+         */
+        post: operations["daily_tasks_complete_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/activity-log/": {
         parameters: {
             query?: never;
@@ -1281,6 +1394,14 @@ export interface components {
             name: string;
             slug: string | null;
         };
+        CityRequest: {
+            /** Имя */
+            name: string;
+            /** Описание */
+            description?: string | null;
+            /** URL */
+            slug?: string | null;
+        };
         Color: {
             readonly id: number;
             /** Цвет */
@@ -1333,6 +1454,42 @@ export interface components {
              */
             photo?: string | null;
         };
+        DailyTask: {
+            readonly id: number;
+            /** Название" */
+            name: string;
+            /** Описание */
+            description?: string;
+            /** Статус */
+            status?: components["schemas"]["DailyTaskStatusEnum"];
+            /**
+             * Начало
+             * Format: time
+             */
+            start_time?: string | null;
+            /**
+             * Конец
+             * Format: time
+             */
+            end_time?: string | null;
+            /**
+             * Ссылка
+             * Format: uri
+             */
+            link: string;
+            readonly city_id: number;
+            readonly city_name: string;
+            readonly available: boolean;
+        };
+        /**
+         * @description * `not_ready` - Не готово
+         *     * `ready` - Доступно
+         *     * `deadline` - Дедлайн
+         *     * `done` - Выполнено
+         *     * `undone` - Не выполнено
+         * @enum {string}
+         */
+        DailyTaskStatusEnum: "not_ready" | "ready" | "deadline" | "done" | "undone";
         Department: {
             readonly id: number;
             /** Название отдела */
@@ -1388,6 +1545,10 @@ export interface components {
             /** Название для UI */
             description: string;
         };
+        DisplayAssetUploadRequest: {
+            /** Format: binary */
+            file: string;
+        };
         DisplayDetail: {
             readonly id: number;
             /** Экран */
@@ -1405,6 +1566,14 @@ export interface components {
             readonly file_url: string;
             /** Format: uri */
             readonly project_photo_url: string;
+            /** Format: uri */
+            readonly camera_link: string | null;
+            readonly contacts: {
+                [key: string]: unknown;
+            }[];
+            readonly photos: {
+                [key: string]: unknown;
+            }[];
             readonly cells: components["schemas"]["Cell"][];
         };
         DisplayList: {
@@ -1421,6 +1590,19 @@ export interface components {
             /** Кол-во столбцов */
             cols?: number;
             readonly aggregated_condition: components["schemas"]["Condition"] | null;
+            readonly application_count: number;
+        };
+        DisplayListRequest: {
+            /** Экран */
+            name: string;
+            /** Описание */
+            description?: string | null;
+            /** URL */
+            slug?: string | null;
+            /** Кол-во рядов */
+            rows?: number;
+            /** Кол-во столбцов */
+            cols?: number;
         };
         DisplayMini: {
             id: number;
@@ -1565,9 +1747,12 @@ export interface components {
             /** Format: email */
             email?: string;
             readonly permission: string;
+            readonly roles: string;
+            readonly extra_permissions: string[];
             readonly allowed_cities: components["schemas"]["CityMini"][];
             telegram_id?: string | null;
             max_chat_id?: string | null;
+            readonly show_activity_feed: boolean;
         };
         MoveToCellRequest: {
             cell_id: number;
@@ -1583,12 +1768,20 @@ export interface components {
             rendered_text?: string;
             /** Format: date-time */
             readonly created_at: string;
-            status?: components["schemas"]["StatusEnum"];
+            status?: components["schemas"]["NotificationInboxItemStatusEnum"];
             delivered_via?: string;
             readonly target_kind: string | null;
             readonly target_id: string | null;
             readonly deep_link_path: string | null;
         };
+        /**
+         * @description * `pending` - В очереди
+         *     * `sent` - Отправлено
+         *     * `failed` - Ошибка
+         *     * `skipped` - Пропущено
+         * @enum {string}
+         */
+        NotificationInboxItemStatusEnum: "pending" | "sent" | "failed" | "skipped";
         PaginatedActivityLogList: {
             results?: components["schemas"]["ActivityLog"][];
             next_cursor?: string | null;
@@ -1645,6 +1838,12 @@ export interface components {
         };
         PaginatedConnectorsList: {
             results?: components["schemas"]["Connectors"][];
+            next_cursor?: string | null;
+            prev_cursor?: string | null;
+            has_more?: boolean;
+        };
+        PaginatedDailyTaskList: {
+            results?: components["schemas"]["DailyTask"][];
             next_cursor?: string | null;
             prev_cursor?: string | null;
             has_more?: boolean;
@@ -1917,14 +2116,6 @@ export interface components {
          * @enum {string}
          */
         StageEnum: "monitoring_create" | "control_apply" | "control_send" | "service_apply" | "service_complete" | "service_unable" | "archive_done" | "archive_unable";
-        /**
-         * @description * `pending` - В очереди
-         *     * `sent` - Отправлено
-         *     * `failed` - Ошибка
-         *     * `skipped` - Пропущено
-         * @enum {string}
-         */
-        StatusEnum: "pending" | "sent" | "failed" | "skipped";
         StorageSearchItem: {
             id: number;
             kind: string;
@@ -2660,6 +2851,75 @@ export interface operations {
             };
         };
     };
+    displays_photos_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                photo_id: number;
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    displays_notes_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DisplayList"];
+                };
+            };
+        };
+    };
+    displays_notes_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DisplayListRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["DisplayListRequest"];
+                "multipart/form-data": components["schemas"]["DisplayListRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DisplayList"];
+                };
+            };
+        };
+    };
     displays_photos_retrieve: {
         parameters: {
             query?: never;
@@ -2670,6 +2930,58 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DisplayList"];
+                };
+            };
+        };
+    };
+    displays_photos_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["DisplayListRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["DisplayListRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DisplayList"];
+                };
+            };
+        };
+    };
+    displays_assets_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_kind: string;
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["DisplayAssetUploadRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
@@ -3887,7 +4199,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: string;
+                /** @description A unique integer value identifying this Выезд. */
+                id: number;
             };
             cookie?: never;
         };
@@ -3908,7 +4221,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: string;
+                /** @description A unique integer value identifying this Выезд. */
+                id: number;
             };
             cookie?: never;
         };
@@ -3928,7 +4242,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: string;
+                /** @description A unique integer value identifying this Выезд. */
+                id: number;
             };
             cookie?: never;
         };
@@ -3955,7 +4270,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: string;
+                /** @description A unique integer value identifying this Выезд. */
+                id: number;
             };
             cookie?: never;
         };
@@ -3976,7 +4292,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: string;
+                /** @description A unique integer value identifying this Выезд. */
+                id: number;
             };
             cookie?: never;
         };
@@ -4044,16 +4361,88 @@ export interface operations {
             };
         };
     };
+    daily_tasks_list: {
+        parameters: {
+            query?: {
+                /** @description ID города */
+                city?: number;
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Number of results to return per page. */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedDailyTaskList"];
+                };
+            };
+        };
+    };
+    daily_tasks_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DailyTask"];
+                };
+            };
+        };
+    };
+    daily_tasks_complete_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DailyTask"];
+                };
+            };
+        };
+    };
     activity_log_list: {
         parameters: {
             query?: {
                 before?: string;
+                cell?: number;
                 /** @description The pagination cursor value. */
                 cursor?: string;
                 display?: string;
+                /** @description CSV точных event_type */
+                event_types?: string;
                 kind?: string;
                 /** @description Number of results to return per page. */
                 limit?: number;
+                panel?: number;
                 since?: string;
             };
             header?: never;
@@ -4077,7 +4466,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: string;
+                /** @description A unique integer value identifying this Запись журнала. */
+                id: number;
             };
             cookie?: never;
         };
@@ -4095,7 +4485,9 @@ export interface operations {
     };
     events_stream_retrieve: {
         parameters: {
-            query?: never;
+            query?: {
+                format?: "event-stream" | "json";
+            };
             header?: never;
             path?: never;
             cookie?: never;

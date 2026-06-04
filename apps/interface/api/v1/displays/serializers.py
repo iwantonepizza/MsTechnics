@@ -1,7 +1,9 @@
 from drf_spectacular.utils import OpenApiTypes, extend_schema_field
+from PIL import Image, UnidentifiedImageError
 from rest_framework import serializers
 
 from apps.directory.displays.models import Cell, Display, condition_severity
+from apps.directory.displays.services import stored_file_url
 from apps.directory.panels.models import Panel
 from apps.interface.api.v1.refs.serializers import CitySerializer, ConditionSerializer
 
@@ -31,6 +33,7 @@ class CellSerializer(serializers.ModelSerializer):
 class DisplayListSerializer(serializers.ModelSerializer):
     city = CitySerializer(read_only=True)
     aggregated_condition = serializers.SerializerMethodField()
+    application_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Display
@@ -43,6 +46,7 @@ class DisplayListSerializer(serializers.ModelSerializer):
             "rows",
             "cols",
             "aggregated_condition",
+            "application_count",
         ]
 
     @extend_schema_field(ConditionSerializer(allow_null=True))
@@ -116,11 +120,11 @@ class DisplayDetailSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(OpenApiTypes.URI)
     def get_file_url(self, d) -> str | None:
-        return d.file.url if d.file else None
+        return stored_file_url(d.file)
 
     @extend_schema_field(OpenApiTypes.URI)
     def get_project_photo_url(self, d) -> str | None:
-        return d.project_photo.url if d.project_photo else None
+        return stored_file_url(d.project_photo)
 
     @extend_schema_field(
         serializers.ListField(
@@ -148,7 +152,7 @@ class DisplayDetailSerializer(serializers.ModelSerializer):
         return [
             {
                 "id": photo.id,
-                "url": photo.image.url if photo.image else None,
+                "url": stored_file_url(photo.image),
                 "uploaded_at": getattr(photo, "uploaded_at", None),
             }
             for photo in photos
@@ -158,6 +162,30 @@ class DisplayDetailSerializer(serializers.ModelSerializer):
 class PhotoUploadSerializer(serializers.Serializer):
     file = serializers.ImageField(required=True)
     description = serializers.CharField(max_length=200, required=False, allow_blank=True)
+
+
+class DisplayAssetUploadSerializer(serializers.Serializer):
+    file = serializers.FileField(required=True)
+
+    def validate_file(self, value):
+        if value.size > 10 * 1024 * 1024:
+            raise serializers.ValidationError("Максимальный размер файла — 10 МБ.")
+        content_type = getattr(value, "content_type", "")
+        if content_type == "application/pdf":
+            signature = value.read(5)
+            value.seek(0)
+            if signature != b"%PDF-":
+                raise serializers.ValidationError("Файл не является корректным PDF.")
+            return value
+        if not content_type.startswith("image/"):
+            raise serializers.ValidationError("Разрешены изображения и PDF.")
+        try:
+            Image.open(value).verify()
+        except (OSError, UnidentifiedImageError) as exc:
+            raise serializers.ValidationError("Файл не является корректным изображением.") from exc
+        finally:
+            value.seek(0)
+        return value
 
 
 class DisplayNoteSerializer(serializers.Serializer):

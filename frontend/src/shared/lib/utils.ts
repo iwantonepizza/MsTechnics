@@ -19,8 +19,22 @@ export function formatRelative(iso: string | null | undefined) {
 
 export function getErrorMessage(error: unknown): string {
   if (error && typeof error === 'object' && 'response' in error) {
-    const e = error as { response?: { data?: { detail?: string } } }
-    return e.response?.data?.detail ?? 'Произошла ошибка'
+    const e = error as {
+      response?: {
+        data?: {
+          detail?: string
+          errors?: Record<string, string[] | string>
+        }
+      }
+    }
+    const detail = e.response?.data?.detail
+    if (detail) return detail
+    const errors = e.response?.data?.errors
+    if (errors) {
+      const first = Object.values(errors).flat()[0]
+      if (typeof first === 'string') return first
+    }
+    return 'Произошла ошибка'
   }
   if (error instanceof Error) return error.message
   return 'Произошла ошибка'

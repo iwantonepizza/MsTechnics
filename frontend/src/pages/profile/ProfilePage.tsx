@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Activity, MapPin, MessageCircle, Shield, Volume2, VolumeX } from 'lucide-react'
 
-import { useMyActivity, type ActivityLogEntry } from '@/entities/activity/hooks'
+import { useInfiniteMyActivity, type ActivityLogEntry } from '@/entities/activity/hooks'
 import { useMe } from '@/features/auth/hooks'
 import {
   isNotificationSoundEnabled,
@@ -10,6 +10,7 @@ import {
 } from '@/shared/lib/notificationSound'
 import { useTheme, type ThemePreference } from '@/shared/lib/theme'
 import { Button } from '@/shared/ui/Button'
+import { InfiniteScrollSentinel } from '@/shared/ui/InfiniteScrollSentinel'
 import { Spinner } from '@/shared/ui/Spinner'
 import { Toggle } from '@/shared/ui/Toggle'
 import { useCrumb } from '@/widgets/navigation/CrumbContext'
@@ -24,7 +25,8 @@ export function ProfilePage() {
   const { data: me } = useMe()
   const { theme, resolvedTheme, setTheme } = useTheme()
   const { setCrumb } = useCrumb()
-  const { data: activity, isLoading: activityLoading } = useMyActivity(me?.username)
+  const activityQuery = useInfiniteMyActivity(me?.username)
+  const activity = activityQuery.entries
   const [soundEnabled, setSoundEnabledState] = useState<boolean>(() => isNotificationSoundEnabled())
 
   const handleSoundToggle = (next: boolean) => {
@@ -194,11 +196,11 @@ export function ProfilePage() {
           </h2>
         </div>
 
-        {activityLoading ? (
+        {activityQuery.isLoading ? (
           <div className="flex justify-center py-4">
             <Spinner className="h-5 w-5" />
           </div>
-        ) : !activity || activity.length === 0 ? (
+        ) : activity.length === 0 ? (
           <div className="text-sm" style={{ color: 'var(--fg-faint)' }}>
             История пуста: ваших действий пока не зафиксировано.
           </div>
@@ -207,6 +209,11 @@ export function ProfilePage() {
             {activity.map(entry => (
               <ActivityRow key={entry.id} entry={entry} />
             ))}
+            <InfiniteScrollSentinel
+              hasMore={Boolean(activityQuery.hasNextPage)}
+              loading={activityQuery.isFetchingNextPage}
+              onLoadMore={() => void activityQuery.fetchNextPage()}
+            />
           </ol>
         )}
       </section>

@@ -1,12 +1,13 @@
 import { Inbox } from 'lucide-react'
 import { useState } from 'react'
 
-import { useActivityLog, type ActivityLogEntry } from '@/entities/activity/hooks'
+import { useInfiniteActivityLog, type ActivityLogEntry } from '@/entities/activity/hooks'
 import { ApplicationCard } from '@/entities/application/ApplicationCard'
-import { useApplications } from '@/entities/application/hooks'
+import { useInfiniteApplications } from '@/entities/application/hooks'
 import { useDeferredLoading } from '@/shared/lib/useDeferredLoading'
 import { formatRelative } from '@/shared/lib/utils'
 import { EmptyState } from '@/shared/ui/EmptyState'
+import { InfiniteScrollSentinel } from '@/shared/ui/InfiniteScrollSentinel'
 import { SkeletonList } from '@/shared/ui/Skeleton'
 import { Tabs } from '@/shared/ui/Tabs'
 
@@ -14,11 +15,12 @@ type Dept = 'monitoring' | 'control' | 'service'
 
 const TABS: Record<Dept, Array<{ value: string; label: string }>> = {
   monitoring: [
-    { value: 'received', label: 'Созданные' },
     { value: 'all', label: 'Все' },
+    { value: 'received', label: 'Созданные' },
     { value: 'history', label: 'История' },
   ],
   control: [
+    { value: 'all', label: 'Все' },
     { value: 'received', label: 'Запросы' },
     { value: 'at_work', label: 'В работе' },
     { value: 'complete', label: 'Выполненные' },
@@ -26,6 +28,7 @@ const TABS: Record<Dept, Array<{ value: string; label: string }>> = {
     { value: 'unable', label: 'Невозможные' },
   ],
   service: [
+    { value: 'all', label: 'Все' },
     { value: 'at_work', label: 'В работе' },
     { value: 'received', label: 'Новые' },
     { value: 'complete', label: 'Выполненные' },
@@ -60,17 +63,20 @@ export function ApplicationsPanel({
   const [box, setBox] = useState(tabs[0].value)
   const isHistoryTab = department === 'monitoring' && box === 'history'
 
-  const { data, isLoading } = useApplications({
+  const applicationsQuery = useInfiniteApplications({
     display: displaySlug,
     box,
     enabled: !isHistoryTab,
   })
-  const { data: history = [], isLoading: historyLoading } = useActivityLog(
-    isHistoryTab ? { display: displaySlug, eventTypes: APPLICATION_HISTORY_EVENT_TYPES } : {},
-  )
+  const historyQuery = useInfiniteActivityLog({
+    display: displaySlug,
+    eventTypes: APPLICATION_HISTORY_EVENT_TYPES,
+    enabled: isHistoryTab,
+  })
 
-  const showSkeleton = useDeferredLoading(isHistoryTab ? historyLoading : isLoading)
-  const apps = data?.results ?? []
+  const showSkeleton = useDeferredLoading(isHistoryTab ? historyQuery.isLoading : applicationsQuery.isLoading)
+  const apps = applicationsQuery.applications
+  const history = historyQuery.entries
 
   return (
     <div className="flex h-full flex-col" style={{ background: 'var(--bg-1)' }}>
@@ -88,18 +94,30 @@ export function ApplicationsPanel({
         {showSkeleton ? (
           <SkeletonList rows={6} height="var(--h-row)" />
         ) : isHistoryTab ? (
-          <ApplicationHistoryTab entries={history} />
+          <ApplicationHistoryTab
+            entries={history}
+            hasMore={Boolean(historyQuery.hasNextPage)}
+            loadingMore={historyQuery.isFetchingNextPage}
+            onLoadMore={() => void historyQuery.fetchNextPage()}
+          />
         ) : apps.length === 0 ? (
           <EmptyState icon={<Inbox size={20} />} title="Заявок нет" className="py-10" />
         ) : (
-          apps.map(app => (
-            <ApplicationCard
-              key={app.id}
-              application={app}
-              selected={app.id === selectedId}
-              onClick={() => onApplicationSelect?.(app.id)}
+          <>
+            {apps.map(app => (
+              <ApplicationCard
+                key={app.id}
+                application={app}
+                selected={app.id === selectedId}
+                onClick={() => onApplicationSelect?.(app.id)}
+              />
+            ))}
+            <InfiniteScrollSentinel
+              hasMore={Boolean(applicationsQuery.hasNextPage)}
+              loading={applicationsQuery.isFetchingNextPage}
+              onLoadMore={() => void applicationsQuery.fetchNextPage()}
             />
-          ))
+          </>
         )}
       </div>
     </div>
@@ -108,8 +126,14 @@ export function ApplicationsPanel({
 
 function ApplicationHistoryTab({
   entries,
+  hasMore,
+  loadingMore,
+  onLoadMore,
 }: {
   entries: ActivityLogEntry[]
+  hasMore: boolean
+  loadingMore: boolean
+  onLoadMore: () => void
 }) {
   if (entries.length === 0) {
     return (
@@ -165,6 +189,11 @@ function ApplicationHistoryTab({
           </div>
         </article>
       ))}
+      <InfiniteScrollSentinel
+        hasMore={hasMore}
+        loading={loadingMore}
+        onLoadMore={onLoadMore}
+      />
     </div>
   )
 }

@@ -20,6 +20,7 @@ const mockDisplays = [
       icon: { id: 1, unicode_symbol: '!' },
     },
     city: { id: 1, name: 'Екатеринбург', slug: 'ekb' },
+    application_count: 2,
   },
   {
     id: 2,
@@ -36,6 +37,7 @@ const mockDisplays = [
       icon: { id: 2, unicode_symbol: '+' },
     },
     city: { id: 1, name: 'Екатеринбург', slug: 'ekb' },
+    application_count: 0,
   },
   {
     id: 3,
@@ -46,6 +48,7 @@ const mockDisplays = [
     cols: 6,
     aggregated_condition: null,
     city: { id: 2, name: 'РњРѕСЃРєРІР°', slug: 'msk' },
+    application_count: 0,
   },
   {
     id: 4,
@@ -62,6 +65,7 @@ const mockDisplays = [
       icon: { id: 3, unicode_symbol: 'x' },
     },
     city: { id: 3, name: 'Казань', slug: 'kzn' },
+    application_count: 0,
   },
 ]
 
@@ -148,14 +152,17 @@ vi.mock('@/entities/application/hooks', () => ({
 }))
 
 vi.mock('@/entities/activity/hooks', () => ({
-  useActivityLog: (filter: unknown) => mockUseActivityLog(filter),
+  useInfiniteActivityLog: (filter: unknown) => mockUseActivityLog(filter),
 }))
 
 mockUseActivityLog.mockImplementation(() => ({
-  data: mockActivityEntries,
+  entries: mockActivityEntries,
   isLoading: false,
   isError: false,
   refetch: vi.fn(),
+  hasNextPage: false,
+  isFetchingNextPage: false,
+  fetchNextPage: vi.fn(),
 }))
 
 vi.mock('@/features/auth/hooks', () => ({
@@ -283,17 +290,14 @@ describe('DepartmentListPage - merged sort/filter/quick-links', () => {
     expect(within(ekbCards[1]).getByText('РђР»СЊС„Р°')).toBeInTheDocument()
   })
 
-  it('renders quick-links for each card', () => {
+  it('renders zip quick-link and application count without broken history/application links', () => {
     renderPage()
 
     expect(screen.getByTestId('quicklink-zip-ekb-1')).toHaveAttribute('href', '/zip/ekb-1')
     expect(screen.getByTestId('quicklink-zip-ekb-1')).toHaveTextContent('ЗИП')
-    expect(screen.getByTestId('quicklink-applications-ekb-1')).toHaveAttribute('href', '/control/ekb/ekb-1')
-    expect(screen.getByTestId('quicklink-applications-ekb-1')).toHaveTextContent('Заявки')
-    expect(screen.getByTestId('quicklink-history-ekb-1')).toHaveAttribute(
-      'href',
-      '/monitoring/ekb/ekb-1?tab=history',
-    )
+    expect(screen.getByTestId('display-application-count-ekb-1')).toHaveTextContent('Заявки: 2')
+    expect(screen.queryByTestId('quicklink-applications-ekb-1')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('quicklink-history-ekb-1')).not.toBeInTheDocument()
   })
 
   it('shows the activity feed in the side rail when enabled for the user', () => {
@@ -306,20 +310,16 @@ describe('DepartmentListPage - merged sort/filter/quick-links', () => {
     expect(screen.getByText('Panel moved')).toBeInTheDocument()
   })
 
-  it('keeps the activity since filter stable across unrelated renders', () => {
-    vi.useFakeTimers()
-    vi.setSystemTime(new Date('2026-06-04T10:00:00Z'))
+  it('loads activity feed for all time without since filter', () => {
     renderPage()
-    const firstSince =
-      mockUseActivityLog.mock.calls[mockUseActivityLog.mock.calls.length - 1]?.[0].since
 
-    vi.setSystemTime(new Date('2026-06-04T10:01:00Z'))
     const select = screen.getByTestId('sort-select').querySelector('select') as HTMLSelectElement
     fireEvent.change(select, { target: { value: 'name-desc' } })
 
     const lastCall = mockUseActivityLog.mock.calls[mockUseActivityLog.mock.calls.length - 1]
-    expect(lastCall?.[0].since).toBe(firstSince)
-    vi.useRealTimers()
+    expect(lastCall?.[0]).toEqual(expect.objectContaining({ feed: true, limit: 60 }))
+    expect(lastCall?.[0]).not.toHaveProperty('since')
+    expect(screen.getByText('Всё время')).toBeInTheDocument()
   })
 
   it('retries both city and display queries after a list load error', () => {
@@ -409,9 +409,6 @@ describe('DepartmentListPage - merged sort/filter/quick-links', () => {
       expect(mockApiPost).toHaveBeenCalledWith(
         '/displays/ekb-1/photos/',
         expect.any(FormData),
-        expect.objectContaining({
-          headers: { 'Content-Type': 'multipart/form-data' },
-        }),
       )
     })
 

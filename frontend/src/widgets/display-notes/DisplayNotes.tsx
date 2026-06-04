@@ -67,7 +67,7 @@ export function DisplayNotes({ slug }: { slug: string }) {
               onClick={submit}
               disabled={addNote.isPending || !text.trim()}
               className="text-xs px-2 rounded disabled:opacity-50"
-              style={{ background: 'var(--accent)', color: 'var(--accent-fg, #fff)' }}
+              style={{ background: 'var(--accent)', color: 'var(--accent-ink)' }}
             >
               +
             </button>

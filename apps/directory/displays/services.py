@@ -4,9 +4,10 @@ apps/directory/displays/services.py — сервис создания экран
 T-2-027: выносит side-effects из Display.save() в явный сервис.
 Display.save() становится стандартным Django-поведением.
 """
+
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import structlog
@@ -20,11 +21,29 @@ if TYPE_CHECKING:
 
 logger = structlog.get_logger(__name__)
 
+DISPLAY_ASSET_FIELDS = {
+    "schematic": "file",
+    "project": "project_photo",
+}
+
+
+def stored_file_url(field_file) -> str | None:
+    """Return a URL only when the referenced file is present in storage."""
+    if not field_file or not getattr(field_file, "name", ""):
+        return None
+    try:
+        if not field_file.storage.exists(field_file.name):
+            return None
+        return field_file.url
+    except (NotImplementedError, OSError, ValueError):
+        logger.warning("media_reference_check_failed", file_name=field_file.name)
+        return None
+
 
 @dataclass
 class DisplayLayoutSpec:
     name: str
-    city_name: str          # имя города (Cities.name) — legacy-связь через to_field
+    city_name: str  # имя города (Cities.name) — legacy-связь через to_field
     rows: int
     cols: int
     description: str = ""
@@ -103,7 +122,7 @@ class DisplayService:
             created_cells = list(Cell.objects.filter(display=display).order_by("id"))
             created_panels = list(Panel.objects.filter(display=display).order_by("id"))
 
-            for cell, panel in zip(created_cells, created_panels):
+            for cell, panel in zip(created_cells, created_panels, strict=False):
                 cell.panel = panel
             Cell.objects.bulk_update(created_cells, ["panel"])
 
@@ -134,6 +153,32 @@ class DisplayService:
             )
 
         return display
+
+    def replace_asset(self, display: "Display", asset_kind: str, uploaded_file) -> str:
+        """Replace a display attachment and remove the previous physical file."""
+        try:
+            field_name = DISPLAY_ASSET_FIELDS[asset_kind]
+        except KeyError as exc:
+            raise ValueError(f"Неизвестный тип файла: {asset_kind}") from exc
+
+        old_field = getattr(display, field_name)
+        old_name = old_field.name if old_field else ""
+        old_storage = old_field.storage if old_field else None
+
+        setattr(display, field_name, uploaded_file)
+        display.save(update_fields=[field_name])
+        new_field = getattr(display, field_name)
+
+        if old_name and old_storage and old_name != new_field.name and old_storage.exists(old_name):
+            old_storage.delete(old_name)
+
+        logger.info(
+            "display_asset_replaced",
+            display=display.name,
+            asset_kind=asset_kind,
+            file_name=new_field.name,
+        )
+        return new_field.url
 
 
 # Глобальный синглтон

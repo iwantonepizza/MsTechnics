@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api/client'
 import type { PaginatedResponse } from '@/shared/api/types'
 
@@ -27,34 +27,62 @@ export interface ActivityLogFilter {
   /** T-8-020: общая лента (без таргета) — включается тумблером show_activity_feed */
   feed?: boolean
   limit?: number
+  enabled?: boolean
 }
 
-export function useActivityLog(filter: ActivityLogFilter = {}) {
-  return useQuery({
-    queryKey: ['activity-log', filter],
-    queryFn: async () => {
-      const res = await apiClient.get<PaginatedResponse<ActivityLogEntry>>('/activity-log/', {
-        params: {
-          display: filter.display,
-          panel: filter.panel ?? undefined,
-          cell: filter.cell ?? undefined,
-          kind: filter.kind,
-          event_types: filter.eventTypes,
-          since: filter.since,
-          limit: filter.limit ?? 30,
-        },
-      })
-      return res.data.results ?? []
-    },
-    enabled:
+function activityLogEnabled(filter: ActivityLogFilter) {
+  return (
+    filter.enabled ??
+    (
       !!filter.display ||
       !!filter.kind ||
       !!filter.eventTypes ||
       filter.panel != null ||
       filter.cell != null ||
-      !!filter.feed,
+      !!filter.feed
+    )
+  )
+}
+
+async function fetchActivityLog(filter: ActivityLogFilter, cursor?: string) {
+  const res = await apiClient.get<PaginatedResponse<ActivityLogEntry>>('/activity-log/', {
+    params: {
+      display: filter.display,
+      panel: filter.panel ?? undefined,
+      cell: filter.cell ?? undefined,
+      kind: filter.kind,
+      event_types: filter.eventTypes,
+      since: filter.since,
+      limit: filter.limit ?? 30,
+      cursor,
+    },
+  })
+  return res.data
+}
+
+export function useActivityLog(filter: ActivityLogFilter = {}) {
+  return useQuery({
+    queryKey: ['activity-log', filter],
+    queryFn: async () => (await fetchActivityLog(filter)).results ?? [],
+    enabled: activityLogEnabled(filter),
     staleTime: 30_000,
   })
+}
+
+export function useInfiniteActivityLog(filter: ActivityLogFilter = {}) {
+  const query = useInfiniteQuery({
+    queryKey: ['activity-log', 'infinite', filter],
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam }) => fetchActivityLog(filter, pageParam),
+    getNextPageParam: lastPage => lastPage.next_cursor ?? undefined,
+    enabled: activityLogEnabled(filter),
+    staleTime: 30_000,
+  })
+
+  return {
+    ...query,
+    entries: query.data?.pages.flatMap(page => page.results ?? []) ?? [],
+  }
 }
 
 /**
@@ -75,4 +103,24 @@ export function useMyActivity(username: string | undefined, limit: number = 50) 
     enabled: !!username,
     staleTime: 30_000,
   })
+}
+
+export function useInfiniteMyActivity(username: string | undefined, limit: number = 50) {
+  const query = useInfiniteQuery({
+    queryKey: ['my-activity', 'infinite', username, limit],
+    initialPageParam: undefined as string | undefined,
+    queryFn: async ({ pageParam }) => {
+      const res = await apiClient.get<PaginatedResponse<ActivityLogEntry>>('/activity-log/', {
+        params: { actor: username, limit, cursor: pageParam },
+      })
+      return res.data
+    },
+    getNextPageParam: lastPage => lastPage.next_cursor ?? undefined,
+    enabled: !!username,
+    staleTime: 30_000,
+  })
+  return {
+    ...query,
+    entries: query.data?.pages.flatMap(page => page.results ?? []) ?? [],
+  }
 }

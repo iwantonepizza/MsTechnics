@@ -18,9 +18,10 @@ import { apiClient } from '@/shared/api/client'
 import { useMe } from '@/features/auth/hooks'
 import { useDisplays } from '@/entities/display/hooks'
 import { useStorage } from '@/entities/storage/hooks'
-import { useActivityLog } from '@/entities/activity/hooks'
+import { useInfiniteActivityLog } from '@/entities/activity/hooks'
 import { Activity } from 'lucide-react'
 import { Badge } from '@/shared/ui/Badge'
+import { InfiniteScrollSentinel } from '@/shared/ui/InfiniteScrollSentinel'
 import { Skeleton, SkeletonList } from '@/shared/ui/Skeleton'
 import { useDeferredLoading } from '@/shared/lib/useDeferredLoading'
 import { formatDate, formatRelative } from '@/shared/lib/utils'
@@ -380,23 +381,16 @@ function ZipDeparturesColumn({ allowed }: { allowed: boolean }) {
   )
 }
 
-function monthsAgoIso(months: number): string {
-  const d = new Date()
-  d.setMonth(d.getMonth() - months)
-  return d.toISOString()
-}
-
-/** T-8-020/T-8-107: лента последних действий с устойчивым query key. */
+/** T-8-020/T-8-107/T-8-111: лента последних действий без ограничения по дате, с cursor-пагинацией. */
 export function ActivityFeedBand() {
-  const [months, setMonths] = useState(1)
   const [kind, setKind] = useState<ActivityKind>('all')
-  const since = useMemo(() => monthsAgoIso(months), [months])
-  const { data = [], isLoading, isError, refetch } = useActivityLog({
+  const activityQuery = useInfiniteActivityLog({
     feed: true,
-    since,
     kind: kind === 'all' ? undefined : kind,
     limit: 60,
   })
+  const data = activityQuery.entries
+  const isLoading = activityQuery.isLoading
   const show = useDeferredLoading(isLoading)
 
   return (
@@ -429,34 +423,21 @@ export function ActivityFeedBand() {
               {filter.label}
             </button>
           ))}
-          {[1, 2].map(m => (
-            <button
-              key={m}
-              type="button"
-              onClick={() => setMonths(m)}
-              className="rounded px-1.5 py-0.5 text-2xs transition-colors"
-              style={{
-                background: months === m ? 'var(--accent)' : 'var(--bg-2)',
-                color: months === m ? 'var(--accent-ink)' : 'var(--fg)',
-                border: `1px solid ${months === m ? 'var(--accent-edge)' : 'var(--border-strong)'}`,
-              }}
-              data-testid={`activity-months-${m}`}
-            >
-              {m} мес
-            </button>
-          ))}
+          <span className="rounded px-1.5 py-0.5 text-2xs" style={{ color: 'var(--fg-faint)' }}>
+            Всё время
+          </span>
         </div>
       </div>
       <div className="flex-1 overflow-y-auto p-2">
         {show ? (
           <SkeletonList rows={4} height="28px" />
-        ) : isError && data.length === 0 ? (
+        ) : activityQuery.isError && data.length === 0 ? (
           <div
             className="flex h-full flex-col items-center justify-center gap-2 text-xs"
             style={{ color: 'var(--err)' }}
           >
             <span>Не удалось загрузить последние действия</span>
-            <button type="button" className="btn btn-secondary sm" onClick={() => void refetch()}>
+            <button type="button" className="btn btn-secondary sm" onClick={() => void activityQuery.refetch()}>
               Повторить
             </button>
           </div>
@@ -479,6 +460,11 @@ export function ActivityFeedBand() {
                 </span>
               </div>
             ))}
+            <InfiniteScrollSentinel
+              hasMore={Boolean(activityQuery.hasNextPage)}
+              loading={activityQuery.isFetchingNextPage}
+              onLoadMore={() => void activityQuery.fetchNextPage()}
+            />
           </div>
         )}
       </div>

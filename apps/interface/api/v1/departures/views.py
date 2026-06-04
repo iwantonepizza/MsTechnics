@@ -8,13 +8,15 @@ from rest_framework.viewsets import GenericViewSet, mixins
 
 from apps.workflow.departures.models import Departure, DepartureStatus, Executor
 from apps.activity.services import activity_logger
-from apps.core.users.permissions import is_admin
 from shared.exceptions import DomainError
 from shared.permissions import HasDepartmentAccess
 from shared.throttling import TransitionRateThrottle
 from .serializers import (
-    DepartureListSerializer, DepartureCreateSerializer,
-    DeparturePatchSerializer, DepartureCompleteSerializer, ExecutorSerializer,
+    DepartureListSerializer,
+    DepartureCreateSerializer,
+    DeparturePatchSerializer,
+    DepartureCompleteSerializer,
+    ExecutorSerializer,
 )
 
 
@@ -35,9 +37,12 @@ class ExecutorViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, GenericV
 
 
 class DepartureViewSet(
-    mixins.ListModelMixin, mixins.RetrieveModelMixin,
-    mixins.CreateModelMixin, mixins.UpdateModelMixin,
-    mixins.DestroyModelMixin, GenericViewSet
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.CreateModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    GenericViewSet,
 ):
     permission_classes = [IsAuthenticated]
     serializer_class = DepartureListSerializer
@@ -48,9 +53,8 @@ class DepartureViewSet(
         params = self.request.query_params
         if st := params.get("status"):
             qs = qs.filter(status__name=st)
-        user = self.request.user
-        if not is_admin(user) and user.allowed_city.exists():
-            qs = qs.filter(display__city__in=user.allowed_city.all()).distinct()
+        # Departure has no Display/Application relation yet (T-7-004), so city filtering
+        # cannot be applied here. The previous `display__city` lookup caused production 500s.
         return qs
 
     def get_permissions(self):
@@ -58,8 +62,9 @@ class DepartureViewSet(
             return [HasDepartmentAccess.for_("control", "service", "admin")()]
         return [IsAuthenticated()]
 
-    @extend_schema(tags=["departures"], summary="Список выездов",
-                   parameters=[OpenApiParameter("status", str)])
+    @extend_schema(
+        tags=["departures"], summary="Список выездов", parameters=[OpenApiParameter("status", str)]
+    )
     def list(self, *args, **kwargs):
         return super().list(*args, **kwargs)
 
@@ -71,7 +76,11 @@ class DepartureViewSet(
     def create(self, request, *args, **kwargs):
         s = DepartureCreateSerializer(data=request.data)
         s.is_valid(raise_exception=True)
-        executor = Executor.objects.get(id=s.validated_data["executor_id"]) if s.validated_data.get("executor_id") else None
+        executor = (
+            Executor.objects.get(id=s.validated_data["executor_id"])
+            if s.validated_data.get("executor_id")
+            else None
+        )
         created_status = DepartureStatus.objects.filter(name="created").first()
         dep = Departure.objects.create(
             description=s.validated_data["description"],
@@ -82,8 +91,12 @@ class DepartureViewSet(
             time_created=timezone.now(),
             time_updated=timezone.now(),
         )
-        activity_logger.log(event_type="departure.created", target=dep, actor=request.user,
-                             description=f"Создан выезд #{dep.id}")
+        activity_logger.log(
+            event_type="departure.created",
+            target=dep,
+            actor=request.user,
+            description=f"Создан выезд #{dep.id}",
+        )
         try:
             from apps.notifications.triggers.departure import notify_departure_assigned
 
@@ -106,8 +119,9 @@ class DepartureViewSet(
         dep.save()
         return Response(DepartureListSerializer(dep).data)
 
-    @extend_schema(tags=["departures"], summary="Завершить выезд",
-                   request=DepartureCompleteSerializer)
+    @extend_schema(
+        tags=["departures"], summary="Завершить выезд", request=DepartureCompleteSerializer
+    )
     @action(detail=True, methods=["post"], throttle_classes=[TransitionRateThrottle])
     def complete(self, request, pk=None):
         dep = self.get_object()
@@ -120,9 +134,13 @@ class DepartureViewSet(
         dep.time_end = s.validated_data.get("time_end") or timezone.now()
         dep.time_updated = timezone.now()
         dep.save()
-        activity_logger.log(event_type="departure.completed", target=dep, actor=request.user,
-                             description=f"Выезд #{dep.id} завершён",
-                             comment=s.validated_data.get("comment", ""))
+        activity_logger.log(
+            event_type="departure.completed",
+            target=dep,
+            actor=request.user,
+            description=f"Выезд #{dep.id} завершён",
+            comment=s.validated_data.get("comment", ""),
+        )
         return Response(DepartureListSerializer(dep).data)
 
     @extend_schema(tags=["departures"], summary="Архивировать выезд", request=None)
@@ -133,14 +151,19 @@ class DepartureViewSet(
         dep.status = archived
         dep.time_updated = timezone.now()
         dep.save()
-        activity_logger.log(event_type="departure.archived", target=dep, actor=request.user,
-                             description=f"Выезд #{dep.id} архивирован")
+        activity_logger.log(
+            event_type="departure.archived",
+            target=dep,
+            actor=request.user,
+            description=f"Выезд #{dep.id} архивирован",
+        )
         return Response(DepartureListSerializer(dep).data)
 
     @extend_schema(tags=["departures"], summary="Удалить выезд")
     def destroy(self, request, *args, **kwargs):
         dep = self.get_object()
         if dep.status and dep.status.name != "created":
-            raise DomainError("Удалить можно только выезд в статусе created",
-                               code="delete_not_allowed")
+            raise DomainError(
+                "Удалить можно только выезд в статусе created", code="delete_not_allowed"
+            )
         return super().destroy(request, *args, **kwargs)

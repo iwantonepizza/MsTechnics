@@ -1,13 +1,14 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ActivityFeedBand } from './MainMenuPage'
 
 const refetchMock = vi.fn()
-const useActivityLogMock = vi.fn()
+const fetchNextPageMock = vi.fn()
+const useInfiniteActivityLogMock = vi.fn()
 
 vi.mock('@/entities/activity/hooks', () => ({
-  useActivityLog: (filter: unknown) => useActivityLogMock(filter),
+  useInfiniteActivityLog: (filter: unknown) => useInfiniteActivityLogMock(filter),
 }))
 
 vi.mock('@/shared/lib/useDeferredLoading', () => ({
@@ -16,32 +17,31 @@ vi.mock('@/shared/lib/useDeferredLoading', () => ({
 
 beforeEach(() => {
   refetchMock.mockReset()
-  useActivityLogMock.mockReset()
-  useActivityLogMock.mockReturnValue({
-    data: [],
+  fetchNextPageMock.mockReset()
+  useInfiniteActivityLogMock.mockReset()
+  useInfiniteActivityLogMock.mockReturnValue({
+    entries: [],
     isLoading: false,
     isError: false,
     refetch: refetchMock,
+    hasNextPage: false,
+    isFetchingNextPage: false,
+    fetchNextPage: fetchNextPageMock,
   })
 })
 
-afterEach(() => {
-  vi.useRealTimers()
-})
-
 describe('ActivityFeedBand', () => {
-  it('keeps the since filter stable across unrelated renders', () => {
-    vi.useFakeTimers()
-    vi.setSystemTime(new Date('2026-06-04T10:00:00Z'))
-    const { rerender } = render(<ActivityFeedBand />)
-    const firstSince =
-      useActivityLogMock.mock.calls[useActivityLogMock.mock.calls.length - 1]?.[0].since
+  it('loads the all-time activity feed without a date limit', () => {
+    render(<ActivityFeedBand />)
 
-    vi.setSystemTime(new Date('2026-06-04T10:01:00Z'))
-    rerender(<ActivityFeedBand />)
-
-    const lastCall = useActivityLogMock.mock.calls[useActivityLogMock.mock.calls.length - 1]
-    expect(lastCall?.[0].since).toBe(firstSince)
+    expect(useInfiniteActivityLogMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        feed: true,
+        limit: 60,
+      }),
+    )
+    expect(useInfiniteActivityLogMock.mock.calls[0]?.[0]).not.toHaveProperty('since')
+    expect(screen.getByText('Всё время')).toBeInTheDocument()
   })
 
   it('filters the feed by action entity kind', () => {
@@ -49,7 +49,7 @@ describe('ActivityFeedBand', () => {
 
     fireEvent.click(screen.getByTestId('activity-kind-panel'))
 
-    expect(useActivityLogMock).toHaveBeenLastCalledWith(
+    expect(useInfiniteActivityLogMock).toHaveBeenLastCalledWith(
       expect.objectContaining({
         feed: true,
         kind: 'panel',
@@ -59,11 +59,14 @@ describe('ActivityFeedBand', () => {
   })
 
   it('shows a load error and supports an explicit retry', () => {
-    useActivityLogMock.mockReturnValue({
-      data: [],
+    useInfiniteActivityLogMock.mockReturnValue({
+      entries: [],
       isLoading: false,
       isError: true,
       refetch: refetchMock,
+      hasNextPage: false,
+      isFetchingNextPage: false,
+      fetchNextPage: fetchNextPageMock,
     })
 
     render(<ActivityFeedBand />)

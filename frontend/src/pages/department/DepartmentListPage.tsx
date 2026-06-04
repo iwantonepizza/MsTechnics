@@ -9,7 +9,6 @@ import {
   Building2,
   Camera,
   Circle,
-  ClipboardList,
   Clock,
   Copy,
   Cpu,
@@ -28,18 +27,19 @@ import {
 import { toast } from 'sonner'
 
 import { ApplicationCard } from '@/entities/application/ApplicationCard'
-import { useActivityLog } from '@/entities/activity/hooks'
+import { useInfiniteActivityLog } from '@/entities/activity/hooks'
 import { useApplications } from '@/entities/application/hooks'
 import { useCities, useDisplayDetail, useDisplays } from '@/entities/display/hooks'
 import { useMe } from '@/features/auth/hooks'
 import { apiClient } from '@/shared/api/client'
 import type { City, DisplayDetail, DisplayListItem, DisplayPhoto } from '@/shared/api/types'
 import { useResizableValue, useResizeDrag } from '@/shared/lib/useResizableValue'
-import { formatRelative } from '@/shared/lib/utils'
+import { formatRelative, getErrorMessage } from '@/shared/lib/utils'
 import { useDeferredLoading } from '@/shared/lib/useDeferredLoading'
 import { Button } from '@/shared/ui/Button'
 import { ConfirmDialog, useConfirmDialog } from '@/shared/ui/ConfirmDialog'
 import { EmptyState } from '@/shared/ui/EmptyState'
+import { InfiniteScrollSentinel } from '@/shared/ui/InfiniteScrollSentinel'
 import { Modal } from '@/shared/ui/Modal'
 import { ResizeHandle } from '@/shared/ui/ResizeHandle'
 import { Skeleton, SkeletonList } from '@/shared/ui/Skeleton'
@@ -269,17 +269,10 @@ function SideRail({
   )
 }
 
-function monthsAgoIso(months: number): string {
-  const date = new Date()
-  date.setMonth(date.getMonth() - months)
-  return date.toISOString()
-}
-
 function ActivityFeedBand({ height }: { height: number }) {
-  const [months, setMonths] = useState(1)
-  const since = useMemo(() => monthsAgoIso(months), [months])
-  const { data = [], isLoading, isError, refetch } = useActivityLog({ feed: true, since, limit: 60 })
-  const show = useDeferredLoading(isLoading)
+  const activityQuery = useInfiniteActivityLog({ feed: true, limit: 60 })
+  const data = activityQuery.entries
+  const show = useDeferredLoading(activityQuery.isLoading)
 
   return (
     <div
@@ -299,34 +292,20 @@ function ActivityFeedBand({ height }: { height: number }) {
           <Activity size={13} style={{ color: 'var(--fg-dim)' }} />
           Последние действия
         </div>
-        <div className="flex gap-1">
-          {[1, 2].map(month => (
-            <button
-              key={month}
-              type="button"
-              onClick={() => setMonths(month)}
-              className="rounded px-1.5 py-0.5 text-2xs transition-colors"
-              style={{
-                background: months === month ? 'var(--accent)' : 'var(--bg-2)',
-                color: months === month ? 'var(--accent-ink)' : 'var(--fg)',
-                border: `1px solid ${months === month ? 'var(--accent-edge)' : 'var(--border-strong)'}`,
-              }}
-            >
-              {month} мес
-            </button>
-          ))}
-        </div>
+        <span className="rounded px-1.5 py-0.5 text-2xs" style={{ color: 'var(--fg-faint)' }}>
+          Всё время
+        </span>
       </div>
       <div className="flex-1 overflow-y-auto p-2">
         {show ? (
           <SkeletonList rows={4} height="28px" />
-        ) : isError && data.length === 0 ? (
+        ) : activityQuery.isError && data.length === 0 ? (
           <div
             className="flex h-full flex-col items-center justify-center gap-2 text-xs"
             style={{ color: 'var(--err)' }}
           >
             <span>Не удалось загрузить последние действия</span>
-            <button type="button" className="btn btn-secondary sm" onClick={() => void refetch()}>
+            <button type="button" className="btn btn-secondary sm" onClick={() => void activityQuery.refetch()}>
               Повторить
             </button>
           </div>
@@ -351,6 +330,11 @@ function ActivityFeedBand({ height }: { height: number }) {
                 </span>
               </div>
             ))}
+            <InfiniteScrollSentinel
+              hasMore={Boolean(activityQuery.hasNextPage)}
+              loading={activityQuery.isFetchingNextPage}
+              onLoadMore={() => void activityQuery.fetchNextPage()}
+            />
           </div>
         )}
       </div>
@@ -362,25 +346,107 @@ function AssetModal({
   open,
   onClose,
   title,
+  slug,
+  kind,
   url,
   loading,
+  canManage,
+  onRefresh,
 }: {
   open: boolean
   onClose: () => void
   title: string
+  slug: string
+  kind: 'schematic' | 'project'
   url: string | null
   loading: boolean
+  canManage: boolean
+  onRefresh: () => Promise<unknown>
 }) {
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const inputRef = useRef<HTMLInputElement | null>(null)
+
+  useEffect(() => {
+    if (!open) {
+      setError(null)
+      setUploading(false)
+    }
+  }, [open])
+
+  const handleUpload = async (file: File | null | undefined) => {
+    if (!file) return
+    setUploading(true)
+    setError(null)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      await apiClient.post(`/displays/${slug}/assets/${kind}/`, formData)
+      await onRefresh()
+      if (inputRef.current) inputRef.current.value = ''
+      toast.success('Файл загружен')
+    } catch (uploadError: unknown) {
+      setError(getErrorMessage(uploadError))
+    } finally {
+      setUploading(false)
+    }
+  }
+
   return (
     <Modal open={open} onClose={onClose} title={title} size="lg">
       <Modal.Body className="space-y-4">
+        {canManage ? (
+          <div
+            className="flex flex-wrap items-center justify-between gap-3 rounded-md border p-3"
+            style={{ borderColor: 'var(--border-subtle)', background: 'var(--bg-0)' }}
+          >
+            <div>
+              <div className="text-sm font-medium" style={{ color: 'var(--fg)' }}>
+                {url ? 'Обновить файл' : 'Загрузить файл'}
+              </div>
+              <div className="mt-1 text-xs" style={{ color: 'var(--fg-mute)' }}>
+                Поддерживаются PDF и изображения до 10 МБ.
+              </div>
+            </div>
+            <label
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium transition-colors"
+              style={{
+                background: 'var(--accent)',
+                color: 'var(--accent-ink)',
+                opacity: uploading ? 0.7 : 1,
+              }}
+            >
+              <Upload size={12} />
+              {uploading ? 'Загрузка...' : 'Выбрать файл'}
+              <input
+                ref={inputRef}
+                type="file"
+                accept="image/*,application/pdf"
+                className="sr-only"
+                data-testid={`asset-upload-${kind}`}
+                onChange={event => void handleUpload(event.target.files?.[0])}
+              />
+            </label>
+          </div>
+        ) : null}
+
+        {error ? (
+          <div
+            className="rounded-md border px-3 py-2 text-xs"
+            style={{ color: 'var(--err)', borderColor: 'var(--err-faint)' }}
+          >
+            {error}
+          </div>
+        ) : null}
+
         {loading ? (
           <Skeleton style={{ height: '420px', borderRadius: 'var(--r-md)' }} />
         ) : !url ? (
           <EmptyState
             icon={<FileText size={20} />}
             title="Файл не загружен"
-            description="Для этого экрана пока нет вложения"
+            description={canManage ? 'Нажмите «Выбрать файл», чтобы добавить вложение.' : 'Для этого экрана пока нет вложения.'}
           />
         ) : isPdfUrl(url) ? (
           <iframe
@@ -390,12 +456,14 @@ function AssetModal({
             style={{ height: '65vh', border: '1px solid var(--border-subtle)' }}
           />
         ) : (
-          <img
-            src={url}
-            alt={title}
-            className="max-h-[65vh] w-full rounded-md object-contain"
-            style={{ border: '1px solid var(--border-subtle)', background: 'var(--bg-0)' }}
-          />
+          <a href={url} target="_blank" rel="noreferrer" title="Открыть в новой вкладке">
+            <img
+              src={url}
+              alt={title}
+              className="max-h-[65vh] w-full rounded-md object-contain"
+              style={{ border: '1px solid var(--border-subtle)', background: 'var(--bg-0)' }}
+            />
+          </a>
         )}
       </Modal.Body>
       <Modal.Footer>
@@ -530,18 +598,13 @@ function PhotoBankModal({
       for (const file of Array.from(files)) {
         const formData = new FormData()
         formData.append('file', file)
-        await apiClient.post(`/displays/${slug}/photos/`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        })
+        await apiClient.post(`/displays/${slug}/photos/`, formData)
       }
       await onRefresh()
       if (inputRef.current) inputRef.current.value = ''
       toast.success('Фотографии загружены')
     } catch (uploadError: unknown) {
-      const detailMessage = (
-        uploadError as { response?: { data?: { detail?: string } } }
-      )?.response?.data?.detail
-      setError(detailMessage ?? 'Не удалось загрузить фотографии')
+      setError(getErrorMessage(uploadError))
     } finally {
       setUploading(false)
     }
@@ -556,10 +619,7 @@ function PhotoBankModal({
       setPhotoToDelete(null)
       toast.success('Фото удалено')
     } catch (deleteError: unknown) {
-      const detailMessage = (
-        deleteError as { response?: { data?: { detail?: string } } }
-      )?.response?.data?.detail
-      setError(detailMessage ?? 'Не удалось удалить фото')
+      setError(getErrorMessage(deleteError))
       throw deleteError
     }
   }
@@ -630,7 +690,9 @@ function PhotoBankModal({
                   style={{ borderColor: 'var(--border-subtle)', background: 'var(--bg-0)' }}
                 >
                   {photo.url ? (
-                    <img src={photo.url} alt={`Фото ${photo.id}`} className="h-44 w-full object-cover" />
+                    <a href={photo.url} target="_blank" rel="noreferrer" title="Открыть фото">
+                      <img src={photo.url} alt={`Фото ${photo.id}`} className="h-44 w-full object-cover" />
+                    </a>
                   ) : (
                     <div
                       className="flex h-44 items-center justify-center text-xs"
@@ -792,22 +854,15 @@ function DisplayRow({
           >
             <Package size={11} /> ЗИП
           </Link>
-          <Link
-            to={`/control/${display.city.slug}/${display.slug}`}
-            className="inline-flex items-center gap-1 hover:text-fg-dim"
-            title="Все заявки по экрану"
-            data-testid={`quicklink-applications-${display.slug}`}
-          >
-            <ClipboardList size={11} /> Заявки
-          </Link>
-          <Link
-            to={`/${department}/${display.city.slug}/${display.slug}?tab=history`}
-            className="inline-flex items-center gap-1 hover:text-fg-dim"
-            title="Журнал событий по экрану"
-            data-testid={`quicklink-history-${display.slug}`}
-          >
-            <Activity size={11} /> История
-          </Link>
+          {display.application_count > 0 ? (
+            <span
+              className="inline-flex items-center gap-1"
+              style={{ color: 'var(--fg-dim)' }}
+              data-testid={`display-application-count-${display.slug}`}
+            >
+              Заявки: {display.application_count}
+            </span>
+          ) : null}
         </div>
       </div>
     </div>
@@ -893,6 +948,7 @@ export function DepartmentListPage({ department }: { department: Dept }) {
   const [cityQuery, setCityQuery] = useState('')
   const [activeAction, setActiveAction] = useState<DisplayActionState>(null)
   const showActivityFeed = Boolean((me as { show_activity_feed?: boolean } | undefined)?.show_activity_feed)
+  const canManageMedia = department === 'service' || me?.permission === 'admin' || me?.permission === 'all'
   const [railWidth, setRailWidth] = useResizableValue({
     storageKey: `department-list:${department}:rail-width`,
     defaultValue: 320,
@@ -1137,8 +1193,12 @@ export function DepartmentListPage({ department }: { department: Dept }) {
           open
           onClose={closeAction}
           title={`Электросхема · ${activeAction.display.description ?? activeAction.display.name}`}
+          slug={activeAction.display.slug}
+          kind="schematic"
           url={activeDisplayDetail?.file_url ?? null}
           loading={detailLoading}
+          canManage={canManageMedia}
+          onRefresh={refetchDetail}
         />
       ) : null}
 
@@ -1147,8 +1207,12 @@ export function DepartmentListPage({ department }: { department: Dept }) {
           open
           onClose={closeAction}
           title={`Проект · ${activeAction.display.description ?? activeAction.display.name}`}
+          slug={activeAction.display.slug}
+          kind="project"
           url={activeDisplayDetail?.project_photo_url ?? null}
           loading={detailLoading}
+          canManage={canManageMedia}
+          onRefresh={refetchDetail}
         />
       ) : null}
 
@@ -1170,7 +1234,7 @@ export function DepartmentListPage({ department }: { department: Dept }) {
           slug={activeAction.display.slug}
           detail={activeDisplayDetail}
           loading={detailLoading}
-          canManage={department === 'service'}
+          canManage={canManageMedia}
           onRefresh={refetchDetail}
         />
       ) : null}

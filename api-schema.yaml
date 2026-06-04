@@ -23,7 +23,6 @@ paths:
               $ref: '#/components/schemas/LoginRequestRequest'
         required: true
       security:
-      - jwtAuth: []
       - {}
       responses:
         '200':
@@ -48,7 +47,6 @@ paths:
       tags:
       - auth
       security:
-      - jwtAuth: []
       - {}
       responses:
         '200':
@@ -67,6 +65,7 @@ paths:
       - auth
       security:
       - jwtAuth: []
+      - {}
       responses:
         '204':
           description: Успешно
@@ -185,6 +184,32 @@ paths:
                 $ref: '#/components/schemas/City'
           description: ''
   /api/v1/colors/:
+    post:
+      operationId: colors_create
+      summary: Создать цвет
+      tags:
+      - refs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ColorRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ColorRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ColorRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Color'
+          description: ''
     get:
       operationId: colors_list
       summary: Список цветов
@@ -212,11 +237,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedColorList'
           description: ''
-    post:
-      operationId: colors_create
-      summary: Создать цвет
+  /api/v1/colors/{id}/:
+    put:
+      operationId: colors_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Цвет.
+        required: true
       tags:
-      - refs
+      - colors
       requestBody:
         content:
           application/json:
@@ -229,28 +261,6 @@ paths:
             schema:
               $ref: '#/components/schemas/ColorRequest'
         required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Color'
-          description: ''
-  /api/v1/colors/{id}/:
-    get:
-      operationId: colors_retrieve
-      summary: Цвет
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Цвет.
-        required: true
-      tags:
-      - refs
       security:
       - jwtAuth: []
       responses:
@@ -277,6 +287,27 @@ paths:
       responses:
         '204':
           description: No response body
+    get:
+      operationId: colors_retrieve
+      summary: Цвет
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Цвет.
+        required: true
+      tags:
+      - refs
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Color'
+          description: ''
     patch:
       operationId: colors_partial_update
       summary: Обновить цвет
@@ -300,38 +331,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/PatchedColorRequest'
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Color'
-          description: ''
-    put:
-      operationId: colors_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Цвет.
-        required: true
-      tags:
-      - colors
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ColorRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/ColorRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ColorRequest'
-        required: true
       security:
       - jwtAuth: []
       responses:
@@ -704,7 +703,111 @@ paths:
               schema:
                 $ref: '#/components/schemas/DisplayList'
           description: ''
+  /api/v1/displays/{slug}/photos/{photo_id}/:
+    delete:
+      operationId: displays_photos_destroy
+      summary: Удалить фото экрана
+      parameters:
+      - in: path
+        name: photo_id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - displays
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/displays/{slug}/notes/:
+    post:
+      operationId: displays_notes_create
+      summary: Заметки об экране
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - displays
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DisplayListRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DisplayListRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DisplayListRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisplayList'
+          description: ''
+    get:
+      operationId: displays_notes_retrieve
+      summary: Заметки об экране
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - displays
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisplayList'
+          description: ''
   /api/v1/displays/{slug}/photos/:
+    post:
+      operationId: displays_photos_create
+      summary: Фотографии экрана
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - displays
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DisplayListRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DisplayListRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisplayList'
+          description: ''
     get:
       operationId: displays_photos_retrieve
       summary: Фотографии экрана
@@ -716,6 +819,39 @@ paths:
         required: true
       tags:
       - displays
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisplayList'
+          description: ''
+  /api/v1/displays/{slug}/assets/{asset_kind}/:
+    post:
+      operationId: displays_assets_create
+      summary: Загрузить электросхему или проект
+      parameters:
+      - in: path
+        name: asset_kind
+        schema:
+          type: string
+          pattern: ^schematic|project$
+        required: true
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - displays
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DisplayAssetUploadRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
@@ -753,6 +889,32 @@ paths:
                 $ref: '#/components/schemas/DisplayList'
           description: ''
   /api/v1/panels/:
+    post:
+      operationId: panels_create
+      summary: Создать новую панель (T-7-035, Z7)
+      tags:
+      - panels
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PanelCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PanelCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PanelCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Panel'
+          description: ''
     get:
       operationId: panels_list
       summary: Список панелей
@@ -788,33 +950,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedPanelList'
           description: ''
-    post:
-      operationId: panels_create
-      summary: Создать новую панель (T-7-035, Z7)
+  /api/v1/panels/{id}/:
+    delete:
+      operationId: panels_destroy
+      summary: Удалить панель (T-7-036, admin-only, Z8)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
       tags:
       - panels
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PanelCreateRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PanelCreateRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PanelCreateRequest'
-        required: true
       security:
       - jwtAuth: []
       responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Panel'
-          description: ''
-  /api/v1/panels/{id}/:
+        '204':
+          description: No response body
     get:
       operationId: panels_retrieve
       summary: Детали панели
@@ -835,22 +987,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Panel'
           description: ''
-    delete:
-      operationId: panels_destroy
-      summary: Удалить панель (T-7-036, admin-only, Z8)
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-        required: true
-      tags:
-      - panels
-      security:
-      - jwtAuth: []
-      responses:
-        '204':
-          description: No response body
     patch:
       operationId: panels_partial_update
       summary: Обновить панель
@@ -1109,6 +1245,31 @@ paths:
                 $ref: '#/components/schemas/Cell'
           description: ''
   /api/v1/storage/wires/:
+    post:
+      operationId: storage_wires_create
+      tags:
+      - storage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WiresRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/WiresRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WiresRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wires'
+          description: ''
     get:
       operationId: storage_wires_list
       parameters:
@@ -1135,32 +1296,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedWiresList'
           description: ''
-    post:
-      operationId: storage_wires_create
+  /api/v1/storage/wires/{id}/:
+    delete:
+      operationId: storage_wires_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Провод.
+        required: true
       tags:
       - storage
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/WiresRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/WiresRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/WiresRequest'
-        required: true
       security:
       - jwtAuth: []
       responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Wires'
-          description: ''
-  /api/v1/storage/wires/{id}/:
+        '204':
+          description: No response body
     get:
       operationId: storage_wires_retrieve
       parameters:
@@ -1181,22 +1333,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Wires'
           description: ''
-    delete:
-      operationId: storage_wires_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Провод.
-        required: true
-      tags:
-      - storage
-      security:
-      - jwtAuth: []
-      responses:
-        '204':
-          description: No response body
     patch:
       operationId: storage_wires_partial_update
       parameters:
@@ -1229,6 +1365,31 @@ paths:
                 $ref: '#/components/schemas/Wires'
           description: ''
   /api/v1/storage/hubs/:
+    post:
+      operationId: storage_hubs_create
+      tags:
+      - storage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HubsRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/HubsRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/HubsRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Hubs'
+          description: ''
     get:
       operationId: storage_hubs_list
       parameters:
@@ -1255,32 +1416,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedHubsList'
           description: ''
-    post:
-      operationId: storage_hubs_create
+  /api/v1/storage/hubs/{id}/:
+    delete:
+      operationId: storage_hubs_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Хаб.
+        required: true
       tags:
       - storage
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/HubsRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/HubsRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/HubsRequest'
-        required: true
       security:
       - jwtAuth: []
       responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Hubs'
-          description: ''
-  /api/v1/storage/hubs/{id}/:
+        '204':
+          description: No response body
     get:
       operationId: storage_hubs_retrieve
       parameters:
@@ -1301,22 +1453,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Hubs'
           description: ''
-    delete:
-      operationId: storage_hubs_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Хаб.
-        required: true
-      tags:
-      - storage
-      security:
-      - jwtAuth: []
-      responses:
-        '204':
-          description: No response body
     patch:
       operationId: storage_hubs_partial_update
       parameters:
@@ -1349,6 +1485,31 @@ paths:
                 $ref: '#/components/schemas/Hubs'
           description: ''
   /api/v1/storage/lamels/:
+    post:
+      operationId: storage_lamels_create
+      tags:
+      - storage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LamelsRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LamelsRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LamelsRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lamels'
+          description: ''
     get:
       operationId: storage_lamels_list
       parameters:
@@ -1375,32 +1536,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedLamelsList'
           description: ''
-    post:
-      operationId: storage_lamels_create
+  /api/v1/storage/lamels/{id}/:
+    delete:
+      operationId: storage_lamels_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Ламель.
+        required: true
       tags:
       - storage
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LamelsRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/LamelsRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/LamelsRequest'
-        required: true
       security:
       - jwtAuth: []
       responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Lamels'
-          description: ''
-  /api/v1/storage/lamels/{id}/:
+        '204':
+          description: No response body
     get:
       operationId: storage_lamels_retrieve
       parameters:
@@ -1421,22 +1573,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Lamels'
           description: ''
-    delete:
-      operationId: storage_lamels_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Ламель.
-        required: true
-      tags:
-      - storage
-      security:
-      - jwtAuth: []
-      responses:
-        '204':
-          description: No response body
     patch:
       operationId: storage_lamels_partial_update
       parameters:
@@ -1469,6 +1605,31 @@ paths:
                 $ref: '#/components/schemas/Lamels'
           description: ''
   /api/v1/storage/power-blocks/:
+    post:
+      operationId: storage_power_blocks_create
+      tags:
+      - storage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PowerBlocksRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PowerBlocksRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PowerBlocksRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PowerBlocks'
+          description: ''
     get:
       operationId: storage_power_blocks_list
       parameters:
@@ -1495,32 +1656,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedPowerBlocksList'
           description: ''
-    post:
-      operationId: storage_power_blocks_create
+  /api/v1/storage/power-blocks/{id}/:
+    delete:
+      operationId: storage_power_blocks_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Блок питания.
+        required: true
       tags:
       - storage
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PowerBlocksRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PowerBlocksRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PowerBlocksRequest'
-        required: true
       security:
       - jwtAuth: []
       responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PowerBlocks'
-          description: ''
-  /api/v1/storage/power-blocks/{id}/:
+        '204':
+          description: No response body
     get:
       operationId: storage_power_blocks_retrieve
       parameters:
@@ -1541,22 +1693,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/PowerBlocks'
           description: ''
-    delete:
-      operationId: storage_power_blocks_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Блок питания.
-        required: true
-      tags:
-      - storage
-      security:
-      - jwtAuth: []
-      responses:
-        '204':
-          description: No response body
     patch:
       operationId: storage_power_blocks_partial_update
       parameters:
@@ -1589,6 +1725,31 @@ paths:
                 $ref: '#/components/schemas/PowerBlocks'
           description: ''
   /api/v1/storage/connectors/:
+    post:
+      operationId: storage_connectors_create
+      tags:
+      - storage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectorsRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ConnectorsRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ConnectorsRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connectors'
+          description: ''
     get:
       operationId: storage_connectors_list
       parameters:
@@ -1615,32 +1776,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedConnectorsList'
           description: ''
-    post:
-      operationId: storage_connectors_create
+  /api/v1/storage/connectors/{id}/:
+    delete:
+      operationId: storage_connectors_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Коннектор.
+        required: true
       tags:
       - storage
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ConnectorsRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/ConnectorsRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ConnectorsRequest'
-        required: true
       security:
       - jwtAuth: []
       responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Connectors'
-          description: ''
-  /api/v1/storage/connectors/{id}/:
+        '204':
+          description: No response body
     get:
       operationId: storage_connectors_retrieve
       parameters:
@@ -1661,22 +1813,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Connectors'
           description: ''
-    delete:
-      operationId: storage_connectors_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Коннектор.
-        required: true
-      tags:
-      - storage
-      security:
-      - jwtAuth: []
-      responses:
-        '204':
-          description: No response body
     patch:
       operationId: storage_connectors_partial_update
       parameters:
@@ -1769,6 +1905,32 @@ paths:
                 $ref: '#/components/schemas/PaginatedApplicationEventList'
           description: ''
   /api/v1/applications/:
+    post:
+      operationId: applications_create
+      summary: Создать заявку
+      tags:
+      - applications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ApplicationCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ApplicationCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationCreate'
+          description: ''
     get:
       operationId: applications_list
       summary: Список заявок
@@ -1812,33 +1974,26 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedApplicationListItemList'
           description: ''
-    post:
-      operationId: applications_create
-      summary: Создать заявку
+  /api/v1/applications/{id}/:
+    delete:
+      operationId: applications_destroy
+      description: |-
+        T-3-fix-002 / B3: Whitelist-подход — разрешено только is_creator OR is_admin.
+        Если creator is None (старая заявка) — не-admin НЕ проходит.
+      summary: Удалить заявку
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
       tags:
       - applications
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ApplicationCreateRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/ApplicationCreateRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ApplicationCreateRequest'
-        required: true
       security:
       - jwtAuth: []
       responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApplicationCreate'
-          description: ''
-  /api/v1/applications/{id}/:
+        '204':
+          description: No response body
     get:
       operationId: applications_retrieve
       summary: Детали заявки
@@ -1859,25 +2014,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApplicationDetail'
           description: ''
-    delete:
-      operationId: applications_destroy
-      description: |-
-        T-3-fix-002 / B3: Whitelist-подход — разрешено только is_creator OR is_admin.
-        Если creator is None (старая заявка) — не-admin НЕ проходит.
-      summary: Удалить заявку
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-        required: true
-      tags:
-      - applications
-      security:
-      - jwtAuth: []
-      responses:
-        '204':
-          description: No response body
   /api/v1/applications/{id}/events/:
     get:
       operationId: applications_events_list_2
@@ -1949,6 +2085,32 @@ paths:
         '403':
           description: No response body
   /api/v1/departures/:
+    post:
+      operationId: departures_create
+      summary: Создать выезд
+      tags:
+      - departures
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepartureCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DepartureCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DepartureCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepartureList'
+          description: ''
     get:
       operationId: departures_list
       summary: Список выездов
@@ -1980,33 +2142,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedDepartureListList'
           description: ''
-    post:
-      operationId: departures_create
-      summary: Создать выезд
+  /api/v1/departures/{id}/:
+    delete:
+      operationId: departures_destroy
+      summary: Удалить выезд
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Выезд.
+        required: true
       tags:
       - departures
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DepartureCreateRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/DepartureCreateRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/DepartureCreateRequest'
-        required: true
       security:
       - jwtAuth: []
       responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DepartureList'
-          description: ''
-  /api/v1/departures/{id}/:
+        '204':
+          description: No response body
     get:
       operationId: departures_retrieve
       summary: Детали выезда
@@ -2014,7 +2167,8 @@ paths:
       - in: path
         name: id
         schema:
-          type: string
+          type: integer
+        description: A unique integer value identifying this Выезд.
         required: true
       tags:
       - departures
@@ -2027,22 +2181,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/DepartureList'
           description: ''
-    delete:
-      operationId: departures_destroy
-      summary: Удалить выезд
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-        required: true
-      tags:
-      - departures
-      security:
-      - jwtAuth: []
-      responses:
-        '204':
-          description: No response body
     patch:
       operationId: departures_partial_update
       summary: Обновить выезд
@@ -2050,7 +2188,8 @@ paths:
       - in: path
         name: id
         schema:
-          type: string
+          type: integer
+        description: A unique integer value identifying this Выезд.
         required: true
       tags:
       - departures
@@ -2082,7 +2221,8 @@ paths:
       - in: path
         name: id
         schema:
-          type: string
+          type: integer
+        description: A unique integer value identifying this Выезд.
         required: true
       tags:
       - departures
@@ -2103,7 +2243,8 @@ paths:
       - in: path
         name: id
         schema:
-          type: string
+          type: integer
+        description: A unique integer value identifying this Выезд.
         required: true
       tags:
       - departures
@@ -2177,6 +2318,87 @@ paths:
               schema:
                 $ref: '#/components/schemas/Executor'
           description: ''
+  /api/v1/daily-tasks/:
+    get:
+      operationId: daily_tasks_list
+      description: 'T-8-035: ежедневные задачи. Мониторинг выполняет, контроль смотрит
+        прогресс.'
+      summary: Список ежедневных задач
+      parameters:
+      - in: query
+        name: city
+        schema:
+          type: integer
+        description: ID города
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - daily-tasks
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDailyTaskList'
+          description: ''
+  /api/v1/daily-tasks/{id}/:
+    get:
+      operationId: daily_tasks_retrieve
+      description: 'T-8-035: ежедневные задачи. Мониторинг выполняет, контроль смотрит
+        прогресс.'
+      summary: Задача
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - daily-tasks
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyTask'
+          description: ''
+  /api/v1/daily-tasks/{id}/complete/:
+    post:
+      operationId: daily_tasks_complete_create
+      description: 'T-8-035: ежедневные задачи. Мониторинг выполняет, контроль смотрит
+        прогресс.'
+      summary: Отметить задачу выполненной (открыл ссылку)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - daily-tasks
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyTask'
+          description: ''
   /api/v1/activity-log/:
     get:
       operationId: activity_log_list
@@ -2186,6 +2408,10 @@ paths:
         name: before
         schema:
           type: string
+      - in: query
+        name: cell
+        schema:
+          type: integer
       - name: cursor
         required: false
         in: query
@@ -2197,6 +2423,11 @@ paths:
         schema:
           type: string
       - in: query
+        name: event_types
+        schema:
+          type: string
+        description: CSV точных event_type
+      - in: query
         name: kind
         schema:
           type: string
@@ -2204,6 +2435,10 @@ paths:
         required: false
         in: query
         description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: panel
         schema:
           type: integer
       - in: query
@@ -2229,7 +2464,8 @@ paths:
       - in: path
         name: id
         schema:
-          type: string
+          type: integer
+        description: A unique integer value identifying this Запись журнала.
         required: true
       tags:
       - activity
@@ -2246,6 +2482,14 @@ paths:
     get:
       operationId: events_stream_retrieve
       summary: SSE поток событий
+      parameters:
+      - in: query
+        name: format
+        schema:
+          type: string
+          enum:
+          - event-stream
+          - json
       tags:
       - events
       security:
@@ -2770,6 +3014,26 @@ components:
       - id
       - name
       - slug
+    CityRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Имя
+          maxLength: 15
+        description:
+          type: string
+          nullable: true
+          title: Описание
+        slug:
+          type: string
+          nullable: true
+          title: URL
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+      required:
+      - name
     Color:
       type: object
       properties:
@@ -2894,6 +3158,68 @@ components:
           title: Фото
       required:
       - name
+    DailyTask:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Название"
+          maxLength: 20
+        description:
+          type: string
+          title: Описание
+        status:
+          allOf:
+          - $ref: '#/components/schemas/DailyTaskStatusEnum'
+          title: Статус
+        start_time:
+          type: string
+          format: time
+          nullable: true
+          title: Начало
+        end_time:
+          type: string
+          format: time
+          nullable: true
+          title: Конец
+        link:
+          type: string
+          format: uri
+          title: Ссылка
+          maxLength: 150
+        city_id:
+          type: integer
+          readOnly: true
+        city_name:
+          type: string
+          readOnly: true
+        available:
+          type: boolean
+          readOnly: true
+      required:
+      - available
+      - city_id
+      - city_name
+      - id
+      - link
+      - name
+    DailyTaskStatusEnum:
+      enum:
+      - not_ready
+      - ready
+      - deadline
+      - done
+      - undone
+      type: string
+      description: |-
+        * `not_ready` - Не готово
+        * `ready` - Доступно
+        * `deadline` - Дедлайн
+        * `done` - Выполнено
+        * `undone` - Не выполнено
     Department:
       type: object
       properties:
@@ -3015,6 +3341,14 @@ components:
       - description
       - id
       - name
+    DisplayAssetUploadRequest:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+      required:
+      - file
     DisplayDetail:
       type: object
       properties:
@@ -3057,17 +3391,37 @@ components:
           type: string
           format: uri
           readOnly: true
+        camera_link:
+          type: string
+          format: uri
+          readOnly: true
+          nullable: true
+        contacts:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
+        photos:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
         cells:
           type: array
           items:
             $ref: '#/components/schemas/Cell'
           readOnly: true
       required:
+      - camera_link
       - cells
       - city
+      - contacts
       - file_url
       - id
       - name
+      - photos
       - project_photo_url
     DisplayList:
       type: object
@@ -3108,10 +3462,44 @@ components:
           - $ref: '#/components/schemas/Condition'
           nullable: true
           readOnly: true
+        application_count:
+          type: integer
+          readOnly: true
       required:
       - aggregated_condition
+      - application_count
       - city
       - id
+      - name
+    DisplayListRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Экран
+          maxLength: 20
+        description:
+          type: string
+          nullable: true
+          title: Описание
+        slug:
+          type: string
+          nullable: true
+          title: URL
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        rows:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Кол-во рядов
+        cols:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Кол-во столбцов
+      required:
       - name
     DisplayMini:
       type: object
@@ -3457,6 +3845,14 @@ components:
         permission:
           type: string
           readOnly: true
+        roles:
+          type: string
+          readOnly: true
+        extra_permissions:
+          type: array
+          items:
+            type: string
+          readOnly: true
         allowed_cities:
           type: array
           items:
@@ -3468,10 +3864,16 @@ components:
         max_chat_id:
           type: string
           nullable: true
+        show_activity_feed:
+          type: boolean
+          readOnly: true
       required:
       - allowed_cities
+      - extra_permissions
       - id
       - permission
+      - roles
+      - show_activity_feed
       - username
     MoveToCellRequest:
       type: object
@@ -3499,7 +3901,7 @@ components:
           format: date-time
           readOnly: true
         status:
-          $ref: '#/components/schemas/StatusEnum'
+          $ref: '#/components/schemas/NotificationInboxItemStatusEnum'
         delivered_via:
           type: string
           maxLength: 16
@@ -3521,6 +3923,18 @@ components:
       - id
       - target_id
       - target_kind
+    NotificationInboxItemStatusEnum:
+      enum:
+      - pending
+      - sent
+      - failed
+      - skipped
+      type: string
+      description: |-
+        * `pending` - В очереди
+        * `sent` - Отправлено
+        * `failed` - Ошибка
+        * `skipped` - Пропущено
     PaginatedActivityLogList:
       type: object
       properties:
@@ -3663,6 +4077,21 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Connectors'
+        next_cursor:
+          type: string
+          nullable: true
+        prev_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+    PaginatedDailyTaskList:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DailyTask'
         next_cursor:
           type: string
           nullable: true
@@ -4280,18 +4709,6 @@ components:
         * `service_unable` - Ремонт невозможен
         * `archive_done` - Архивирована (выполнена)
         * `archive_unable` - Архивирована (невозможно)
-    StatusEnum:
-      enum:
-      - pending
-      - sent
-      - failed
-      - skipped
-      type: string
-      description: |-
-        * `pending` - В очереди
-        * `sent` - Отправлено
-        * `failed` - Ошибка
-        * `skipped` - Пропущено
     StorageSearchItem:
       type: object
       properties:

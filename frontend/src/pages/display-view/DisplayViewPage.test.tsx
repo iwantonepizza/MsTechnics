@@ -7,6 +7,7 @@ import { DisplayViewPage } from './DisplayViewPage'
 let mockPermission = 'monitoring'
 let mockSelectedApp: any = null
 let mockDeleteMutateAsync = vi.fn()
+const mockUseDisplayAlarms = vi.fn()
 
 const mockDisplay = {
   id: 1,
@@ -77,23 +78,7 @@ vi.mock('@/entities/display/hooks', () => ({
     data: mockDisplay,
     isLoading: false,
   }),
-  useDisplayAlarms: () => ({
-    data: [
-      {
-        id: 901,
-        type: 'faulty',
-        receiving_card_no: 4,
-        raw_position: 'A2',
-        raw_email_subject: 'fault',
-        occurred_at: '2026-05-30T10:00:00Z',
-        resolved_at: null,
-        cell_id: 12,
-        cell_position: 'A2',
-        panel_id: 102,
-        panel_name: 'P-ERROR',
-      },
-    ],
-  }),
+  useDisplayAlarms: (...args: unknown[]) => mockUseDisplayAlarms(...args),
 }))
 
 vi.mock('@/entities/application/hooks', () => ({
@@ -210,6 +195,25 @@ beforeEach(() => {
   mockPermission = 'monitoring'
   mockSelectedApp = null
   mockDeleteMutateAsync = vi.fn().mockResolvedValue(undefined)
+  mockUseDisplayAlarms.mockReset()
+  mockUseDisplayAlarms.mockReturnValue({
+    data: [
+      {
+        id: 901,
+        type: 'faulty',
+        receiving_card_no: 4,
+        raw_position: 'A2',
+        raw_email_subject: 'fault',
+        occurred_at: '2026-05-30T10:00:00Z',
+        resolved_at: null,
+        cell_id: 12,
+        cell_position: 'A2',
+        panel_id: 102,
+        panel_name: 'P-ERROR',
+      },
+    ],
+    isLoading: false,
+  })
 })
 
 describe('DisplayViewPage role matrix', () => {
@@ -276,6 +280,19 @@ describe('DisplayViewPage role matrix', () => {
     expect(grid).not.toContainElement(screen.getByTestId('display-notes'))
   })
 
+  it('keeps VNNOX alarms in the detail column and loads them only after opening', () => {
+    renderPage('monitoring')
+
+    expect(mockUseDisplayAlarms).toHaveBeenLastCalledWith('test-display', false, false)
+    expect(screen.getByTestId('display-view-detail-column')).toContainElement(screen.getByTestId('vnnox-section'))
+    expect(screen.getByTestId('display-view-rail-column')).not.toHaveTextContent('VNNOX')
+
+    fireEvent.click(screen.getByRole('button', { name: /VNNOX сообщения/ }))
+
+    expect(mockUseDisplayAlarms).toHaveBeenLastCalledWith('test-display', false, true)
+    expect(screen.getByText('P-ERROR')).toBeInTheDocument()
+  })
+
   it('service can install panel into empty cell', () => {
     mockPermission = 'service'
     renderPage('service')
@@ -294,7 +311,7 @@ describe('DisplayViewPage role matrix', () => {
     expect(screen.getByRole('button', { name: 'Открыть камеру' })).toBeInTheDocument()
 
     act(() => {
-      vi.advanceTimersByTime(5000)
+      vi.advanceTimersByTime(15000)
     })
 
     expect(screen.getByTitle('Камера экрана')).toBeInTheDocument()
@@ -310,7 +327,7 @@ describe('DisplayViewPage role matrix', () => {
     fireEvent.load(iframe)
 
     act(() => {
-      vi.advanceTimersByTime(5000)
+      vi.advanceTimersByTime(15000)
     })
 
     expect(screen.getByTitle('Камера экрана')).toBeInTheDocument()

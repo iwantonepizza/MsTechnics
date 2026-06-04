@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/shared/api/client'
 import type { ApplicationListItem, ApplicationDetail, ApplicationEvent, PaginatedResponse } from '@/shared/api/types'
 
@@ -28,6 +28,32 @@ export function useApplications(filter: ApplicationsFilter) {
     },
     enabled: filter.enabled ?? true,
   })
+}
+
+export function useInfiniteApplications(filter: ApplicationsFilter) {
+  const query = useInfiniteQuery({
+    queryKey: ['applications', 'infinite', filter],
+    initialPageParam: undefined as string | undefined,
+    queryFn: async ({ pageParam }) => {
+      const params: Record<string, string | number | undefined> = {
+        display: filter.display,
+        box: filter.box ?? 'received',
+        panel: filter.panel,
+        cell: filter.cell,
+        cursor: pageParam,
+      }
+      Object.keys(params).forEach(k => params[k] === undefined && delete params[k])
+      const res = await apiClient.get<PaginatedResponse<ApplicationListItem>>('/applications/', { params })
+      return res.data
+    },
+    getNextPageParam: lastPage => lastPage.next_cursor ?? undefined,
+    enabled: filter.enabled ?? true,
+  })
+
+  return {
+    ...query,
+    applications: query.data?.pages.flatMap(page => page.results ?? []) ?? [],
+  }
 }
 
 export function useApplicationDetail(id: number | null) {

@@ -17,12 +17,13 @@ import {
 import { toast } from 'sonner'
 import { useChangeDepartment, usePanels } from '@/entities/panel/hooks'
 import { useStorage, useUpdateStorageItem, type StorageKind } from '@/entities/storage/hooks'
-import { useActivityLog } from '@/entities/activity/hooks'
+import { useInfiniteActivityLog } from '@/entities/activity/hooks'
 import { useDisplays } from '@/entities/display/hooks'
 import { PanelCreateButton } from '@/features/panels/PanelCreateButton'
 import { PanelDeleteButton } from '@/features/panels/PanelDeleteButton'
 import { Skeleton, SkeletonList } from '@/shared/ui/Skeleton'
 import { EmptyState } from '@/shared/ui/EmptyState'
+import { InfiniteScrollSentinel } from '@/shared/ui/InfiniteScrollSentinel'
 import { Modal } from '@/shared/ui/Modal'
 import { Button } from '@/shared/ui/Button'
 import { useDeferredLoading } from '@/shared/lib/useDeferredLoading'
@@ -573,12 +574,14 @@ function HistoryRail({
   const active = HISTORY_TYPES.find(t => t.key === historyType) ?? HISTORY_TYPES[0]
 
   // Если выбрана панель — история по панели; иначе по экрану.
-  const { data = [], isLoading } = useActivityLog(
-    selectedPanel
-      ? { panel: selectedPanel.id, eventTypes: getHistoryEventTypes(active) }
-      : { display: displaySlug ?? undefined, eventTypes: getHistoryEventTypes(active) },
-  )
-  const show = useDeferredLoading(isLoading)
+  const historyQuery = useInfiniteActivityLog({
+    panel: selectedPanel?.id,
+    display: selectedPanel ? undefined : displaySlug ?? undefined,
+    eventTypes: getHistoryEventTypes(active),
+    enabled: Boolean(selectedPanel || displaySlug),
+  })
+  const data = historyQuery.entries
+  const show = useDeferredLoading(historyQuery.isLoading)
 
   return (
     <div className="flex flex-col min-h-0">
@@ -602,7 +605,7 @@ function HistoryRail({
             className="rounded px-1.5 py-0.5 text-2xs transition-colors"
             style={{
               background: historyType === t.key ? 'var(--accent)' : 'var(--bg-2)',
-              color: historyType === t.key ? 'var(--accent-fg, #fff)' : 'var(--fg-dim)',
+              color: historyType === t.key ? 'var(--accent-ink)' : 'var(--fg-dim)',
               border: `1px solid ${historyType === t.key ? 'var(--accent-edge)' : 'var(--border-subtle)'}`,
             }}
           >
@@ -630,7 +633,14 @@ function HistoryRail({
                 <span>{formatRelative(entry.occurred_at)}</span>
               </div>
             </div>
-          ))
+          )).concat([
+            <InfiniteScrollSentinel
+              key="sentinel"
+              hasMore={Boolean(historyQuery.hasNextPage)}
+              loading={historyQuery.isFetchingNextPage}
+              onLoadMore={() => void historyQuery.fetchNextPage()}
+            />,
+          ])
         )}
       </div>
     </div>

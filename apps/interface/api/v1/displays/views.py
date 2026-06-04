@@ -1,4 +1,4 @@
-from django.db.models import Prefetch
+from django.db.models import Count, Prefetch
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema, extend_schema_view
 from rest_framework import status as http_status
 from rest_framework.decorators import action
@@ -10,11 +10,13 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from apps.core.users.permissions import is_admin
 from apps.directory.displays.models import Display
+from apps.directory.displays.services import display_service, stored_file_url
 from apps.directory.panels.models import Panel
 from shared.permissions import HasCityAccess, HasDepartmentAccess
 
 from .serializers import (
     AlarmEventSerializer,
+    DisplayAssetUploadSerializer,
     DisplayDetailSerializer,
     DisplayListSerializer,
     PhotoUploadSerializer,
@@ -35,16 +37,26 @@ class DisplayViewSet(ReadOnlyModelViewSet):
 
     def get_permissions(self):
         if self.action == "photos" and self.request.method == "POST":
-            return [IsAuthenticated(), HasDepartmentAccess.for_("service", "admin")()]
-        if self.action in {"upload_photo", "delete_photo"}:
-            return [IsAuthenticated(), HasDepartmentAccess.for_("service", "admin")()]
+            return [
+                IsAuthenticated(),
+                HasDepartmentAccess.for_("service", "admin")(),
+                HasCityAccess(),
+            ]
+        if self.action in {"upload_photo", "delete_photo", "upload_asset"}:
+            return [
+                IsAuthenticated(),
+                HasDepartmentAccess.for_("service", "admin")(),
+                HasCityAccess(),
+            ]
         return [permission() for permission in self.permission_classes]
 
     def get_queryset(self):
         qs = Display.objects.select_related("city")
         if self.action == "list":
             panel_queryset = Panel.objects.select_related("condition__color", "condition__icon")
-            qs = qs.prefetch_related(Prefetch("cell_set__panel", queryset=panel_queryset))
+            qs = qs.annotate(
+                application_count=Count("application", distinct=True)
+            ).prefetch_related(Prefetch("cell_set__panel", queryset=panel_queryset))
         user = self.request.user
         if not is_admin(user) and user.allowed_city.exists():
             qs = qs.filter(city__in=user.allowed_city.all())
@@ -126,9 +138,7 @@ class DisplayViewSet(ReadOnlyModelViewSet):
             description=f"Заметка к экрану {display.name}",
             comment=note.text[:200],
         )
-        return Response(
-            DisplayNoteSerializer(note).data, status=http_status.HTTP_201_CREATED
-        )
+        return Response(DisplayNoteSerializer(note).data, status=http_status.HTTP_201_CREATED)
 
     @extend_schema(tags=["displays"], summary="Фотографии экрана")
     @action(detail=True, methods=["get", "post"], parser_classes=[MultiPartParser, FormParser])
@@ -141,7 +151,7 @@ class DisplayViewSet(ReadOnlyModelViewSet):
                 [
                     {
                         "id": photo.id,
-                        "url": photo.image.url if photo.image else None,
+                        "url": stored_file_url(photo.image),
                         "uploaded_at": getattr(photo, "uploaded_at", None),
                     }
                     for photo in photos
@@ -169,9 +179,16 @@ class DisplayViewSet(ReadOnlyModelViewSet):
     def _create_photo(self, request, display):
         s = PhotoUploadSerializer(data=request.data)
         s.is_valid(raise_exception=True)
+        from apps.activity.services import activity_logger
         from apps.directory.displays.models import PhotoDisplay
 
         photo = PhotoDisplay.objects.create(display=display, image=s.validated_data["file"])
+        activity_logger.log(
+            actor=request.user,
+            target=display,
+            event_type="display.photo_uploaded",
+            description=f"Добавлено фото экрана {display.name}",
+        )
         return Response(
             {
                 "id": photo.id,
@@ -200,5 +217,39 @@ class DisplayViewSet(ReadOnlyModelViewSet):
             photo = PhotoDisplay.objects.get(id=photo_id, display=display)
         except PhotoDisplay.DoesNotExist as exc:
             raise NotFound("Фото не найдено.") from exc
+        file_name = photo.image.name
+        storage = photo.image.storage
         photo.delete()
+        if file_name and storage.exists(file_name):
+            storage.delete(file_name)
         return Response(status=http_status.HTTP_204_NO_CONTENT)
+
+    @extend_schema(
+        tags=["displays"],
+        summary="Загрузить электросхему или проект",
+        request={"multipart/form-data": DisplayAssetUploadSerializer},
+    )
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path=r"assets/(?P<asset_kind>schematic|project)",
+        parser_classes=[MultiPartParser, FormParser],
+    )
+    def upload_asset(self, request, slug=None, asset_kind=None):
+        del slug
+        display = self.get_object()
+        serializer = DisplayAssetUploadSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        url = display_service.replace_asset(display, asset_kind, serializer.validated_data["file"])
+
+        from apps.activity.services import activity_logger
+
+        label = "электросхема" if asset_kind == "schematic" else "проект"
+        activity_logger.log(
+            actor=request.user,
+            target=display,
+            event_type="display.asset_uploaded",
+            description=f"Обновлён файл «{label}» экрана {display.name}",
+            payload={"asset_kind": asset_kind},
+        )
+        return Response({"kind": asset_kind, "url": url}, status=http_status.HTTP_200_OK)

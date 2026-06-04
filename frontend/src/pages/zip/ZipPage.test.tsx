@@ -43,7 +43,13 @@ vi.mock('@/entities/storage/hooks', () => ({
 }))
 
 vi.mock('@/entities/activity/hooks', () => ({
-  useActivityLog: vi.fn(() => ({ data: [], isLoading: false })),
+  useInfiniteActivityLog: vi.fn(() => ({
+    entries: [],
+    isLoading: false,
+    hasNextPage: false,
+    isFetchingNextPage: false,
+    fetchNextPage: vi.fn(),
+  })),
 }))
 
 vi.mock('@/entities/display/hooks', () => ({

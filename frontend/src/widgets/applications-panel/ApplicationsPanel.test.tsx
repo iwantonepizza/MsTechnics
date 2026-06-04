@@ -7,11 +7,11 @@ const mockUseApplications = vi.fn()
 const mockUseActivityLog = vi.fn()
 
 vi.mock('@/entities/application/hooks', () => ({
-  useApplications: (...args: unknown[]) => mockUseApplications(...args),
+  useInfiniteApplications: (...args: unknown[]) => mockUseApplications(...args),
 }))
 
 vi.mock('@/entities/activity/hooks', () => ({
-  useActivityLog: (...args: unknown[]) => mockUseActivityLog(...args),
+  useInfiniteActivityLog: (...args: unknown[]) => mockUseActivityLog(...args),
 }))
 
 vi.mock('@/entities/application/ApplicationCard', () => ({
@@ -23,11 +23,14 @@ vi.mock('@/entities/application/ApplicationCard', () => ({
 describe('ApplicationsPanel', () => {
   it('renders monitoring tabs with history timeline', () => {
     mockUseApplications.mockReturnValue({
-      data: { results: [{ id: 11 }] },
+      applications: [{ id: 11 }],
       isLoading: false,
+      hasNextPage: false,
+      isFetchingNextPage: false,
+      fetchNextPage: vi.fn(),
     })
     mockUseActivityLog.mockReturnValue({
-      data: [
+      entries: [
         {
           id: 301,
           event_type: 'application.created',
@@ -39,6 +42,9 @@ describe('ApplicationsPanel', () => {
         },
       ],
       isLoading: false,
+      hasNextPage: false,
+      isFetchingNextPage: false,
+      fetchNextPage: vi.fn(),
     })
 
     render(<ApplicationsPanel displaySlug="ekb-1" department="monitoring" />)
@@ -57,17 +63,24 @@ describe('ApplicationsPanel', () => {
     expect(mockUseActivityLog).toHaveBeenLastCalledWith({
       display: 'ekb-1',
       eventTypes: expect.stringContaining('application.created'),
+      enabled: true,
     })
   })
 
   it('does not render history tab for control', () => {
     mockUseApplications.mockReturnValue({
-      data: { results: [] },
+      applications: [],
       isLoading: false,
+      hasNextPage: false,
+      isFetchingNextPage: false,
+      fetchNextPage: vi.fn(),
     })
     mockUseActivityLog.mockReturnValue({
-      data: [],
+      entries: [],
       isLoading: false,
+      hasNextPage: false,
+      isFetchingNextPage: false,
+      fetchNextPage: vi.fn(),
     })
 
     render(<ApplicationsPanel displaySlug="ekb-1" department="control" />)
@@ -75,6 +88,10 @@ describe('ApplicationsPanel', () => {
     expect(screen.getByText('Запросы')).toBeInTheDocument()
     expect(screen.getByText('В работе')).toBeInTheDocument()
     expect(screen.queryByText('История')).not.toBeInTheDocument()
-    expect(mockUseActivityLog).toHaveBeenLastCalledWith({})
+    expect(mockUseActivityLog).toHaveBeenLastCalledWith({
+      display: 'ekb-1',
+      eventTypes: expect.stringContaining('application.created'),
+      enabled: false,
+    })
   })
 })

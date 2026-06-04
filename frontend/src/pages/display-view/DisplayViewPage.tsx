@@ -43,6 +43,7 @@ import type { AlarmEvent, Cell } from '@/shared/api/types'
 import { Badge } from '@/shared/ui/Badge'
 import { Button, type ButtonProps } from '@/shared/ui/Button'
 import { ConfirmDialog, useConfirmDialog } from '@/shared/ui/ConfirmDialog'
+import { LoadingWave } from '@/shared/ui/LoadingWave'
 import { Skeleton } from '@/shared/ui/Skeleton'
 import { ResizeHandle } from '@/shared/ui/ResizeHandle'
 import { useDeferredLoading } from '@/shared/lib/useDeferredLoading'
@@ -144,7 +145,7 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
     panel: PanelLike
     applicationId?: number
   } | null>(null)
-  const [railTab, setRailTab] = useState<'applications' | 'alarms'>('applications')
+  const [alarmsOpen, setAlarmsOpen] = useState(false)
   const [deleteCandidate, setDeleteCandidate] = useState<number | null>(null)
 
   const deleteDialog = useConfirmDialog()
@@ -152,7 +153,7 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
 
   const { data: selectedApp } = useApplicationDetail(selectedAppId)
   const { data: events = [] } = useApplicationEvents(selectedAppId)
-  const { data: alarms = [] } = useDisplayAlarms(displaySlug ?? null, false)
+  const { data: alarms = [], isLoading: alarmsLoading } = useDisplayAlarms(displaySlug ?? null, false, alarmsOpen)
 
   useEffect(() => {
     if (display) {
@@ -643,13 +644,33 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
                 cellId={selectedCell.id}
                 panelId={selectedCell.panel?.id ?? null}
               />
+              <VnnoxSection
+                open={alarmsOpen}
+                loading={alarmsLoading}
+                alarms={alarms}
+                canCreate={canCreateFromAlarm}
+                onCreate={handleAlarmCreate}
+                onToggle={() => setAlarmsOpen(value => !value)}
+              />
             </div>
           </>
         ) : (
-          <div className="flex flex-1 items-center justify-center">
-            <p className="px-4 text-center text-xs" style={{ color: 'var(--fg-faint)' }}>
-              Выберите заявку или нажмите на ячейку
-            </p>
+          <div className="flex flex-1 flex-col">
+            <div className="flex flex-1 items-center justify-center">
+              <p className="px-4 text-center text-xs" style={{ color: 'var(--fg-faint)' }}>
+                Выберите заявку или нажмите на ячейку
+              </p>
+            </div>
+            <div className="shrink-0 p-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+              <VnnoxSection
+                open={alarmsOpen}
+                loading={alarmsLoading}
+                alarms={alarms}
+                canCreate={canCreateFromAlarm}
+                onCreate={handleAlarmCreate}
+                onToggle={() => setAlarmsOpen(value => !value)}
+              />
+            </div>
           </div>
         )}
       </div>
@@ -667,39 +688,13 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
         style={{ borderColor: 'var(--border-subtle)', background: 'var(--bg-0)' }}
         data-testid="display-view-rail-column"
       >
-        <div
-          className="flex items-center gap-1 p-2 shrink-0"
-          style={{ borderBottom: '1px solid var(--border-subtle)' }}
-        >
-          {([
-            ['applications', 'Заявки'],
-            ['alarms', `VNNOX ${alarms.length ? alarms.length : ''}`],
-          ] as const).map(([key, label]) => (
-            <button
-              key={key}
-              onClick={() => setRailTab(key)}
-              className="flex-1 h-7 rounded-sm text-xs transition-colors"
-              style={{
-                color: railTab === key ? 'var(--fg)' : 'var(--fg-mute)',
-                background: railTab === key ? 'var(--bg-2)' : 'transparent',
-                border: railTab === key ? '1px solid var(--border-subtle)' : '1px solid transparent',
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
         <div className="display-view-rail-main">
-          {railTab === 'applications' ? (
-            <ApplicationsPanel
-              displaySlug={display.slug ?? displaySlug ?? ''}
-              department={department}
-              onApplicationSelect={handleAppSelect}
-              selectedId={selectedAppId}
-            />
-          ) : (
-            <AlarmRail alarms={alarms} canCreate={canCreateFromAlarm} onCreate={handleAlarmCreate} />
-          )}
+          <ApplicationsPanel
+            displaySlug={display.slug ?? displaySlug ?? ''}
+            department={department}
+            onApplicationSelect={handleAppSelect}
+            selectedId={selectedAppId}
+          />
         </div>
         <ResizeHandle
           orientation="horizontal"
@@ -819,7 +814,7 @@ function DisplayCameraCard({
     const timeoutId = window.setTimeout(() => {
       setLoadFailed(true)
       setIsLoading(false)
-    }, 5000)
+    }, 15000)
 
     return () => window.clearTimeout(timeoutId)
   }, [cameraLink, expanded, isLoading, loadFailed])
@@ -852,17 +847,19 @@ function DisplayCameraCard({
       {expanded ? (
         <div className="space-y-2">
           <div
-            className="overflow-hidden rounded-md border"
+            className="relative aspect-video overflow-hidden rounded-md border"
             style={{ borderColor: 'var(--border-subtle)', background: 'var(--bg-0)' }}
           >
             <iframe
               key={cameraLink}
               src={cameraLink}
               title="Камера экрана"
-              className="h-48 w-full border-0"
+              className="h-full w-full border-0"
               loading="eager"
+              scrolling="no"
               allow="autoplay; fullscreen; picture-in-picture"
               allowFullScreen
+              style={{ overflow: 'hidden' }}
               onLoad={() => {
                 setLoadFailed(false)
                 setIsLoading(false)
@@ -872,6 +869,15 @@ function DisplayCameraCard({
                 setIsLoading(false)
               }}
             />
+            {isLoading ? (
+              <div
+                className="absolute inset-0 flex items-center justify-center"
+                style={{ background: 'color-mix(in srgb, var(--bg-0) 84%, transparent)' }}
+                data-testid="camera-loading-wave"
+              >
+                <LoadingWave />
+              </div>
+            ) : null}
           </div>
           {loadFailed ? (
             <div
@@ -901,74 +907,101 @@ function DisplayCameraCard({
   )
 }
 
-function AlarmRail({
+function VnnoxSection({
+  open,
+  loading,
   alarms,
   canCreate,
   onCreate,
+  onToggle,
 }: {
+  open: boolean
+  loading: boolean
   alarms: AlarmEvent[]
   canCreate: (alarm: AlarmEvent) => boolean
   onCreate: (alarm: AlarmEvent) => void
+  onToggle: () => void
 }) {
-  if (alarms.length === 0) {
-    return (
-      <div
-        className="flex flex-1 items-center justify-center px-6 text-center text-xs"
-        style={{ color: 'var(--fg-faint)' }}
-      >
-        Открытых VNNOX-алармов нет
-      </div>
-    )
-  }
-
   return (
-    <div className="flex-1 space-y-2 overflow-y-auto p-3">
-      {alarms.map(alarm => {
-        const isFaulty = alarm.type === 'faulty'
-        const canCreateForAlarm = isFaulty && canCreate(alarm)
+    <section
+      className="rounded-md border"
+      style={{ borderColor: 'var(--border-subtle)', background: 'var(--bg-0)' }}
+      data-testid="vnnox-section"
+    >
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-xs"
+        style={{ color: 'var(--fg)' }}
+      >
+        <span className="font-medium">VNNOX сообщения</span>
+        <span className="flex items-center gap-2 text-2xs" style={{ color: 'var(--fg-faint)' }}>
+          {open && alarms.length > 0 ? `${alarms.length}` : null}
+          {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+        </span>
+      </button>
 
-        return (
-          <div
-            key={alarm.id}
-            className="space-y-2 rounded-md p-3"
-            style={{ background: 'var(--bg-1)', border: '1px solid var(--border-subtle)' }}
-          >
-            <div className="flex items-center justify-between gap-2">
-              <Badge label={isFaulty ? 'Open' : 'Recovery'} variant={isFaulty ? 'err' : 'ok'} />
-              <span className="text-2xs" style={{ color: 'var(--fg-faint)', fontFamily: 'var(--font-mono)' }}>
-                {formatDate(alarm.occurred_at)}
-              </span>
+      {open ? (
+        <div className="max-h-64 space-y-2 overflow-y-auto px-3 pb-3">
+          {loading ? (
+            <Skeleton style={{ height: '72px', borderRadius: 'var(--r-md)' }} />
+          ) : alarms.length === 0 ? (
+            <div
+              className="rounded-md border px-3 py-4 text-center text-xs"
+              style={{ color: 'var(--fg-faint)', borderColor: 'var(--border-subtle)' }}
+            >
+              Открытых VNNOX-алармов нет
             </div>
+          ) : (
+            alarms.map(alarm => {
+              const isFaulty = alarm.type === 'faulty'
+              const canCreateForAlarm = isFaulty && canCreate(alarm)
 
-            <div className="grid grid-cols-2 gap-y-1 text-xs">
-              <span style={{ color: 'var(--fg-mute)' }}>Ячейка</span>
-              <span style={{ color: 'var(--fg-dim)', fontFamily: 'var(--font-mono)' }}>
-                {alarm.cell_position ?? String(alarm.receiving_card_no).padStart(2, '0')}
-              </span>
-              <span style={{ color: 'var(--fg-mute)' }}>Панель</span>
-              <span style={{ color: 'var(--fg-dim)', fontFamily: 'var(--font-mono)' }}>
-                {alarm.panel_name ?? '—'}
-              </span>
-            </div>
+              return (
+                <div
+                  key={alarm.id}
+                  className="space-y-2 rounded-md p-3"
+                  style={{ background: 'var(--bg-1)', border: '1px solid var(--border-subtle)' }}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <Badge label={isFaulty ? 'Open' : 'Recovery'} variant={isFaulty ? 'err' : 'ok'} />
+                    <span className="text-2xs" style={{ color: 'var(--fg-faint)', fontFamily: 'var(--font-mono)' }}>
+                      {formatDate(alarm.occurred_at)}
+                    </span>
+                  </div>
 
-            <p className="line-clamp-2 text-2xs" style={{ color: 'var(--fg-faint)' }}>
-              {alarm.raw_position}
-            </p>
+                  <div className="grid grid-cols-2 gap-y-1 text-xs">
+                    <span style={{ color: 'var(--fg-mute)' }}>Ячейка</span>
+                    <span style={{ color: 'var(--fg-dim)', fontFamily: 'var(--font-mono)' }}>
+                      {alarm.cell_position ?? String(alarm.receiving_card_no).padStart(2, '0')}
+                    </span>
+                    <span style={{ color: 'var(--fg-mute)' }}>Панель</span>
+                    <span style={{ color: 'var(--fg-dim)', fontFamily: 'var(--font-mono)' }}>
+                      {alarm.panel_name ?? '—'}
+                    </span>
+                  </div>
 
-            {canCreateForAlarm ? (
-              <Button
-                variant="primary"
-                size="sm"
-                icon={<Plus size={11} />}
-                onClick={() => onCreate(alarm)}
-                className="w-full justify-center"
-              >
-                Создать заявку
-              </Button>
-            ) : null}
-          </div>
-        )
-      })}
-    </div>
+                  <p className="line-clamp-2 text-2xs" style={{ color: 'var(--fg-faint)' }}>
+                    {alarm.raw_position}
+                  </p>
+
+                  {canCreateForAlarm ? (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      icon={<Plus size={11} />}
+                      onClick={() => onCreate(alarm)}
+                      className="w-full justify-center"
+                    >
+                      Создать заявку
+                    </Button>
+                  ) : null}
+                </div>
+              )
+            })
+          )}
+        </div>
+      ) : null}
+    </section>
   )
 }

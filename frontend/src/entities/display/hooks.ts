@@ -27,7 +27,7 @@ export function useDisplayDetail(slug: string | null) {
   })
 }
 
-export function useDisplayAlarms(slug: string | null, resolved = false) {
+export function useDisplayAlarms(slug: string | null, resolved = false, enabled = true) {
   return useQuery({
     queryKey: ['display-alarms', slug, resolved],
     queryFn: async () => {
@@ -36,7 +36,7 @@ export function useDisplayAlarms(slug: string | null, resolved = false) {
       })
       return Array.isArray(res.data) ? res.data : (res.data as { results?: AlarmEvent[] }).results ?? []
     },
-    enabled: !!slug,
+    enabled: !!slug && enabled,
     staleTime: 30_000,
   })
 }

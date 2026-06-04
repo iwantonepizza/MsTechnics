@@ -15,6 +15,7 @@ export type DisplayListItem = Schemas['DisplayList'] & {
   rows: number
   cols: number
   aggregated_condition: Condition | null
+  application_count: number
 }
 export interface DisplayContact {
   id: number
@@ -32,7 +33,15 @@ export interface DisplayPhoto {
 
 export type DisplayDetail = Omit<
   Schemas['DisplayDetail'],
-  'slug' | 'rows' | 'cols' | 'cells' | 'file_url' | 'project_photo_url' | 'camera_link'
+  | 'slug'
+  | 'rows'
+  | 'cols'
+  | 'cells'
+  | 'file_url'
+  | 'project_photo_url'
+  | 'camera_link'
+  | 'contacts'
+  | 'photos'
 > & {
   slug: string
   rows: number

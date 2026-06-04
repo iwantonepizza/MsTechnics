@@ -156,11 +156,11 @@
 
 | ID | Название | Статус | Часов |
 |----|----------|--------|-------|
-| [T-6-001](phase-5-integrations/T-6-001-production-cutover-runbook.md) | **P0:** prod cutover runbook + удаление `prod_dump_compat.sql` + переписать `restore_to_dev.sh` | in-progress | 3-4 |
-| [T-6-002](phase-5-integrations/T-6-002-backup-strategy.md) | **P1:** pgBackRest или pg_dump cron + off-host копия + тест восстановления | in-progress | 2-3 |
-| [T-6-003](phase-5-integrations/T-6-003-observability.md) | **P1:** django-prometheus + Grafana + uptime monitor + 4 alerts | in-progress | 3-4 |
+| [T-6-001](phase-5-integrations/T-6-001-production-cutover-runbook.md) | **P0:** prod cutover runbook + удаление `prod_dump_compat.sql` + переписать `restore_to_dev.sh` | review | 3-4 |
+| [T-6-002](phase-5-integrations/T-6-002-backup-strategy.md) | **P1:** pgBackRest или pg_dump cron + off-host копия + тест восстановления | review | 2-3 |
+| [T-6-003](phase-5-integrations/T-6-003-observability.md) | **P1:** django-prometheus + Grafana + uptime monitor + 4 alerts | review | 3-4 |
 | [T-6-004](phase-5-integrations/T-6-004-gitignore-and-dump-leakage.md) | **P0 security:** .gitignore + filter-repo + force-push (history переписана) | done | 0.5-2 |
-| [T-6-005](phase-5-integrations/T-6-005-rotate-leaked-secrets.md) | **P0 security:** ротация утёкших секретов (Google OAuth + `SECRET_KEY` + БД + TG/MAX токены) | in-progress | 1-2 |
+| [T-6-005](phase-5-integrations/T-6-005-rotate-leaked-secrets.md) | **P0 security:** ротация утёкших секретов (Google OAuth + `SECRET_KEY` + БД + TG/MAX токены) | review | 1-2 |
 | [T-6-006](phase-5-integrations/T-6-006-encoding-hygiene.md) | **P1 hygiene:** UTF-8 без BOM + pre-commit hook + восстановление 54 markdown + T-6-001 cp1251-mojibake | done | 1-2 |
 
 **Итого фаза 6:** ~11-17 часов перед prod-релизом + наблюдение.
@@ -197,7 +197,7 @@
 
 | ID | Название | Статус | Часов |
 |----|----------|--------|-------|
-| [T-8-107](phase-8-owner-feedback/T-8-107-prod-ui-stability.md) | **P0:** Activity request-loop/429, mobile camera, SSE native runtime | in-progress | 2-3 |
+| [T-8-107](phase-8-owner-feedback/T-8-107-prod-ui-stability.md) | **P0:** Activity request-loop/429, mobile camera, SSE native runtime | review | 2-3 |
 | [T-8-108](phase-8-owner-feedback/T-8-108-prod-media-reconciliation.md) | **P1:** Сверка отсутствующих prod media-файлов | ready | 1-2 + owner data |
 
 ---

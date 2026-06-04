@@ -1,8 +1,29 @@
 # Прогресс проекта
 
-**Текущая фаза:** Фаза 6 (Production cutover) — в работе + **Фаза 7** в активной фазе после раунда дизайнера 2026-05-19. T-6-004/006 done. T-6-005 coder-side готова, owner-side ротации pending. T-6-001 (prod cutover runbook) — главный остаточный блокер сервера. Phase 7: rebranding в «Суперсимметрия» (ADR-002), новая палитра, dark mode, **T-7-100 Design Round 4 закрыт по automated acceptance** (PR-1..13), **T-7-003 multi-role + fine-grained permissions переведена в `review`** (Wave 1+2 backend сделаны, Wave 3 — отдельная итерация через 2-4 недели).
-**Процент готовности:** ~97% по рефакторингу. Phase 7 — основной массив фронт-PR'ов и backend follow-up'ов закрыт; остаётся manual visual sweep + Wave 3 multi-role.
-**Последнее обновление:** 2026-05-20 — закрыты `T-7-100` (PR-1..13, automated acceptance зелёный, остаётся ручная визуальная приёмка), `T-7-003` (Wave 1: модель `Role` + M2M + JSONField + миграция + backfill; Wave 2: переписаны 30+ мест с `user.permission in (...)` на `has_role/is_admin`, notification triggers через `role_membership_q` для BC-friendly работы). Три backend follow-up (`applications-display-city`, `display-aggregated-condition`, `bell-deeplink-resolve`) → `review`. **Docker compose smoke прогнан на чистой БД (db+redis+web)**: миграции, `/api/v1/health/live`, `/api/v1/health/ready` (DB+Redis), `/metrics`, `/api/schema/`, `/api/v1/auth/login/` — все 200. Backend test suite **114 passed**, frontend **60 passed**, typecheck **clean**. **Git:** 4 чистых коммита запушены в `feature/phase-7-prod-readiness`. До прод-деплоя осталось только owner-side: merge ветки в main + ротация секретов (T-6-005) + execution `ai-docs/06-integrations/production-cutover-runbook.md`.
+## Актуальный production-статус — 2026-06-04
+
+Production cutover выполнен, секреты ротированы владельцем, активный `main` развёрнут через git.
+Предыдущие упоминания ниже о pending cutover/owner rotation сохранены как исторический контекст и больше не являются текущими блокерами.
+
+- `T-8-107` развёрнут на production, статус `review`: устранены activity request-loop и усиление `429`,
+  исправлены retry списка городов/экранов и мобильное поведение камеры.
+- Native Gunicorn переведён на gevent для SSE; отдельный nginx SSE location не пишет query-token в access log.
+- Health live/ready, PostgreSQL, Redis, Nginx, Gunicorn, daily tasks timer и VNNOX unresolved checker работают.
+- Перед hotfix создан свежий scheduled DB dump; локальный backup timer работает.
+- Проверки hotfix: backend `136 passed`, frontend `103 passed`, typecheck/build/check/migration drift — успешно.
+
+### Оставшиеся задачи перед закрытием post-cutover окна
+
+1. `T-8-108`: решить с владельцем, восстановить или явно очистить отсутствующие production media-файлы.
+2. Установить и проверить VNNOX pull timer/Gmail OAuth, если автоматический импорт тревог нужен в production.
+3. Подключить Prometheus/Grafana, внешний uptime и alerts; endpoint `/metrics` уже доступен.
+4. Настроить off-host encrypted backup и провести restore drill.
+5. Усилить SSH: key-only, fail2ban, ограничение root login; повторно ротировать опубликованный в чате пароль.
+6. Провести ручную мобильную/визуальную приёмку камер, ролей и новых блоков после полного обновления SPA.
+
+**Текущая фаза:** production развёрнут; идёт post-cutover стабилизация и ручная приёмка Phase 8.
+**Процент готовности:** основной функционал развёрнут; P0 hotfix `T-8-107` в `review`, остаются data/operations задачи.
+**Последнее обновление:** 2026-06-04 — production обновлён до `de8c6ab`, runtime SSE переведён на gevent, проверки и логи зафиксированы в `08-reports/T-8-107.md`.
 
 ---
 
@@ -17,9 +38,9 @@
 | 3. REST API | ✅ 100% | 20 задач done + 2 hotfix done |
 | 4. React SPA | ✅ 100% | все экраны/модалки/SSE/OpenAPI типы done; staging polish/coverage — на post-cutover |
 | 5. Integrations | ✅ 100% | notifications/TG/MAX/VNNOX/timers done; 3 hotfix done; T-5-050 blocked до prod+2нед |
-| 6. Production cutover | 🟢 coder-side готов | T-6-001/002/003/004/006 ✅ coder-side done (отчёты + runbooks); T-6-005 coder-side done (owner-side ротация секретов pending). Docker stack smoke-tested. |
+| 6. Production cutover | ✅ развёрнут | Native production работает; секреты ротированы; backup/health/timers проверены. Остаются observability, off-host backup и SSH hardening. |
 | 7. Product / redesign | 🟢 основной массив закрыт | ADR-002 rebranding; T-7-001/002/005/007/010/013/030/031/035/036/008/012/014 done; **T-7-100 Round 4 → review** (PR-1..13 закрыты, automated acceptance ✅); **T-7-003 Wave 1+2 → review**; полный трекер 36 задач в `phase-7-product/README.md` |
-| 8. Owner Feedback Round 2 | 🟢 21/21 реализованы | Фидбэк владельца после прод-проверки (2026-05-30). **Итерация 1: 14 задач** (T-8-001/002/010/011/031/032/033/034/041/060/061/070/071/080). **Итерация 2: оставшиеся 7** — `T-8-003` заметки, `T-8-004` тумблер история панель/место, `T-8-020` лента на главной + `show_activity_feed`, `T-8-035` daily-tasks API+UI, `T-8-062` тип истории ЗИП, `T-8-063` меню расходника, `T-8-072` русификация/регистрации админки. Коммиты `Phase 8 backend/frontend`; backend `test_round2_remaining.py` (10) + FE `DailyTasksPanel.test.tsx` зелёные, typecheck/`manage.py check` чисты. **Round 2.1 (прод-фидбэк 2026-06-02):** найдены регрессии/недоделки — `T-8-100` ЗИП всё ещё 50 панелей, `T-8-101` камера закрывается через 5с (безусловный таймаут в `DisplayCameraCard`), `T-8-102` ежедневные задачи не грузятся, `T-8-103` перенести камеру/задачи/заметки в правый блок, `T-8-104` снова mojibake (нужен постоянный guard через `.gitattributes`+`check_encoding.py`), плюс `T-8-091` media-404 в nginx и `T-8-092` лента в списке экранов. Корневые причины проверены архитектором по коду. **Осталось:** реализовать Round 2.1 + применить миграции `0005`/`0007`. Трекер: `ai-docs/09-user-tasks-round-2.md` (раздел «⚡ Round 2.1»). |
+| 8. Owner Feedback Round 2 | 🟢 реализовано, hotfix в review | Основной Round 2 и Round 2.1 развёрнуты. `T-8-107` устраняет prod request-loop/429, camera timeout и SSE runtime. Остаются `T-8-108` media reconciliation и ручная мобильная/визуальная приёмка. |
 
 ---
 

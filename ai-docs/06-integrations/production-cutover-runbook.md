@@ -16,6 +16,10 @@
   Sync workers блокируются долгоживущими `/api/v1/events/stream` и уходят в timeout.
 - Для nginx нужен отдельный `location = /api/v1/events/stream` с `proxy_buffering off`,
   длинным `proxy_read_timeout` и `access_log off`, чтобы query JWT не попадал в access log.
+- После ротации `SECRET_KEY` проверить Django sessions со старой подписью. Они уже невалидны, но создают
+  `Session data corrupted` на каждом запросе; удалять можно только подтверждённо неверно подписанные записи.
+- После выката новой SPA закрыть или полностью обновить старые вкладки: уже открытый старый bundle продолжает
+  исполняться до reload и может сохранять устранённый клиентский request-loop.
 
 Команды ниже по-прежнему используют `/opt/mstechnics` как стандартный шаблон. На текущем native
 prod заменить путь на фактический из списка выше.

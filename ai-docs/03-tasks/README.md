@@ -198,8 +198,8 @@
 | ID | Название | Статус | Часов |
 |----|----------|--------|-------|
 | [T-8-107](phase-8-owner-feedback/T-8-107-prod-ui-stability.md) | **P0:** Activity request-loop/429, mobile camera, SSE native runtime | review | 2-3 |
-| [T-8-108](phase-8-owner-feedback/T-8-108-prod-media-reconciliation.md) | **P1:** Сверка отсутствующих prod media-файлов | ready | 1-2 + owner data |
-| [T-8-111](phase-8-owner-feedback/T-8-111-owner-prod-ux-and-data-reset.md) | **P0/P1:** owner prod UX, media reconciliation, history reset | in-progress | 4-6 |
+| [T-8-108](phase-8-owner-feedback/T-8-108-prod-media-reconciliation.md) | **P1:** Сверка отсутствующих prod media-файлов | done | 1-2 + owner data |
+| [T-8-111](phase-8-owner-feedback/T-8-111-owner-prod-ux-and-data-reset.md) | **P0/P1:** owner prod UX, media reconciliation, history reset | done | 4-6 |
 
 ---
 

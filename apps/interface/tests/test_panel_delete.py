@@ -161,3 +161,50 @@ def test_admin_delete_panel_is_blocked_when_active_application_exists(panel_dele
     assert Application.objects.filter(id=application.id).exists()
     cell.refresh_from_db()
     assert cell.panel_id == panel.id
+
+
+def test_multi_role_admin_can_delete_panel(panel_delete_refs):
+    from apps.core.users.models import Role
+    from apps.directory.panels.models import Panel
+
+    user = MsUserFactory(username="panel-delete-multi-role-admin", permission="service")
+    user.roles.add(Role.objects.create(name="admin", description="Администратор"))
+    display = DisplayFactory(
+        name="panel-delete-display-multi-role-admin",
+        city=panel_delete_refs["city"],
+    )
+    panel = PanelFactory(
+        name="P-DEL-MRA",
+        display=display,
+        condition=panel_delete_refs["work"],
+    )
+    client = APIClient()
+    client.force_authenticate(user)
+
+    response = client.delete(f"/api/v1/panels/{panel.id}/")
+
+    assert response.status_code == 204
+    assert not Panel.objects.filter(id=panel.id).exists()
+
+
+@pytest.mark.parametrize("permission", ["service", "all"])
+def test_non_admin_cannot_delete_panel(panel_delete_refs, permission):
+    from apps.directory.panels.models import Panel
+
+    user = MsUserFactory(username=f"panel-delete-{permission}", permission=permission)
+    display = DisplayFactory(
+        name=f"panel-delete-display-{permission}",
+        city=panel_delete_refs["city"],
+    )
+    panel = PanelFactory(
+        name=f"P-DEL-{permission[:3].upper()}",
+        display=display,
+        condition=panel_delete_refs["work"],
+    )
+    client = APIClient()
+    client.force_authenticate(user)
+
+    response = client.delete(f"/api/v1/panels/{panel.id}/")
+
+    assert response.status_code == 403
+    assert Panel.objects.filter(id=panel.id).exists()

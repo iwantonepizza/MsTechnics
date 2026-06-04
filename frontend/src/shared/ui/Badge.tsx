@@ -15,7 +15,7 @@ const VARIANT_STYLES: Record<string, React.CSSProperties> = {
   err:     { background: 'var(--err-faint)',  color: 'var(--err)' },
   info:    { background: 'var(--info-faint)', color: 'var(--info)' },
   neutral: { background: 'var(--bg-3)',       color: 'var(--fg-dim)' },
-  brand:   { background: 'color-mix(in oklch, var(--brand) 18%, transparent)', color: 'var(--brand)' },
+  brand:   { background: 'color-mix(in oklch, var(--brand) 18%, transparent)', color: 'var(--brand-ink)' },
 }
 
 export function Badge({ label, bgHex, fgHex, icon, variant, className }: BadgeProps) {

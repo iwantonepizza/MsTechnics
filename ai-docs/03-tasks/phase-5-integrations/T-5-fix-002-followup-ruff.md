@@ -17,6 +17,10 @@
 - `black --check apps shared Config` -> 96 файлов на переформатирование
 - `mypy apps` -> 16 ошибок в 12 файлах
 
+Повторный полный аудит 2026-06-04 с расширенным охватом `apps shared Config project_config tests`
+показал актуальный baseline: `ruff` 313 ошибок, `black` 116 файлов, `mypy apps` 99 ошибок.
+Frontend `npm run lint` отдельно не запускается, потому что в репозитории отсутствует ESLint config.
+
 Эта задача нужна, чтобы разобрать baseline отдельно от staging cutover и migration hotfix'ов.
 
 ---
@@ -58,4 +62,3 @@ mypy apps
 - [ ] `black --check apps shared Config` -> exit 0
 - [ ] `mypy apps` -> baseline устранён или явно зафиксирован новыми ignores
 - [ ] Изменения отделены от staging/migration hotfix
-

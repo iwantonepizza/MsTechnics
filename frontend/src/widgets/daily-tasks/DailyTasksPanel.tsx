@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CheckSquare, ChevronDown, ChevronRight, ExternalLink } from 'lucide-react'
+import { AlertTriangle, CheckSquare, ChevronDown, ChevronRight, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   useCompleteDailyTask,
@@ -40,6 +40,7 @@ export function DailyTasksPanel({
   const complete = useCompleteDailyTask()
   const data = shouldLoadFallback ? (fallbackTasks.data ?? []) : (scopedTasks.data ?? [])
   const isLoading = scopedTasks.isLoading || (shouldLoadFallback && fallbackTasks.isLoading)
+  const isError = Boolean(shouldLoadFallback ? fallbackTasks.isError : scopedTasks.isError)
 
   const doneCount = data.filter(t => t.status === 'done').length
 
@@ -76,6 +77,15 @@ export function DailyTasksPanel({
         <div className="px-4 pb-3 space-y-1 max-h-56 overflow-y-auto">
           {isLoading ? (
             <SkeletonList rows={3} height="30px" />
+          ) : isError ? (
+            <p
+              className="flex items-center gap-1.5 text-2xs"
+              style={{ color: 'var(--err)' }}
+              data-testid="daily-tasks-error"
+            >
+              <AlertTriangle size={12} />
+              Не удалось загрузить ежедневные задачи
+            </p>
           ) : data.length === 0 ? (
             <p className="text-2xs" style={{ color: 'var(--fg-faint)' }}>Задач нет</p>
           ) : (

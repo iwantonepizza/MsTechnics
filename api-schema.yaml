@@ -23,7 +23,6 @@ paths:
               $ref: '#/components/schemas/LoginRequestRequest'
         required: true
       security:
-      - jwtAuth: []
       - {}
       responses:
         '200':
@@ -48,7 +47,6 @@ paths:
       tags:
       - auth
       security:
-      - jwtAuth: []
       - {}
       responses:
         '200':
@@ -67,6 +65,7 @@ paths:
       - auth
       security:
       - jwtAuth: []
+      - {}
       responses:
         '204':
           description: Успешно
@@ -260,6 +259,38 @@ paths:
               schema:
                 $ref: '#/components/schemas/Color'
           description: ''
+    put:
+      operationId: colors_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Цвет.
+        required: true
+      tags:
+      - colors
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ColorRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ColorRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ColorRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Color'
+          description: ''
     delete:
       operationId: colors_destroy
       summary: Удалить цвет
@@ -300,38 +331,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/PatchedColorRequest'
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Color'
-          description: ''
-    put:
-      operationId: colors_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this Цвет.
-        required: true
-      tags:
-      - colors
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ColorRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/ColorRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/ColorRequest'
-        required: true
       security:
       - jwtAuth: []
       responses:
@@ -704,6 +703,81 @@ paths:
               schema:
                 $ref: '#/components/schemas/DisplayList'
           description: ''
+  /api/v1/displays/{slug}/photos/{photo_id}/:
+    delete:
+      operationId: displays_photos_destroy
+      summary: Удалить фото экрана
+      parameters:
+      - in: path
+        name: photo_id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - displays
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/displays/{slug}/notes/:
+    get:
+      operationId: displays_notes_retrieve
+      summary: Заметки об экране
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - displays
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisplayList'
+          description: ''
+    post:
+      operationId: displays_notes_create
+      summary: Заметки об экране
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - displays
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DisplayListRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DisplayListRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DisplayListRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisplayList'
+          description: ''
   /api/v1/displays/{slug}/photos/:
     get:
       operationId: displays_photos_retrieve
@@ -716,6 +790,35 @@ paths:
         required: true
       tags:
       - displays
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisplayList'
+          description: ''
+    post:
+      operationId: displays_photos_create
+      summary: Фотографии экрана
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - displays
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DisplayListRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DisplayListRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
@@ -2177,6 +2280,87 @@ paths:
               schema:
                 $ref: '#/components/schemas/Executor'
           description: ''
+  /api/v1/daily-tasks/:
+    get:
+      operationId: daily_tasks_list
+      description: 'T-8-035: ежедневные задачи. Мониторинг выполняет, контроль смотрит
+        прогресс.'
+      summary: Список ежедневных задач
+      parameters:
+      - in: query
+        name: city
+        schema:
+          type: integer
+        description: ID города
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - daily-tasks
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDailyTaskList'
+          description: ''
+  /api/v1/daily-tasks/{id}/:
+    get:
+      operationId: daily_tasks_retrieve
+      description: 'T-8-035: ежедневные задачи. Мониторинг выполняет, контроль смотрит
+        прогресс.'
+      summary: Задача
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - daily-tasks
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyTask'
+          description: ''
+  /api/v1/daily-tasks/{id}/complete/:
+    post:
+      operationId: daily_tasks_complete_create
+      description: 'T-8-035: ежедневные задачи. Мониторинг выполняет, контроль смотрит
+        прогресс.'
+      summary: Отметить задачу выполненной (открыл ссылку)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - daily-tasks
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyTask'
+          description: ''
   /api/v1/activity-log/:
     get:
       operationId: activity_log_list
@@ -2186,6 +2370,10 @@ paths:
         name: before
         schema:
           type: string
+      - in: query
+        name: cell
+        schema:
+          type: integer
       - name: cursor
         required: false
         in: query
@@ -2197,6 +2385,11 @@ paths:
         schema:
           type: string
       - in: query
+        name: event_types
+        schema:
+          type: string
+        description: CSV точных event_type
+      - in: query
         name: kind
         schema:
           type: string
@@ -2204,6 +2397,10 @@ paths:
         required: false
         in: query
         description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: panel
         schema:
           type: integer
       - in: query
@@ -2229,7 +2426,8 @@ paths:
       - in: path
         name: id
         schema:
-          type: string
+          type: integer
+        description: A unique integer value identifying this Запись журнала.
         required: true
       tags:
       - activity
@@ -2246,6 +2444,14 @@ paths:
     get:
       operationId: events_stream_retrieve
       summary: SSE поток событий
+      parameters:
+      - in: query
+        name: format
+        schema:
+          type: string
+          enum:
+          - event-stream
+          - json
       tags:
       - events
       security:
@@ -2770,6 +2976,26 @@ components:
       - id
       - name
       - slug
+    CityRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Имя
+          maxLength: 15
+        description:
+          type: string
+          nullable: true
+          title: Описание
+        slug:
+          type: string
+          nullable: true
+          title: URL
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+      required:
+      - name
     Color:
       type: object
       properties:
@@ -2894,6 +3120,68 @@ components:
           title: Фото
       required:
       - name
+    DailyTask:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Название"
+          maxLength: 20
+        description:
+          type: string
+          title: Описание
+        status:
+          allOf:
+          - $ref: '#/components/schemas/DailyTaskStatusEnum'
+          title: Статус
+        start_time:
+          type: string
+          format: time
+          nullable: true
+          title: Начало
+        end_time:
+          type: string
+          format: time
+          nullable: true
+          title: Конец
+        link:
+          type: string
+          format: uri
+          title: Ссылка
+          maxLength: 150
+        city_id:
+          type: integer
+          readOnly: true
+        city_name:
+          type: string
+          readOnly: true
+        available:
+          type: boolean
+          readOnly: true
+      required:
+      - available
+      - city_id
+      - city_name
+      - id
+      - link
+      - name
+    DailyTaskStatusEnum:
+      enum:
+      - not_ready
+      - ready
+      - deadline
+      - done
+      - undone
+      type: string
+      description: |-
+        * `not_ready` - Не готово
+        * `ready` - Доступно
+        * `deadline` - Дедлайн
+        * `done` - Выполнено
+        * `undone` - Не выполнено
     Department:
       type: object
       properties:
@@ -3057,17 +3345,37 @@ components:
           type: string
           format: uri
           readOnly: true
+        camera_link:
+          type: string
+          format: uri
+          readOnly: true
+          nullable: true
+        contacts:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
+        photos:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
         cells:
           type: array
           items:
             $ref: '#/components/schemas/Cell'
           readOnly: true
       required:
+      - camera_link
       - cells
       - city
+      - contacts
       - file_url
       - id
       - name
+      - photos
       - project_photo_url
     DisplayList:
       type: object
@@ -3112,6 +3420,36 @@ components:
       - aggregated_condition
       - city
       - id
+      - name
+    DisplayListRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Экран
+          maxLength: 20
+        description:
+          type: string
+          nullable: true
+          title: Описание
+        slug:
+          type: string
+          nullable: true
+          title: URL
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        rows:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Кол-во рядов
+        cols:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          title: Кол-во столбцов
+      required:
       - name
     DisplayMini:
       type: object
@@ -3457,6 +3795,16 @@ components:
         permission:
           type: string
           readOnly: true
+        roles:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        extra_permissions:
+          type: array
+          items:
+            type: string
+          readOnly: true
         allowed_cities:
           type: array
           items:
@@ -3468,10 +3816,16 @@ components:
         max_chat_id:
           type: string
           nullable: true
+        show_activity_feed:
+          type: boolean
+          readOnly: true
       required:
       - allowed_cities
+      - extra_permissions
       - id
       - permission
+      - roles
+      - show_activity_feed
       - username
     MoveToCellRequest:
       type: object
@@ -3499,7 +3853,7 @@ components:
           format: date-time
           readOnly: true
         status:
-          $ref: '#/components/schemas/StatusEnum'
+          $ref: '#/components/schemas/NotificationInboxItemStatusEnum'
         delivered_via:
           type: string
           maxLength: 16
@@ -3521,6 +3875,18 @@ components:
       - id
       - target_id
       - target_kind
+    NotificationInboxItemStatusEnum:
+      enum:
+      - pending
+      - sent
+      - failed
+      - skipped
+      type: string
+      description: |-
+        * `pending` - В очереди
+        * `sent` - Отправлено
+        * `failed` - Ошибка
+        * `skipped` - Пропущено
     PaginatedActivityLogList:
       type: object
       properties:
@@ -3663,6 +4029,21 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Connectors'
+        next_cursor:
+          type: string
+          nullable: true
+        prev_cursor:
+          type: string
+          nullable: true
+        has_more:
+          type: boolean
+    PaginatedDailyTaskList:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DailyTask'
         next_cursor:
           type: string
           nullable: true
@@ -4280,18 +4661,6 @@ components:
         * `service_unable` - Ремонт невозможен
         * `archive_done` - Архивирована (выполнена)
         * `archive_unable` - Архивирована (невозможно)
-    StatusEnum:
-      enum:
-      - pending
-      - sent
-      - failed
-      - skipped
-      type: string
-      description: |-
-        * `pending` - В очереди
-        * `sent` - Отправлено
-        * `failed` - Ошибка
-        * `skipped` - Пропущено
     StorageSearchItem:
       type: object
       properties:

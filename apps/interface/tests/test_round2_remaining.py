@@ -18,7 +18,7 @@ from tests.factories import (
 pytestmark = pytest.mark.django_db
 
 
-# ─── T-8-003: заметки об экране ─────────────────────────────────────────────
+# --- T-8-003: display notes -------------------------------------------------
 
 
 def test_display_notes_post_and_list() -> None:
@@ -57,10 +57,16 @@ def test_activity_panel_filter_returns_panel_and_application_events() -> None:
     client = APIClient()
     client.force_authenticate(admin)
 
-    ActivityLog.objects.create(target=panel, event_type="panel.condition_changed", description="cond")
-    ActivityLog.objects.create(target=application, event_type="application_transition", description="trans")
+    ActivityLog.objects.create(
+        target=panel, event_type="panel.condition_changed", description="cond"
+    )
+    ActivityLog.objects.create(
+        target=application, event_type="application_transition", description="trans"
+    )
     other_panel = PanelFactory(name="OTHER-PANEL", display=display)
-    ActivityLog.objects.create(target=other_panel, event_type="panel.condition_changed", description="other")
+    ActivityLog.objects.create(
+        target=other_panel, event_type="panel.condition_changed", description="other"
+    )
 
     res = client.get(f"/api/v1/activity-log/?panel={panel.id}")
     assert res.status_code == 200
@@ -105,7 +111,9 @@ def test_activity_event_types_filter() -> None:
     client.force_authenticate(admin)
 
     ActivityLog.objects.create(target=panel, event_type="panel_move", description="move")
-    ActivityLog.objects.create(target=panel, event_type="panel.condition_changed", description="cond")
+    ActivityLog.objects.create(
+        target=panel, event_type="panel.condition_changed", description="cond"
+    )
 
     res = client.get(f"/api/v1/activity-log/?panel={panel.id}&event_types=panel_move")
     assert res.status_code == 200
@@ -131,7 +139,9 @@ def test_activity_feed_requires_flag_for_non_admin() -> None:
     panel = PanelFactory(name="FEED-PANEL", display=display)
     ActivityLog.objects.create(target=panel, event_type="panel.condition_changed", description="x")
 
-    no_flag = MsUserFactory(permission="monitoring", allowed_cities=[city], show_activity_feed=False)
+    no_flag = MsUserFactory(
+        permission="monitoring", allowed_cities=[city], show_activity_feed=False
+    )
     client = APIClient()
     client.force_authenticate(no_flag)
     assert client.get("/api/v1/activity-log/").data["results"] == []
@@ -166,6 +176,32 @@ def test_daily_tasks_list_filtered_by_city() -> None:
     assert res.status_code == 200
     names = {row["name"] for row in res.data["results"]}
     assert names == {"task-a"}
+
+
+def test_daily_tasks_city_filter_cannot_bypass_allowed_cities() -> None:
+    city_a = CityFactory(name="dt-allowed", slug="dt-allowed")
+    city_b = CityFactory(name="dt-forbidden", slug="dt-forbidden")
+    _make_task(city_a, name="task-allowed")
+    _make_task(city_b, name="task-forbidden")
+    user = MsUserFactory(permission="monitoring", allowed_cities=[city_a])
+    client = APIClient()
+    client.force_authenticate(user)
+
+    res = client.get(f"/api/v1/daily-tasks/?city={city_b.id}")
+
+    assert res.status_code == 200
+    assert res.data["results"] == []
+
+
+def test_daily_tasks_reject_invalid_city_filter() -> None:
+    user = MsUserFactory(permission="monitoring")
+    client = APIClient()
+    client.force_authenticate(user)
+
+    res = client.get("/api/v1/daily-tasks/?city=not-a-number")
+
+    assert res.status_code == 422
+    assert "city" in res.data["errors"]
 
 
 def test_daily_task_complete_by_monitoring() -> None:

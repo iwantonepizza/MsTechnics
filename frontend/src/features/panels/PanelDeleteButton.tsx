@@ -7,8 +7,6 @@ import { Button } from '@/shared/ui/Button'
 import { ConfirmDialog, useConfirmDialog } from '@/shared/ui/ConfirmDialog'
 import type { Panel } from '@/shared/api/types'
 
-const ADMIN_ROLES = new Set(['admin', 'all'])
-
 interface PanelDeleteButtonProps {
   panel: Panel
   onDeleted?: () => void
@@ -16,7 +14,7 @@ interface PanelDeleteButtonProps {
 
 export function PanelDeleteButton({ panel, onDeleted }: PanelDeleteButtonProps) {
   const { data: me } = useMe()
-  const canDelete = me ? ADMIN_ROLES.has(me.permission) : false
+  const canDelete = Boolean(me && (me.permission === 'admin' || me.roles.includes('admin')))
 
   const dlg = useConfirmDialog()
   const mutation = useDeletePanel()

@@ -146,7 +146,7 @@ export function Header({ crumb }: HeaderProps) {
               {count > 0 && (
                 <span
                   className="flex h-4 min-w-[16px] items-center justify-center rounded px-1 text-2xs font-medium"
-                  style={{ background: 'var(--accent-faint)', color: 'var(--accent)' }}
+                  style={{ background: 'var(--accent-faint)', color: 'var(--accent-ink)' }}
                 >
                   {count}
                 </span>

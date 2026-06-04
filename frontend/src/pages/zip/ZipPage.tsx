@@ -541,7 +541,7 @@ function HistoryRail({
             className="rounded px-1.5 py-0.5 text-2xs transition-colors"
             style={{
               background: historyType === t.key ? 'var(--accent)' : 'var(--bg-2)',
-              color: historyType === t.key ? 'var(--accent-fg, #fff)' : 'var(--fg-dim)',
+              color: historyType === t.key ? 'var(--accent-ink)' : 'var(--fg-dim)',
               border: `1px solid ${historyType === t.key ? 'var(--accent-edge)' : 'var(--border-subtle)'}`,
             }}
           >

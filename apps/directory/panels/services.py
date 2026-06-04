@@ -344,6 +344,7 @@ def delete_panel(*, panel: Panel, actor: MsUser) -> None:
                 application_id__in=related_application_ids_as_str
             ).delete()
             Application.objects.filter(id__in=related_application_ids).delete()
+            # Legacy application post-delete signal writes one final history row.
             ApplicationHistoryReport.objects.filter(
                 application_id__in=related_application_ids_as_str
             ).delete()

@@ -20,11 +20,16 @@ class DailyTaskViewSet(ReadOnlyModelViewSet):
     def get_queryset(self):
         qs = DailyTask.objects.select_related("city").order_by("start_time", "name")
         user = self.request.user
+        if not is_admin(user) and user.allowed_city.exists():
+            qs = qs.filter(city__in=user.allowed_city.all())
+
         city_id = self.request.query_params.get("city")
         if city_id:
+            try:
+                city_id = int(city_id)
+            except ValueError as exc:
+                raise ValidationError({"city": "City id must be an integer."}) from exc
             qs = qs.filter(city_id=city_id)
-        elif not is_admin(user) and user.allowed_city.exists():
-            qs = qs.filter(city__in=user.allowed_city.all())
         return qs
 
     @extend_schema(

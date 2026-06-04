@@ -4,6 +4,40 @@
 
 Цель: убрать legacy compat-path и выполнить один поддерживаемый сценарий `pg_restore -> showmigrations -> migrate -> check` для выката на Linux-сервере. `scripts/prod_dump_compat.sql` больше не используется и не должен возвращаться ни в каком виде.
 
+## Дополнение после pre-deploy аудита 2026-06-04
+
+Перед production cutover обязательно выполнить на свежей копии prod PostgreSQL:
+
+```bash
+cd /opt/mstechnics
+python manage.py showmigrations workflow_daily_tasks
+python manage.py migrate --noinput
+python manage.py showmigrations workflow_daily_tasks
+python manage.py check --deploy
+```
+
+Ожидание:
+
+- `workflow_daily_tasks.0004_convert_daily_task_city_fk_to_id` применена;
+- все legacy `daily_task.city_id` сопоставлены с `city.id`, миграция не нашла unmapped values;
+- мониторинг получает задачи через `/api/v1/daily-tasks/` и может выполнить доступную задачу;
+- контроль получает тот же список read-only;
+- `manage.py check --deploy` не сообщает о небезопасных cookies. Предупреждения по
+  `SECURE_SSL_REDIRECT`/HSTS закрываются только после подтверждения схемы TLS/proxy.
+
+Для compose-based выката не полагаться на автозапуск миграций. В `docker-compose.yml` миграции
+выполняются только при `RUN_MIGRATIONS=1`, а в текущем локальном `.env` он равен `0`. Надёжный
+вариант во время maintenance window:
+
+```bash
+docker compose run --rm web python manage.py migrate --noinput
+docker compose up -d --build web redis
+docker compose ps
+```
+
+После миграции отдельно проверить каскадное удаление тестовой архивной панели на staging и
+визуально принять light/dark контраст кнопок/select.
+
 ## 1. Что подготовить заранее
 
 - Подтвердить, где именно лежит рабочий каталог проекта на сервере. Ниже по умолчанию используется `/opt/mstechnics`.

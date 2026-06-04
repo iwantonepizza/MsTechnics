@@ -132,7 +132,7 @@ export function CommandPalette({
                                 className="rounded px-2 py-0.5 text-[11px]"
                                 style={{
                                   background: 'var(--accent-faint)',
-                                  color: 'var(--accent)',
+                                  color: 'var(--accent-ink)',
                                   fontFamily: 'var(--font-mono)',
                                 }}
                               >

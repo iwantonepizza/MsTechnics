@@ -33,7 +33,7 @@ export function CellHistory({
           className="flex-1 rounded px-2 py-1 text-2xs transition-colors disabled:opacity-40"
           style={{
             background: effectiveMode === 'panel' ? 'var(--accent)' : 'var(--bg-2)',
-            color: effectiveMode === 'panel' ? 'var(--accent-fg, #fff)' : 'var(--fg-dim)',
+            color: effectiveMode === 'panel' ? 'var(--accent-ink)' : 'var(--fg-dim)',
             border: `1px solid ${effectiveMode === 'panel' ? 'var(--accent-edge)' : 'var(--border-subtle)'}`,
           }}
           data-testid="cell-history-panel"
@@ -46,7 +46,7 @@ export function CellHistory({
           className="flex-1 rounded px-2 py-1 text-2xs transition-colors"
           style={{
             background: effectiveMode === 'place' ? 'var(--accent)' : 'var(--bg-2)',
-            color: effectiveMode === 'place' ? 'var(--accent-fg, #fff)' : 'var(--fg-dim)',
+            color: effectiveMode === 'place' ? 'var(--accent-ink)' : 'var(--fg-dim)',
             border: `1px solid ${effectiveMode === 'place' ? 'var(--accent-edge)' : 'var(--border-subtle)'}`,
           }}
           data-testid="cell-history-place"

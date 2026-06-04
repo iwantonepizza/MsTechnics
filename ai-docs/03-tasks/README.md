@@ -191,6 +191,12 @@
 
 **Итого фаза 7:** ~50-65 часов продуктовой разработки + дизайн-итерации.
 
+### Фаза 8. Owner feedback + pre-deploy
+
+| ID | Название | Статус | Часов |
+|----|----------|--------|-------|
+| [T-8-110](phase-8-owner-feedback/T-8-110-predeploy-owner-audit.md) | Pre-deploy owner audit: daily tasks, activity feed, panel delete, contrast | review | 4-6 |
+
 ---
 
 ## Total

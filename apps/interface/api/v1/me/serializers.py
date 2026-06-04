@@ -19,10 +19,12 @@ class MeSerializer(serializers.Serializer):
     extra_permissions = serializers.ListField(child=serializers.CharField(), read_only=True)
     allowed_cities = CityMiniSerializer(many=True, read_only=True, source="allowed_city")
     telegram_id = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    max_chat_id = serializers.CharField(required=False, allow_blank=True, allow_null=True, source="max_id")
+    max_chat_id = serializers.CharField(
+        required=False, allow_blank=True, allow_null=True, source="max_id"
+    )
     show_activity_feed = serializers.BooleanField(read_only=True)
 
-    def get_roles(self, obj):
+    def get_roles(self, obj) -> list[str]:
         return sorted(get_role_names(obj))
 
 

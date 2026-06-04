@@ -1,8 +1,8 @@
 # Прогресс проекта
 
-**Текущая фаза:** Фаза 6 (Production cutover) — в работе + **Фаза 7** в активной фазе после раунда дизайнера 2026-05-19. T-6-004/006 done. T-6-005 coder-side готова, owner-side ротации pending. T-6-001 (prod cutover runbook) — главный остаточный блокер сервера. Phase 7: rebranding в «Суперсимметрия» (ADR-002), новая палитра, dark mode, **T-7-100 Design Round 4 закрыт по automated acceptance** (PR-1..13), **T-7-003 multi-role + fine-grained permissions переведена в `review`** (Wave 1+2 backend сделаны, Wave 3 — отдельная итерация через 2-4 недели).
-**Процент готовности:** ~97% по рефакторингу. Phase 7 — основной массив фронт-PR'ов и backend follow-up'ов закрыт; остаётся manual visual sweep + Wave 3 multi-role.
-**Последнее обновление:** 2026-05-20 — закрыты `T-7-100` (PR-1..13, automated acceptance зелёный, остаётся ручная визуальная приёмка), `T-7-003` (Wave 1: модель `Role` + M2M + JSONField + миграция + backfill; Wave 2: переписаны 30+ мест с `user.permission in (...)` на `has_role/is_admin`, notification triggers через `role_membership_q` для BC-friendly работы). Три backend follow-up (`applications-display-city`, `display-aggregated-condition`, `bell-deeplink-resolve`) → `review`. **Docker compose smoke прогнан на чистой БД (db+redis+web)**: миграции, `/api/v1/health/live`, `/api/v1/health/ready` (DB+Redis), `/metrics`, `/api/schema/`, `/api/v1/auth/login/` — все 200. Backend test suite **114 passed**, frontend **60 passed**, typecheck **clean**. **Git:** 4 чистых коммита запушены в `feature/phase-7-prod-readiness`. До прод-деплоя осталось только owner-side: merge ветки в main + ротация секретов (T-6-005) + execution `ai-docs/06-integrations/production-cutover-runbook.md`.
+**Текущая фаза:** Фаза 6 (Production cutover) + pre-deploy аудит `T-8-110` в `review`.
+**Процент готовности:** код продуктовых требований Round 2/2.1/2.2 реализован; prod пока не разрешён без staging migration smoke и owner/infra шагов ниже.
+**Последнее обновление:** 2026-06-04 — исправлены ежедневные задачи через forward-only миграцию `daily_task.city_id: name -> id`, добавлены фильтры ленты действий, подтверждено каскадное удаление панели, исправлен контраст, актуализированы OpenAPI-типы и secure cookie settings. Полный прогон: backend/frontend tests, typecheck/build, Django check, migration drift и encoding зелёные. Docker/PostgreSQL smoke новой миграции не выполнен: локальный Docker daemon остановлен.
 
 ---
 
@@ -19,7 +19,40 @@
 | 5. Integrations | ✅ 100% | notifications/TG/MAX/VNNOX/timers done; 3 hotfix done; T-5-050 blocked до prod+2нед |
 | 6. Production cutover | 🟢 coder-side готов | T-6-001/002/003/004/006 ✅ coder-side done (отчёты + runbooks); T-6-005 coder-side done (owner-side ротация секретов pending). Docker stack smoke-tested. |
 | 7. Product / redesign | 🟢 основной массив закрыт | ADR-002 rebranding; T-7-001/002/005/007/010/013/030/031/035/036/008/012/014 done; **T-7-100 Round 4 → review** (PR-1..13 закрыты, automated acceptance ✅); **T-7-003 Wave 1+2 → review**; полный трекер 36 задач в `phase-7-product/README.md` |
-| 8. Owner Feedback Round 2 | 🟢 21/21 реализованы | Фидбэк владельца после прод-проверки (2026-05-30). **Итерация 1: 14 задач** (T-8-001/002/010/011/031/032/033/034/041/060/061/070/071/080). **Итерация 2: оставшиеся 7** — `T-8-003` заметки, `T-8-004` тумблер история панель/место, `T-8-020` лента на главной + `show_activity_feed`, `T-8-035` daily-tasks API+UI, `T-8-062` тип истории ЗИП, `T-8-063` меню расходника, `T-8-072` русификация/регистрации админки. Коммиты `Phase 8 backend/frontend`; backend `test_round2_remaining.py` (10) + FE `DailyTasksPanel.test.tsx` зелёные, typecheck/`manage.py check` чисты. **Round 2.1 (прод-фидбэк 2026-06-02):** найдены регрессии/недоделки — `T-8-100` ЗИП всё ещё 50 панелей, `T-8-101` камера закрывается через 5с (безусловный таймаут в `DisplayCameraCard`), `T-8-102` ежедневные задачи не грузятся, `T-8-103` перенести камеру/задачи/заметки в правый блок, `T-8-104` снова mojibake (нужен постоянный guard через `.gitattributes`+`check_encoding.py`), плюс `T-8-091` media-404 в nginx и `T-8-092` лента в списке экранов. Корневые причины проверены архитектором по коду. **Осталось:** реализовать Round 2.1 + применить миграции `0005`/`0007`. Трекер: `ai-docs/09-user-tasks-round-2.md` (раздел «⚡ Round 2.1»). |
+| 8. Owner Feedback Round 2 | 🟢 код реализован, T-8-110 → review | Round 2.1 уже реализован коммитами `81030e4`/`fd59316`/`5c9be55`; старый текст трекера был устаревшим. Round 2.2 (`T-8-110`) добавил миграцию daily tasks, фильтры ленты, проверку cascade delete/multi-role admin и contrast-аудит. До prod: применить все миграции, включая `workflow_daily_tasks.0004`, на копии prod PostgreSQL и пройти ручную visual/mobile приёмку. |
+
+---
+
+## Pre-deploy verdict 2026-06-04
+
+### Код готов к staging
+
+- `pytest -q`, `npm run test`, `npm run typecheck`, `npm run build`, `manage.py check`,
+  `makemigrations --check --dry-run`, `check_encoding.py`, targeted `ruff`/`black` — зелёные.
+- Модельный drift устранён: удалена неиспользуемая Django-permission `Wires.Meta.permissions`;
+  актуальная fine-grained permission остаётся в `MsUser.extra_permissions`.
+- OpenAPI schema/types обновлены; `Me.roles` исправлен до `string[]`.
+
+### Prod cutover заблокирован до выполнения
+
+1. **Staging PostgreSQL smoke:** restore копии prod → `migrate` → проверить
+   `workflow_daily_tasks.0004`, количество DailyTask и API мониторинга/контроля.
+2. **T-6-005:** владелец ротирует Google OAuth, Django/DB/TG/MAX secrets.
+3. **Backup/cutover:** выполнить `production-cutover-runbook.md`; перед изменением БД сделать и
+   проверить backup. Не полагаться на автозапуск: `RUN_MIGRATIONS=0` требует явного `migrate`.
+4. **TLS:** подтвердить HTTPS-терминацию; secure session/CSRF cookies подключены, но
+   `SECURE_SSL_REDIRECT` и HSTS нельзя включать до подтверждения proxy/TLS схемы.
+5. **Ручная приёмка:** кнопки/select/темы, mobile layout, камера, daily tasks, удаление панели.
+
+### Неблокирующий, но незакрытый baseline
+
+- Формальные карточки: 76 `done`, 19 `review`, 5 `blocked`; реестры Phase 7
+  содержат дополнительные ready/review/blocked пункты и требуют отдельного закрывающего ревью.
+- `T-1-005`: полноценного CI нет; frontend `npm run lint` не запускается без ESLint config.
+- `T-5-fix-002-followup`: текущий baseline — `ruff` 313 ошибок, `black` 116 файлов,
+  `mypy` 99 ошибок.
+- OpenAPI validation: 38 warnings / 12 errors; три APIView отсутствуют в схеме без serializer.
+- Dependency audit не запускается: у frontend нет lockfile, `pip-audit` не установлен.
 
 ---
 
@@ -67,7 +100,7 @@
 
 - T-2-021 (drop 28 fields), T-2-023 (backfill ActivityLog), T-2-024 (drop 5 history) — Phase-2 паузы.
 - T-5-050 (templates/views/shims cleanup) — blocked до 2 недель prod-stable.
-- T-5-fix-002-followup-ruff — lint baseline (291/96/16) — blocked до cutover.
+- T-5-fix-002-followup-ruff — lint baseline (актуально 2026-06-04: ruff 313 / black 116 / mypy 99) — blocked до cutover.
 
 ### Backlog (P3, после prod-stable)
 

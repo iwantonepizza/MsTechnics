@@ -308,7 +308,7 @@ function ActivityFeedBand({ height }: { height: number }) {
               className="rounded px-1.5 py-0.5 text-2xs transition-colors"
               style={{
                 background: months === month ? 'var(--accent)' : 'var(--bg-2)',
-                color: months === month ? 'var(--accent-fg, #fff)' : 'var(--fg-dim)',
+                color: months === month ? 'var(--accent-ink)' : 'var(--fg-dim)',
                 border: `1px solid ${months === month ? 'var(--accent-edge)' : 'var(--border-subtle)'}`,
               }}
             >

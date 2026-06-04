@@ -11,17 +11,17 @@
 
   --fg-0: #040f1d;
   --fg-1: #3c4856;
-  --fg-mute: #b8bfc6;
-  --fg-faint: #7d8793;
+  --fg-mute: #3f4b59;
+  --fg-faint: #424f5d;
 
   --accent-0: #ffea00;
   --accent-1: #fdd734;
   --accent-2: #fdb734;
 
-  --danger: #e23a3a;
-  --warning: #ffb020;
-  --success: #2eaa67;
-  --info: #3a8fe2;
+  --danger: #b42318;
+  --warning: #825500;
+  --success: #116b42;
+  --info: #175cd3;
 
   --border-0: #e1e5ea;
   --border-1: #b8bfc6;
@@ -41,12 +41,13 @@
   --accent-faint: rgba(255, 234, 0, 0.18);
   --accent-edge: rgba(255, 234, 0, 0.42);
   --accent-ink: var(--fg-0);
+  --accent-fg: var(--accent-ink);
 
   --ok: var(--success);
   --ok-faint: rgba(46, 170, 103, 0.14);
   --warn: var(--warning);
   --warn-faint: rgba(255, 176, 32, 0.16);
-  --warn-ink: var(--fg-0);
+  --warn-ink: #ffffff;
   --err: var(--danger);
   --err-faint: rgba(226, 58, 58, 0.14);
   --err-ink: #ffffff;
@@ -89,7 +90,7 @@
   --fg-0: #fafcff;
   --fg-1: #e8edf3;
   --fg-mute: #9aa8b7;
-  --fg-faint: #738293;
+  --fg-faint: #8493a3;
 
   --accent-0: #ffea00;
   --accent-1: #fdd734;
@@ -117,6 +118,7 @@
   --accent-faint: rgba(255, 234, 0, 0.16);
   --accent-edge: rgba(255, 234, 0, 0.36);
   --accent-ink: #040f1d;
+  --accent-fg: var(--accent-ink);
 
   --ok: var(--success);
   --ok-faint: rgba(79, 208, 149, 0.16);
@@ -150,7 +152,7 @@
     --fg-0: #fafcff;
     --fg-1: #e8edf3;
     --fg-mute: #9aa8b7;
-    --fg-faint: #738293;
+    --fg-faint: #8493a3;
 
     --accent-0: #ffea00;
     --accent-1: #fdd734;
@@ -178,6 +180,7 @@
     --accent-faint: rgba(255, 234, 0, 0.16);
     --accent-edge: rgba(255, 234, 0, 0.36);
     --accent-ink: #040f1d;
+    --accent-fg: var(--accent-ink);
 
     --ok: var(--success);
     --ok-faint: rgba(79, 208, 149, 0.16);
@@ -422,7 +425,7 @@ body {
 
 .pill-brand {
   background: var(--accent-faint);
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .idchip {

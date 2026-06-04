@@ -74,7 +74,7 @@ export function EventTimeline({ events }: { events: ApplicationEvent[] }) {
                     target="_blank"
                     rel="noreferrer"
                     className="mt-1 inline-flex items-center gap-1 text-2xs hover:underline"
-                    style={{ color: 'var(--accent)' }}
+                    style={{ color: 'var(--info)' }}
                   >
                     <Paperclip size={10} /> Прикреплённый файл
                   </a>

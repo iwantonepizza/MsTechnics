@@ -46,6 +46,7 @@ beforeEach(() => {
   useDailyTasksMock.mockImplementation((_cityId, enabled = true) => ({
     data: enabled ? mockTasks : [],
     isLoading: false,
+    isError: false,
   }))
   vi.spyOn(window, 'open').mockImplementation(() => null)
 })
@@ -62,6 +63,7 @@ describe('DailyTasksPanel', () => {
     useDailyTasksMock.mockImplementation((cityId, enabled = true) => ({
       data: enabled && cityId === null ? mockTasks : [],
       isLoading: false,
+      isError: false,
     }))
 
     render(<DailyTasksPanel cityId={1} readOnly={false} defaultOpen />)
@@ -69,6 +71,19 @@ describe('DailyTasksPanel', () => {
     expect(useDailyTasksMock).toHaveBeenCalledWith(1, true)
     expect(useDailyTasksMock).toHaveBeenCalledWith(null, true)
     expect(screen.getByTestId('daily-task-1')).toBeInTheDocument()
+  })
+
+  it('shows an API error instead of a false empty state', () => {
+    useDailyTasksMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isError: true,
+    })
+
+    render(<DailyTasksPanel cityId={1} readOnly={false} defaultOpen />)
+
+    expect(screen.getByTestId('daily-tasks-error')).toBeInTheDocument()
+    expect(screen.queryByText('Задач нет')).not.toBeInTheDocument()
   })
 
   it('monitoring opens link and completes available task', async () => {

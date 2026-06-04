@@ -63,7 +63,6 @@ class Wires(StorageItemMixin):
     class Meta:
         app_label = "directory_storage"
         db_table = "wires_zip"
-        permissions = [("can_edit_zip_counts", "Can edit ZIP counts for storage items")]
         verbose_name = "Провод"
         verbose_name_plural = "Провода"
         ordering = ["id"]

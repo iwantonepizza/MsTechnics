@@ -31,7 +31,7 @@ beforeEach(() => {
   deleteMutation.mutateAsync.mockReset()
   deleteMutation.mutateAsync.mockResolvedValue(7)
   deleteMutation.isPending = false
-  meMock.mockReturnValue({ data: { username: 'a', permission: 'admin' } })
+  meMock.mockReturnValue({ data: { username: 'a', permission: 'admin', roles: ['admin'] } })
 })
 
 afterEach(() => {
@@ -40,9 +40,23 @@ afterEach(() => {
 
 describe('PanelDeleteButton (T-7-036)', () => {
   it('не рендерится для не-админа', () => {
-    meMock.mockReturnValue({ data: { username: 's', permission: 'service' } })
+    meMock.mockReturnValue({ data: { username: 's', permission: 'service', roles: ['service'] } })
     const { container } = render(<PanelDeleteButton panel={mockPanel as any} />)
     expect(container).toBeEmptyDOMElement()
+  })
+
+  it('не рендерится для legacy-роли all', () => {
+    meMock.mockReturnValue({
+      data: { username: 'all', permission: 'all', roles: ['monitoring', 'control', 'service'] },
+    })
+    const { container } = render(<PanelDeleteButton panel={mockPanel as any} />)
+    expect(container).toBeEmptyDOMElement()
+  })
+
+  it('рендерится для multi-role admin', () => {
+    meMock.mockReturnValue({ data: { username: 'a', permission: 'service', roles: ['service', 'admin'] } })
+    render(<PanelDeleteButton panel={mockPanel as any} />)
+    expect(screen.getByTestId('delete-panel-button')).toBeInTheDocument()
   })
 
   it('рендерит кнопку «Удалить» для admin', () => {

@@ -58,7 +58,7 @@ export function DisplayGrid({ displaySlug, onCellSelect, selectedCellId }: Displ
         {[
           { color: 'var(--bg-3)',   label: 'Норма' },
           { color: 'var(--warn)',   label: 'Заявка' },
-          { color: 'var(--accent)', label: 'В работе' },
+          { color: 'var(--warn)',   label: 'В работе' },
           { color: 'var(--ok)',     label: 'Выполнено' },
           { color: 'var(--err)',    label: 'Невозможно' },
         ].map(({ color, label }) => (

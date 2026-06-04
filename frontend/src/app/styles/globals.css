@@ -97,7 +97,7 @@
 
   .resize-handle:hover,
   .resize-handle:focus-visible {
-    color: var(--accent);
+    color: var(--accent-ink);
     background: var(--accent-faint);
   }
 

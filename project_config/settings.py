@@ -49,6 +49,8 @@ SECRET_KEY = env("SECRET_KEY", default="dev-insecure-key-change-in-production")
 DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["127.0.0.1", "localhost"])
 AUTH_COOKIE_SECURE = env.bool("AUTH_COOKIE_SECURE", default=not DEBUG)
+SESSION_COOKIE_SECURE = AUTH_COOKIE_SECURE
+CSRF_COOKIE_SECURE = AUTH_COOKIE_SECURE
 
 GOOGLE_CREDENTIALS_FILE = env(
     "GOOGLE_CLIENT_SECRET_PATH",
@@ -319,9 +321,7 @@ ALLOWED_DEPARTMENT = {
 }
 
 _log_renderer = (
-    structlog.dev.ConsoleRenderer(colors=True)
-    if DEBUG
-    else structlog.processors.JSONRenderer()
+    structlog.dev.ConsoleRenderer(colors=True) if DEBUG else structlog.processors.JSONRenderer()
 )
 
 LOGGING = {

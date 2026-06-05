@@ -1,6 +1,6 @@
 # T-8-112. Post-cutover infra hardening
 
-Статус: review
+Статус: done
 Исполнитель: GPT-5
 Дата старта: 2026-06-05
 
@@ -30,7 +30,7 @@
 - [x] Fail2ban jail подготовлен в repo.
 - [x] Fail2ban установлен и активирован на production.
 - [x] Public `/metrics` на production возвращает 403, локальный `/metrics` доступен для scrape.
-- [ ] Production `git pull` выполнен после push.
+- [x] Production `git pull` выполнен после push.
 
 ## Production результат
 
@@ -44,6 +44,7 @@
 - `/health/live` -> `200`;
 - `/health/ready` -> `200`;
 - `fail2ban` -> `active`, jail `sshd` включён.
+- production repo подтянут до `47fef6e`, рабочее дерево чистое.
 
 ## Отчёт по выполнению
 

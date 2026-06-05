@@ -3,9 +3,9 @@ Description=MsTechnics gunicorn with gevent workers for SSE
 After=network.target postgresql.service redis-server.service
 
 [Service]
-WorkingDirectory=/opt/mstechnics
-EnvironmentFile=/opt/mstechnics/Config/.env
-ExecStart=/opt/mstechnics/.venv/bin/gunicorn \
+WorkingDirectory=/root/DisplayControl/MsTechnics
+EnvironmentFile=/root/DisplayControl/MsTechnics/Config/.env
+ExecStart=/root/DisplayControl/venv-c84d3816/bin/gunicorn \
     --workers 3 \
     --worker-class gevent \
     --worker-connections 1000 \

@@ -106,6 +106,7 @@ Dashboard: `MsTechnics Overview`
 Важно:
 
 - `/metrics` наружу через публичный Nginx не публиковать
+- production Nginx должен использовать allowlist для `/metrics`: `127.0.0.1` и `::1`; готовый snippet лежит в `infra/nginx/mstechnics-prod-locations.conf`
 - uptime monitor должен проверять только `health/live`
 
 ---
@@ -113,7 +114,7 @@ Dashboard: `MsTechnics Overview`
 ## 7. Smoke-check после выката
 
 1. Открыть `/api/v1/health/live`
-2. Открыть `/metrics`
+2. Проверить `/metrics` локально с server host, публичный `/metrics` должен возвращать `403` или `404`
 3. Убедиться, что Prometheus видит job `django` как `UP`
 4. Открыть Grafana dashboard
 5. Спровоцировать одно тестовое уведомление

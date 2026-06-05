@@ -99,6 +99,7 @@ Header: X-MAX-Secret: <MAX_WEBHOOK_SECRET>
 
 - заполнить `Display.vnnox_device_id` для экранов в admin;
 - убедиться, что Gmail OAuth token доступен как `Config/token.pickle`.
+- На production 2026-06-05 `Config/token.pickle` отсутствует и `Display.vnnox_device_id` заполнен у `0/8` экранов, поэтому `mstechnics-vnnox-pull.timer` нельзя включать до заполнения этих данных.
 
 Команды:
 
@@ -138,7 +139,7 @@ sudo systemctl enable --now mstechnics-vnnox-unresolved.timer
 systemctl list-timers 'mstechnics-*'
 ```
 
-Пути в unit-файлах предполагают `/opt/mstechnics`. Если prod лежит в другом каталоге, заменить `WorkingDirectory`, `EnvironmentFile`, `ExecStart`.
+Production unit-файлы в repo актуализированы под `/root/DisplayControl/MsTechnics` и `/root/DisplayControl/venv-c84d3816`. Если venv или checkout меняются, заменить `WorkingDirectory`, `EnvironmentFile`, `ExecStart` перед `systemctl daemon-reload`.
 
 ---
 

@@ -2,10 +2,10 @@
 Description=MsTechnics VNNOX Gmail alarm pull
 Wants=network-online.target
 After=network-online.target
+ConditionPathExists=/root/DisplayControl/MsTechnics/Config/token.pickle
 
 [Service]
 Type=oneshot
-WorkingDirectory=/opt/mstechnics
-EnvironmentFile=/opt/mstechnics/Config/.env
-ExecStart=/opt/mstechnics/.venv/bin/python manage.py pull_vnnox_alarms
-
+WorkingDirectory=/root/DisplayControl/MsTechnics
+EnvironmentFile=/root/DisplayControl/MsTechnics/Config/.env
+ExecStart=/root/DisplayControl/venv-c84d3816/bin/python manage.py pull_vnnox_alarms

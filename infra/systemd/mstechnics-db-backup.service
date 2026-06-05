@@ -5,6 +5,7 @@ After=network-online.target
 
 [Service]
 Type=oneshot
-WorkingDirectory=/opt/mstechnics
-EnvironmentFile=/opt/mstechnics/Config/.env
-ExecStart=/opt/mstechnics/scripts/backup-db.sh
+WorkingDirectory=/root/DisplayControl/MsTechnics
+EnvironmentFile=/root/DisplayControl/MsTechnics/Config/.env
+Environment=BACKUP_DIR=/var/backups/mstechnics/scheduled
+ExecStart=/bin/bash /root/DisplayControl/MsTechnics/scripts/backup-db.sh

@@ -5,7 +5,6 @@ After=network-online.target
 
 [Service]
 Type=oneshot
-WorkingDirectory=/opt/mstechnics
-EnvironmentFile=/opt/mstechnics/Config/.env
-ExecStart=/opt/mstechnics/.venv/bin/python manage.py check_daily_tasks
-
+WorkingDirectory=/root/DisplayControl/MsTechnics
+EnvironmentFile=/root/DisplayControl/MsTechnics/Config/.env
+ExecStart=/root/DisplayControl/venv-c84d3816/bin/python manage.py check_daily_tasks

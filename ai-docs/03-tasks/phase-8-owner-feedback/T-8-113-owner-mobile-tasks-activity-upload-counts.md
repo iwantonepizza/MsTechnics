@@ -1,6 +1,6 @@
 # T-8-113. Owner feedback: mobile tasks, activity period, upload media type, active application counts
 
-Статус: in-progress
+Статус: done
 Исполнитель: GPT-5
 Дата старта: 2026-06-05
 
@@ -31,7 +31,20 @@
 - [x] `control` может выполнить ежедневную задачу.
 - [x] На мобильной главной для `control` есть быстрый блок ежедневных задач над основными колонками.
 - [x] Backend/frontend тесты и build пройдены.
-- [ ] Изменения запушены и развёрнуты на production через git.
+- [x] Изменения запушены и развёрнуты на production через git.
+
+## Production
+
+Развёрнуто 2026-06-05 через git на commit `f4fa900`.
+
+Smoke:
+
+- production repo clean;
+- `gunicorn` active;
+- `/health/live` -> `200 application/json`;
+- `/health/ready` -> `200 application/json`;
+- `/menu` -> `200 text/html`;
+- SPA build output обновлён в `static/spa`.
 
 ## Отчёт по выполнению
 

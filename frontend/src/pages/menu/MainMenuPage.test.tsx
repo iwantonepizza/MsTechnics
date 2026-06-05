@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { getAppPath } from './MainMenuPage'
+import { getAppPath, shouldShowMobileControlTasks } from './MainMenuPage'
 import type { ApplicationListItem } from '@/shared/api/types'
 
 function makeApplicationListItem(): ApplicationListItem {
@@ -52,5 +52,14 @@ describe('getAppPath', () => {
     const path = getAppPath(app, 'service')
 
     expect(path).toBe('/service')
+  })
+})
+
+describe('shouldShowMobileControlTasks', () => {
+  it('shows the mobile tasks shortcut only for control role', () => {
+    expect(shouldShowMobileControlTasks('control')).toBe(true)
+    expect(shouldShowMobileControlTasks('monitoring')).toBe(false)
+    expect(shouldShowMobileControlTasks('service')).toBe(false)
+    expect(shouldShowMobileControlTasks('admin')).toBe(false)
   })
 })

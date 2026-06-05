@@ -6,6 +6,7 @@ from apps.directory.displays.models import PhotoDisplay
 from apps.workflow.departures.models import Contact
 from tests.factories import (
     ApplicationFactory,
+    ApplicationStatusFactory,
     CellFactory,
     CityFactory,
     DisplayFactory,
@@ -123,6 +124,12 @@ def test_display_list_includes_application_count() -> None:
     cell = CellFactory(display=display, panel=panel, row=1, col=1)
     ApplicationFactory(display=display, panel=panel, cell=cell)
     ApplicationFactory(display=display, panel=panel, cell=cell)
+    ApplicationFactory(
+        display=display,
+        panel=panel,
+        cell=cell,
+        status=ApplicationStatusFactory(name="archive_done"),
+    )
     user = MsUserFactory(permission="monitoring", allowed_cities=[city])
     client = APIClient()
     client.force_authenticate(user)

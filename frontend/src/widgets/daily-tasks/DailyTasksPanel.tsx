@@ -18,9 +18,9 @@ const STATUS_META: Record<DailyTaskStatus, { label: string; color: string }> = {
 }
 
 /**
- * T-8-035: список ежедневных задач.
- * monitoring — интерактив (клик открывает ссылку и засчитывает);
- * control — read-only прогресс.
+ * T-8-035/T-8-113: список ежедневных задач.
+ * monitoring/control — интерактив, если задача доступна;
+ * readOnly оставлен для мест, где нужен только просмотр прогресса.
  */
 export function DailyTasksPanel({
   cityId,
@@ -83,19 +83,13 @@ export function DailyTasksPanel({
               const meta = STATUS_META[task.status]
               const clickable = !readOnly && task.available
               return (
-                <div
+                <button
                   key={task.id}
-                  role={clickable ? 'button' : undefined}
-                  tabIndex={clickable ? 0 : undefined}
+                  type="button"
+                  disabled={!clickable}
                   onClick={() => onTaskClick(task)}
-                  onKeyDown={e => {
-                    if (clickable && (e.key === 'Enter' || e.key === ' ')) {
-                      e.preventDefault()
-                      onTaskClick(task)
-                    }
-                  }}
                   data-testid={`daily-task-${task.id}`}
-                  className="flex items-center justify-between gap-2 rounded px-2 py-1.5 text-xs"
+                  className="flex min-h-[var(--hit-target)] w-full touch-manipulation items-center justify-between gap-2 rounded px-2 py-1.5 text-left text-xs disabled:opacity-80"
                   style={{
                     background: 'var(--bg-1)',
                     border: '1px solid var(--border-subtle)',
@@ -110,9 +104,9 @@ export function DailyTasksPanel({
                     className="shrink-0 rounded px-1.5 py-0.5 text-2xs"
                     style={{ color: meta.color, border: `1px solid ${meta.color}` }}
                   >
-                    {meta.label}
+                      {meta.label}
                   </span>
-                </div>
+                </button>
               )
             })
           )}

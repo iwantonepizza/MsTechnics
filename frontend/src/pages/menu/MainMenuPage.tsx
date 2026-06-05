@@ -26,6 +26,7 @@ import { Skeleton, SkeletonList } from '@/shared/ui/Skeleton'
 import { useDeferredLoading } from '@/shared/lib/useDeferredLoading'
 import { formatDate, formatRelative } from '@/shared/lib/utils'
 import { useCrumb } from '@/widgets/navigation/CrumbContext'
+import { DailyTasksPanel } from '@/widgets/daily-tasks/DailyTasksPanel'
 import type { ApplicationListItem, DepartureListItem, DisplayListItem, PaginatedResponse } from '@/shared/api/types'
 
 interface DashboardData {
@@ -43,6 +44,7 @@ interface StorageItem {
 
 type Dept = 'monitoring' | 'control' | 'service'
 type ActivityKind = 'all' | 'application' | 'panel' | 'display'
+type ActivityPeriod = 'today' | 'all'
 
 const DEPT_LABELS: Record<Dept, string> = {
   monitoring: 'Мониторинг',
@@ -55,6 +57,11 @@ const ACTIVITY_KIND_FILTERS: Array<{ value: ActivityKind; label: string }> = [
   { value: 'application', label: 'Заявки' },
   { value: 'panel', label: 'Панели' },
   { value: 'display', label: 'Экраны' },
+]
+
+const ACTIVITY_PERIOD_FILTERS: Array<{ value: ActivityPeriod; label: string }> = [
+  { value: 'today', label: 'Сегодня' },
+  { value: 'all', label: 'Всё время' },
 ]
 
 function useDashboard() {
@@ -83,6 +90,16 @@ function useDeparturesToday() {
 
 function canAccess(permission: string, dept: Dept | 'zip') {
   return permission === 'admin' || permission === 'all' || permission === dept
+}
+
+export function shouldShowMobileControlTasks(permission: string) {
+  return permission === 'control'
+}
+
+function getStartOfTodayIso() {
+  const date = new Date()
+  date.setHours(0, 0, 0, 0)
+  return date.toISOString()
 }
 
 export function getAppPath(app: ApplicationListItem, dept: Dept) {
@@ -381,13 +398,16 @@ function ZipDeparturesColumn({ allowed }: { allowed: boolean }) {
   )
 }
 
-/** T-8-020/T-8-107/T-8-111: лента последних действий без ограничения по дате, с cursor-пагинацией. */
+/** T-8-020/T-8-107/T-8-111/T-8-113: лента последних действий с периодом и cursor-пагинацией. */
 export function ActivityFeedBand() {
   const [kind, setKind] = useState<ActivityKind>('all')
+  const [period, setPeriod] = useState<ActivityPeriod>('today')
+  const todaySince = useMemo(() => getStartOfTodayIso(), [])
   const activityQuery = useInfiniteActivityLog({
     feed: true,
     kind: kind === 'all' ? undefined : kind,
     limit: 60,
+    ...(period === 'today' ? { since: todaySince } : {}),
   })
   const data = activityQuery.entries
   const isLoading = activityQuery.isLoading
@@ -407,6 +427,22 @@ export function ActivityFeedBand() {
           Последние действия
         </div>
         <div className="flex flex-wrap items-center justify-end gap-1">
+          {ACTIVITY_PERIOD_FILTERS.map(filter => (
+            <button
+              key={filter.value}
+              type="button"
+              onClick={() => setPeriod(filter.value)}
+              className="rounded px-1.5 py-0.5 text-2xs transition-colors"
+              style={{
+                background: period === filter.value ? 'var(--accent)' : 'var(--bg-2)',
+                color: period === filter.value ? 'var(--accent-ink)' : 'var(--fg)',
+                border: `1px solid ${period === filter.value ? 'var(--accent-edge)' : 'var(--border-strong)'}`,
+              }}
+              data-testid={`activity-period-${filter.value}`}
+            >
+              {filter.label}
+            </button>
+          ))}
           {ACTIVITY_KIND_FILTERS.map(filter => (
             <button
               key={filter.value}
@@ -423,9 +459,6 @@ export function ActivityFeedBand() {
               {filter.label}
             </button>
           ))}
-          <span className="rounded px-1.5 py-0.5 text-2xs" style={{ color: 'var(--fg-faint)' }}>
-            Всё время
-          </span>
         </div>
       </div>
       <div className="flex-1 overflow-y-auto p-2">
@@ -443,7 +476,7 @@ export function ActivityFeedBand() {
           </div>
         ) : data.length === 0 ? (
           <div className="flex h-full items-center justify-center text-xs" style={{ color: 'var(--fg-faint)' }}>
-            Действий за период нет
+            {period === 'today' ? 'Сегодня действий нет' : 'Действий за период нет'}
           </div>
         ) : (
           <div className="space-y-1">
@@ -472,6 +505,26 @@ export function ActivityFeedBand() {
   )
 }
 
+function ControlMobileTasksBlock() {
+  return (
+    <section
+      className="shrink-0 border-b bg-bg-1 md:hidden"
+      style={{ borderColor: 'var(--border-subtle)' }}
+      data-testid="control-mobile-tasks"
+    >
+      <div className="px-4 pt-3">
+        <div className="text-xs font-semibold" style={{ color: 'var(--fg)' }}>
+          Задачи контроля
+        </div>
+        <div className="mt-0.5 text-2xs" style={{ color: 'var(--fg-faint)' }}>
+          Быстрый доступ для мобильной смены
+        </div>
+      </div>
+      <DailyTasksPanel cityId={undefined} readOnly={false} defaultOpen />
+    </section>
+  )
+}
+
 export function MainMenuPage() {
   const { setCrumb } = useCrumb()
   const { data: me } = useMe()
@@ -497,6 +550,8 @@ export function MainMenuPage() {
         departuresCount={departures.data?.length ?? 0}
         loading={showKpiSkeleton}
       />
+
+      {shouldShowMobileControlTasks(permission) ? <ControlMobileTasksBlock /> : null}
 
       <div className="grid min-h-0 flex-1 grid-cols-4">
         <MonitoringColumn

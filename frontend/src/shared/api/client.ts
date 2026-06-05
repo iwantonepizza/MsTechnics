@@ -1,4 +1,4 @@
-import axios, { AxiosError } from 'axios'
+import axios, { AxiosError, AxiosHeaders } from 'axios'
 
 // Lazy import — избегаем circular deps
 const getToken = () => {
@@ -21,8 +21,13 @@ export const apiClient = axios.create({
 })
 
 apiClient.interceptors.request.use((config) => {
+  const headers = AxiosHeaders.from(config.headers)
   const token = getToken()
-  if (token) config.headers.Authorization = `Bearer ${token}`
+  if (token) headers.set('Authorization', `Bearer ${token}`)
+  if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+    headers.setContentType(false)
+  }
+  config.headers = headers
   return config
 })
 

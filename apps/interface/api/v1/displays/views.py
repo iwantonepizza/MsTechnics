@@ -1,4 +1,4 @@
-from django.db.models import Count, Prefetch
+from django.db.models import Count, Prefetch, Q
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema, extend_schema_view
 from rest_framework import status as http_status
 from rest_framework.decorators import action
@@ -12,6 +12,7 @@ from apps.core.users.permissions import is_admin
 from apps.directory.displays.models import Display
 from apps.directory.displays.services import display_service, stored_file_url
 from apps.directory.panels.models import Panel
+from apps.workflow.applications.managers import ARCHIVE_STATUSES
 from shared.permissions import HasCityAccess, HasDepartmentAccess
 
 from .serializers import (
@@ -55,7 +56,11 @@ class DisplayViewSet(ReadOnlyModelViewSet):
         if self.action == "list":
             panel_queryset = Panel.objects.select_related("condition__color", "condition__icon")
             qs = qs.annotate(
-                application_count=Count("application", distinct=True)
+                application_count=Count(
+                    "application",
+                    filter=~Q(application__status__name__in=ARCHIVE_STATUSES),
+                    distinct=True,
+                )
             ).prefetch_related(Prefetch("cell_set__panel", queryset=panel_queryset))
         user = self.request.user
         if not is_admin(user) and user.allowed_city.exists():

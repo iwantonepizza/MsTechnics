@@ -53,9 +53,11 @@ class DailyTaskViewSet(ReadOnlyModelViewSet):
         from apps.activity.services import activity_logger
 
         user = request.user
-        # T-8-035: выполнять может только мониторинг (контроль — read-only)
-        if not (is_admin(user) or has_role(user, "monitoring", "all")):
-            raise PermissionDenied("Только мониторинг может выполнять ежедневные задачи.")
+        # T-8-113: control can also complete daily tasks from the mobile main page.
+        if not (is_admin(user) or has_role(user, "monitoring", "control", "all")):
+            raise PermissionDenied(
+                "Только мониторинг или контроль могут выполнять ежедневные задачи."
+            )
 
         task = self.get_object()
         if not task.check_available_status():

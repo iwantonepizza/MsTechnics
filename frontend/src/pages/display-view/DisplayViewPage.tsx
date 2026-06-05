@@ -707,7 +707,7 @@ export function DisplayViewPage({ department }: DisplayViewPageProps) {
         {showDailyTasks ? (
           <DailyTasksPanel
             cityId={display.city?.id}
-            readOnly={department === 'control'}
+            readOnly={false}
             defaultOpen
           />
         ) : null}

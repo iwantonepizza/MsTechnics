@@ -133,4 +133,32 @@ describe('apiClient auth refresh interceptor', () => {
     expect(refreshCalls).toBe(1)
     expect(logout).toHaveBeenCalledTimes(1)
   })
+
+  it('does not force application/json content type for FormData uploads', async () => {
+    const formData = new FormData()
+    formData.append('file', new Blob(['x'], { type: 'image/png' }), 'x.png')
+
+    apiClient.defaults.adapter = async (config) => {
+      const headers = config.headers as typeof config.headers & {
+        get?: (name: string) => string | null | undefined
+        toJSON?: () => Record<string, unknown>
+      }
+      const serializedHeaders = typeof headers.toJSON === 'function' ? headers.toJSON() : headers
+      const contentType = serializedHeaders['Content-Type'] ?? serializedHeaders['content-type']
+
+      expect(config.data).toBe(formData)
+      expect(contentType).toBeUndefined()
+      return {
+        data: { ok: true },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config,
+      }
+    }
+
+    await expect(apiClient.post('/displays/test/photos/', formData)).resolves.toMatchObject({
+      status: 200,
+    })
+  })
 })

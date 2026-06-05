@@ -189,10 +189,23 @@ def test_daily_task_complete_by_monitoring() -> None:
     assert ActivityLog.objects.filter(event_type="daily_task_complete").exists()
 
 
-def test_daily_task_complete_forbidden_for_control() -> None:
+def test_daily_task_complete_allowed_for_control() -> None:
     city = CityFactory(name="dt-control", slug="dt-control")
     task = _make_task(city, status="ready", name="task-d")
     user = MsUserFactory(permission="control", allowed_cities=[city])
+    client = APIClient()
+    client.force_authenticate(user)
+
+    res = client.post(f"/api/v1/daily-tasks/{task.id}/complete/")
+    assert res.status_code == 200
+    task.refresh_from_db()
+    assert task.status == "done"
+
+
+def test_daily_task_complete_forbidden_for_service() -> None:
+    city = CityFactory(name="dt-service", slug="dt-service")
+    task = _make_task(city, status="ready", name="task-service")
+    user = MsUserFactory(permission="service", allowed_cities=[city])
     client = APIClient()
     client.force_authenticate(user)
 

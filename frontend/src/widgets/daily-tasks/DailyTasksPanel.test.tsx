@@ -74,12 +74,20 @@ describe('DailyTasksPanel', () => {
   it('monitoring opens link and completes available task', async () => {
     render(<DailyTasksPanel cityId={1} readOnly={false} />)
     fireEvent.click(screen.getByTestId('daily-tasks-toggle'))
+    expect(await screen.findByTestId('daily-task-1')).toHaveAttribute('type', 'button')
     fireEvent.click(await screen.findByTestId('daily-task-1'))
     expect(window.open).toHaveBeenCalled()
     expect(mockComplete).toHaveBeenCalledWith(1)
   })
 
-  it('control (read-only) does not complete on click', () => {
+  it('control/mobile usage completes available task when not read-only', () => {
+    render(<DailyTasksPanel cityId={1} readOnly={false} defaultOpen />)
+    fireEvent.click(screen.getByTestId('daily-task-1'))
+    expect(window.open).toHaveBeenCalled()
+    expect(mockComplete).toHaveBeenCalledWith(1)
+  })
+
+  it('explicit read-only mode does not complete on click', () => {
     render(<DailyTasksPanel cityId={1} readOnly />)
     fireEvent.click(screen.getByTestId('daily-tasks-toggle'))
     fireEvent.click(screen.getByTestId('daily-task-1'))

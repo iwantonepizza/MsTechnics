@@ -31,8 +31,23 @@ beforeEach(() => {
 })
 
 describe('ActivityFeedBand', () => {
-  it('loads the all-time activity feed without a date limit', () => {
+  it('loads today by default', () => {
     render(<ActivityFeedBand />)
+
+    expect(useInfiniteActivityLogMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        feed: true,
+        limit: 60,
+        since: expect.any(String),
+      }),
+    )
+    expect(screen.getByTestId('activity-period-today')).toBeInTheDocument()
+  })
+
+  it('can switch the feed to all time without a date limit', () => {
+    render(<ActivityFeedBand />)
+
+    fireEvent.click(screen.getByTestId('activity-period-all'))
 
     expect(useInfiniteActivityLogMock).toHaveBeenLastCalledWith(
       expect.objectContaining({
@@ -40,8 +55,8 @@ describe('ActivityFeedBand', () => {
         limit: 60,
       }),
     )
-    expect(useInfiniteActivityLogMock.mock.calls[0]?.[0]).not.toHaveProperty('since')
-    expect(screen.getByText('Всё время')).toBeInTheDocument()
+    const calls = useInfiniteActivityLogMock.mock.calls
+    expect(calls[calls.length - 1]?.[0]).not.toHaveProperty('since')
   })
 
   it('filters the feed by action entity kind', () => {
@@ -54,6 +69,7 @@ describe('ActivityFeedBand', () => {
         feed: true,
         kind: 'panel',
         limit: 60,
+        since: expect.any(String),
       }),
     )
   })

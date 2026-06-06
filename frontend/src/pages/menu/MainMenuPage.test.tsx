@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { getAppPath, shouldShowMobileControlTasks } from './MainMenuPage'
+import { getAppPath, shouldShowMobileMonitoringTasks } from './MainMenuPage'
 import type { ApplicationListItem } from '@/shared/api/types'
 
 function makeApplicationListItem(): ApplicationListItem {
@@ -55,11 +55,18 @@ describe('getAppPath', () => {
   })
 })
 
-describe('shouldShowMobileControlTasks', () => {
-  it('shows the mobile tasks shortcut only for control role', () => {
-    expect(shouldShowMobileControlTasks('control')).toBe(true)
-    expect(shouldShowMobileControlTasks('monitoring')).toBe(false)
-    expect(shouldShowMobileControlTasks('service')).toBe(false)
-    expect(shouldShowMobileControlTasks('admin')).toBe(false)
+describe('shouldShowMobileMonitoringTasks', () => {
+  it('shows the mobile tasks shortcut for monitoring permission', () => {
+    expect(shouldShowMobileMonitoringTasks('monitoring')).toBe(true)
+    expect(shouldShowMobileMonitoringTasks('all')).toBe(true)
+    expect(shouldShowMobileMonitoringTasks('control')).toBe(false)
+    expect(shouldShowMobileMonitoringTasks('service')).toBe(false)
+    expect(shouldShowMobileMonitoringTasks('admin')).toBe(false)
+  })
+
+  it('shows the shortcut when monitoring is present in profile roles', () => {
+    expect(shouldShowMobileMonitoringTasks('control', ['control', 'monitoring'])).toBe(true)
+    expect(shouldShowMobileMonitoringTasks('none_type', 'monitoring')).toBe(true)
+    expect(shouldShowMobileMonitoringTasks('control', ['control'])).toBe(false)
   })
 })

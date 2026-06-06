@@ -92,8 +92,22 @@ function canAccess(permission: string, dept: Dept | 'zip') {
   return permission === 'admin' || permission === 'all' || permission === dept
 }
 
-export function shouldShowMobileControlTasks(permission: string) {
-  return permission === 'control'
+function normalizeRoles(roles: unknown) {
+  if (Array.isArray(roles)) {
+    return roles.filter((role): role is string => typeof role === 'string')
+  }
+  if (typeof roles === 'string' && roles.length > 0) {
+    return [roles]
+  }
+  return []
+}
+
+export function shouldShowMobileMonitoringTasks(permission: string, roles?: unknown) {
+  return (
+    permission === 'monitoring'
+    || permission === 'all'
+    || normalizeRoles(roles).includes('monitoring')
+  )
 }
 
 function getStartOfTodayIso() {
@@ -505,19 +519,19 @@ export function ActivityFeedBand() {
   )
 }
 
-function ControlMobileTasksBlock() {
+function MonitoringMobileTasksBlock() {
   return (
     <section
       className="shrink-0 border-b bg-bg-1 md:hidden"
       style={{ borderColor: 'var(--border-subtle)' }}
-      data-testid="control-mobile-tasks"
+      data-testid="monitoring-mobile-tasks"
     >
       <div className="px-4 pt-3">
         <div className="text-xs font-semibold" style={{ color: 'var(--fg)' }}>
-          Задачи контроля
+          Ежедневные задачи
         </div>
         <div className="mt-0.5 text-2xs" style={{ color: 'var(--fg-faint)' }}>
-          Быстрый доступ для мобильной смены
+          Быстрый доступ для мониторинга
         </div>
       </div>
       <DailyTasksPanel cityId={undefined} readOnly={false} defaultOpen />
@@ -539,6 +553,7 @@ export function MainMenuPage() {
   }, [setCrumb])
 
   const permission = me?.permission ?? ''
+  const roles = (me as { roles?: unknown } | undefined)?.roles
   const counts = dashboard.data?.counts ?? {}
   const showKpiSkeleton = useDeferredLoading(dashboard.isLoading || departures.isLoading)
   const showDisplaysSkeleton = useDeferredLoading(displays.isLoading)
@@ -551,7 +566,7 @@ export function MainMenuPage() {
         loading={showKpiSkeleton}
       />
 
-      {shouldShowMobileControlTasks(permission) ? <ControlMobileTasksBlock /> : null}
+      {shouldShowMobileMonitoringTasks(permission, roles) ? <MonitoringMobileTasksBlock /> : null}
 
       <div className="grid min-h-0 flex-1 grid-cols-4">
         <MonitoringColumn
